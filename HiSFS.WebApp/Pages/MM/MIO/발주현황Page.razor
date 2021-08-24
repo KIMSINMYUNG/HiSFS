@@ -1,0 +1,98 @@
+﻿@inherits CustomComponent
+@page "/mm/mio/발주현황"
+
+
+<SfSplitter Width="100%" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Collapsible="true">
+
+            <!-- <발주현황 /> -->
+            <FGrid @ref="grid" DataSource="@list" TValue="발주정보" DefaultMode="true" EditMode="DGridEditMode.None" 
+                   OnDataBound="OnDataBound" OnCreated="RefreshAsync" OnCheckAuth="CheckAuth">
+
+                <GridColumns>
+                    <GridColumn Field=@nameof(발주정보.발주순번) HeaderText="순번" Width="80" />
+                    <GridColumn Field=@nameof(발주정보.발주서명) Width="260" HeaderText="발주서명칭" />
+                    <GridColumn Field=@nameof(발주정보.거래처코드) Visible="false" />
+                    <GridColumn Field="거래처코드" Width="0">
+                        <Template>
+                            @((context as 발주정보).거래처?.거래처명)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 발주정보; }
+                            <DInputSearch ID="거래처코드" Placeholder="거래처" Target="#root" DialogHeader="거래처 조회" TValue="거래처정보" TCode="string" TextField="거래처명" @bind-Value=@((context as 발주정보).거래처) CodeField="거래처코드" @bind-Code=@(info.거래처코드)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.거래처Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="거래처.거래처명" HeaderText="거래처명" Width="120">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="발주상태코드" HeaderText="발주상태" Width="120" EditType="EditType.DropDownEdit">
+                        <EditTemplate>
+                            <SfDropDownList ID="ddl발주상태" Placeholder="발주상태" TItem="string" Enabled="@Enabled" TValue="string" @bind-Value="@((context as 발주정보).발주상태코드)" DataSource="@listState">
+                                <DropDownListFieldSettings Text="입고" Value="입고"></DropDownListFieldSettings>
+                                <DropDownListFieldSettings Text="지연" Value="지연"></DropDownListFieldSettings>
+                                <DropDownListFieldSettings Text="진행중" Value="진행중"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field=@nameof(발주정보.발주일시) Width="120" Format="yyyy/MM/dd" HeaderText="발주일" />
+                    <GridColumn Field=@nameof(발주정보.입고예정일시) Width="120" Format="yyyy/MM/dd" HeaderText="입고일" />
+                    <GridColumn Field=@nameof(발주정보.비고) Width="240" HeaderText="비고" />
+
+                </GridColumns>
+            </FGrid>
+
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<발주정보> grid;
+    private ObservableCollection<발주정보> list;
+    private 발주정보 selectedRow;
+
+    private FGrid<발주정보상세> grid2;
+    private ObservableCollection<발주정보상세> list2 = new ObservableCollection<발주정보상세>();
+
+
+    private SfTextBox _searchBox;
+
+    private int 발주순번 { get; set; }
+
+    public bool Enabled = true;
+
+    public List<string> listState = new List<string>() { "입고", "입고지연", "진행중" };
+
+    private async Task RefreshAsync()
+    {
+
+        var result = await Remote.Command.기준정보.발주정보_조회();
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+
+
+
+    private void OnDataBound(BeforeDataBoundArgs<발주정보> args)
+    {
+        //list2?.Clear();
+    }
+
+   
+
+    // 페이지가 소멸할 때 호출된다.
+    protected override void OnDispose()
+    {
+    }
+
+}

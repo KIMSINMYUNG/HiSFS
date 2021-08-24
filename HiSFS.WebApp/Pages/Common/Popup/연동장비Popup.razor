@@ -1,0 +1,74 @@
+﻿@page "/popup/연동장비"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="list" TValue="연동장비정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected">
+    <GridColumns>
+        <GridColumn Field=@nameof(연동장비정보.No) HeaderText="순번" Width="60">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(연동장비정보.장비명) IsPrimaryKey="true" Width="120" HeaderText="장비명">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+
+        <GridColumn Field=@nameof(연동장비정보.식별코드) Width="160" HeaderText="식별코드" />
+        <GridColumn Field=@nameof(연동장비정보.연동장비유형코드) Width="180" Template=@CommonCodeTemplate(nameof(연동장비정보.연동장비유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(연동장비정보.연동장비유형코드), "연동장비유형", "S81") HeaderText="연동장비유형" />
+        <GridColumn Field=@nameof(연동장비정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(연동장비정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+    </GridColumns>
+</FGrid>
+
+@code {
+    private FGrid<연동장비정보> grid;
+    private ObservableCollection<연동장비정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<연동장비정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<연동장비정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private async Task RefreshAsync()
+    {
+        var search = new 검색정보
+        {
+            [검색대상.사용] = ""
+        };
+
+        //var result = await Remote.Command.품질관리.품질검사_조회();
+        var result = await Remote.Command.시스템.연동장비_조회(search);
+
+        ModifyList(result, (x, map) =>
+        {
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<연동장비정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

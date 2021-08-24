@@ -1,0 +1,57 @@
+﻿@inherits CustomComponent
+
+@page "/test/FileUploadTest"
+
+@using System.Threading
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-auto">
+            <DFileUpload IsDragAndDrop="false" IsMultiple="false" Text=@buttonText OnChange="OnChangeDFileUpload" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-auto">
+            <DFileUpload IsDragAndDrop="true" IsMultiple="false" Text=@buttonText OnChange="OnChangeDFileUpload" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-auto">
+            <DFileUpload IsDragAndDrop="false" IsMultiple="true" Text=@buttonText OnChange="OnChangeDFileUpload" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-auto">
+            <DFileUpload IsDragAndDrop="true" IsMultiple="true" Text=@buttonText OnChange="OnChangeDFileUpload" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            @status
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            @*<img src="@imageDataUri" />*@
+        </div>
+    </div>
+</div>
+
+@code {
+    private string status;
+    private string buttonText = "파일 업로드";
+
+    private void OnChangeDFileUpload((DFileUpload.FileUploadState State, DFileUpload.FileInfo FileInfo) args)
+    {
+        if (args.State == DFileUpload.FileUploadState.FileUploading)
+            status = $"{args.FileInfo.Filename}, {args.FileInfo.Size}, {args.FileInfo.TempFilename}";
+        else if (args.State == DFileUpload.FileUploadState.FileUploadFinished)
+            status = $"{args.FileInfo.Filename}, {args.FileInfo.Size}, {args.FileInfo.TempFilename} 완료";
+
+        //StateHasChanged();
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

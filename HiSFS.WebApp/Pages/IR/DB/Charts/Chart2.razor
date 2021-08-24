@@ -1,0 +1,46 @@
+﻿<SfChart Title="생산효율" Theme="ChartTheme.MaterialDark">
+    <ChartEvents Load="ChartLoad" />
+    <ChartArea><ChartAreaBorder Width="0"></ChartAreaBorder></ChartArea>
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.DateTime" LabelFormat="d" IntervalType="IntervalType.Days" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
+        <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
+    </ChartPrimaryXAxis>
+    <ChartPrimaryYAxis LabelFormat="{value}%" RangePadding="ChartRangePadding.None" Minimum="50" Maximum="100" Interval="5">
+        <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
+        <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+    </ChartPrimaryYAxis>
+    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+    <ChartSeriesCollection>
+        <ChartSeries DataSource="@ChartData" Name="생산1" XName="xValue" Width="2"
+                     Opacity="1" YName="yValue" Type="ChartSeriesType.Line">
+            <ChartMarker Visible="true" Width="10" Height="10">
+            </ChartMarker>
+        </ChartSeries>
+        <ChartSeries DataSource="@ChartData" Name="생산2" XName="xValue" Width="2"
+                     Opacity="1" YName="yValue1" Type="ChartSeriesType.Line">
+            <ChartMarker Visible="true" Width="10" Height="10">
+            </ChartMarker>
+        </ChartSeries>
+    </ChartSeriesCollection>
+</SfChart>
+
+@code{
+    public class LineChartData
+    {
+        public DateTime xValue { get; set; }
+        public double yValue { get; set; }
+        public double yValue1 { get; set; }
+    }
+    public List<LineChartData> ChartData = new List<LineChartData>
+    {
+        new LineChartData { xValue = new DateTime(2020, 9, 1), yValue = 85, yValue1 = 82 },
+        new LineChartData { xValue = new DateTime(2020, 9, 2), yValue = 83, yValue1 = 80 },
+        new LineChartData { xValue = new DateTime(2020, 9, 3), yValue = 85, yValue1 = 79 },
+        new LineChartData { xValue = new DateTime(2020, 9, 4), yValue = 84, yValue1 = 78 },
+        new LineChartData { xValue = new DateTime(2020, 9, 5), yValue = 83, yValue1 = 75 },
+        new LineChartData { xValue = new DateTime(2020, 9, 6), yValue = 83, yValue1 = 76 },
+        new LineChartData { xValue = new DateTime(2020, 9, 7), yValue = 83, yValue1 = 78 },
+    };
+    void ChartLoad(ILoadedEventArgs Args)
+    {
+    }
+}

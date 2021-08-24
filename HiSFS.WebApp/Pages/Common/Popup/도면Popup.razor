@@ -1,0 +1,72 @@
+﻿@page "/popup/도면"
+
+@inherits CustomComponent
+
+
+<FGrid @ref=@grid DataSource="@list" TValue="도면정보" DefaultMode="true" PageMode="PageMode.Popup" @ondblclick="OnDbClick"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected">
+    <GridColumns>
+        <GridColumn Field=@nameof(도면정보.No) Width="60" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(도면정보.도면코드) Visible="false" />
+        <GridColumn Field=@nameof(도면정보.도면번호) Width="120" HeaderText="도면번호" />
+        <GridColumn Field=@nameof(도면정보.관리차수) Width="80" HeaderText="차수" AllowAdding="false" AllowEditing="false" />
+        <GridColumn Field=@nameof(도면정보.도면명) Width="200" />
+        <GridColumn Field=@nameof(도면정보.도면영문명) Width="200" HeaderText="영문명" />
+        <GridColumn Field=@nameof(도면정보.도면종류코드) Width="100">
+            <Template>
+                @{var info = context as 도면정보;}
+                <span>@(info.도면종류코드 != null ? 코드[info.도면종류코드].코드명 : "")</span>
+            </Template>
+            <EditTemplate>
+                <DCommonCodeDropList ParentCode="B06" Placeholder="도면종류" @bind-Value=@((context as 도면정보).도면종류코드) />
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="도면종류.코드명" Visible="false" />
+        <GridColumn Field=@nameof(도면정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일" AllowAdding="false" AllowEditing="false" />
+        <GridColumn Field=@nameof(도면정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일" AllowAdding="false" AllowEditing="false" />
+    </GridColumns>
+</FGrid>
+
+@code {
+    FGrid<도면정보> grid;
+    ObservableCollection<도면정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<도면정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<도면정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.기준정보.도면_조회();
+        ModifyList(result, (info, map) =>
+        {
+
+        });
+        list = result.ToObservableCollection();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<도면정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+    protected override void OnDispose()
+    {
+
+    }
+}

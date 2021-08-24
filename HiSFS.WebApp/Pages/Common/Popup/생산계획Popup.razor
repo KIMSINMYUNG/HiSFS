@@ -1,0 +1,131 @@
+﻿@page "/popup/생산계획"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="생산계획정보" DefaultMode="true" PageMode="PageMode.Popup" @ondblclick="OnDbClick"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected">
+    <GridColumns>
+        <GridColumn Field=@nameof(생산계획정보.생산계획코드) IsPrimaryKey="true" Visible="false" />
+        <GridColumn Field="No" HeaderText="순번" AllowAdding="false" AllowEditing="false" Width="60">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(생산계획정보.생산계획명) HeaderText="계획명" ValidationRules="@(new ValidationRules { Required = true })" Width="200" />
+        <GridColumn Field="생산품" HeaderText="생산품" ValidationRules="@(new ValidationRules { Required = true })" Width="160">
+            <Template>
+                @((context as 생산계획정보).생산품?.품목명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="생산품" Target="#root" DialogHeader="생산품 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@((context as 생산계획정보).생산품)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.생산품Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="생산품.품목코드" Visible="false" />
+        <GridColumn Field="생산품.품목명" Visible="false" />
+        <GridColumn Field="생산품공정" HeaderText="생산품공정" Width="160">
+            <Template>
+                @((context as 생산계획정보).생산품공정?.생산품공정명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="생산품공정" Target="#root" DialogHeader="생산품공정 조회" TValue="생산품공정정보" TCode="string" TextField="생산품공정명" @bind-Value=@((context as 생산계획정보).생산품공정)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.생산품공정Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="생산품공정.생산품공정코드" Visible="false" />
+        <GridColumn Field="생산품공정.생산품공정명" Visible="false" />
+        <GridColumn Field="발주처" HeaderText="발주처" Width="120">
+            <Template>
+                @((context as 생산계획정보).발주처?.거래처명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="발주처" Target="#root" DialogHeader="발주처 조회" TValue="거래처정보" TCode="string" TextField="거래처명" @bind-Value=@((context as 생산계획정보).발주처)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.거래처Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="발주처.거래처코드" Visible="false" />
+        <GridColumn Field="발주처.거래처명" Visible="false" />
+        <GridColumn Field=@nameof(생산계획정보.발주일) Format="yyyy/MM/dd" HeaderText="발주일" Width="120" />
+        <GridColumn Field=@nameof(생산계획정보.발주수량) HeaderText="발주수량" Width="100" />
+        <GridColumn Field=@nameof(생산계획정보.납품일) Format="yyyy/MM/dd" HeaderText="납품일" Width="120" />
+        <GridColumn Field=@nameof(생산계획정보.종료일시) Format="yyyy/MM/dd" HeaderText="목표일" Width="120" />
+        <GridColumn Field=@nameof(생산계획정보.계획수량) HeaderText="계획수량" Width="100" />
+        <GridColumn Field=@nameof(생산계획정보.실행일시) Format="yyyy/MM/dd" HeaderText="실행예정일" Width="120" />
+        <GridColumn Field="생산책임자" HeaderText="책임자" Width="100">
+            <Template>
+                @((context as 생산계획정보).생산책임자?.사용자명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="책임자" Target="#root" DialogHeader="책임자 조회" TValue="직원정보" TCode="string" TextField="사용자명" @bind-Value=@((context as 생산계획정보).생산책임자)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.직원Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="생산책임자.사번" Visible="false" />
+        <GridColumn Field="생산책임자.사용자명" Visible="false" />
+    </GridColumns>
+</FGrid>
+
+@code {
+    private FGrid<생산계획정보> grid;
+    private ObservableCollection<생산계획정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<생산계획정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<생산계획정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private string 회사코드 = "";
+    private async Task RefreshAsync()
+    {
+
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.생산계획_조회(회사코드, new 검색정보
+        {
+            [검색대상.사용] = ""
+        });
+        ModifyList(result, (x, map) =>
+        {
+            //if (x.품목구분코드 != null)
+            //    x.품목구분 = map[x.품목구분코드];
+            //if (x.조달구분코드 != null)
+            //    x.조달구분 = map[x.조달구분코드];
+            //if (x.단위코드 != null)
+            //    x.단위 = map[x.단위코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<생산계획정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

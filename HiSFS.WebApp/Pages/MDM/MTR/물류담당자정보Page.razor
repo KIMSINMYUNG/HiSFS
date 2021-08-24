@@ -1,0 +1,71 @@
+﻿@page  "/mdm/mtr/물류담당자정보"
+@inherits CustomComponent
+
+<SfSplitter Width="100%" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%">
+            <FGrid @ref="grid" DataSource="@list" TValue="물류담당자정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="15"
+                   OnCreated="RefreshAsync" OnCheckAuth="CheckAuth">
+                <GridColumns>
+                    @*<GridColumn Field=@nameof(부서정보.회사코드) HeaderText="회사코드" />*@
+                    <GridColumn Field=@nameof(물류담당자정보.담당자코드) HeaderText="담당자코드" />
+                    <GridColumn Field=@nameof(물류담당자정보.담당자명) HeaderText="담당자명" />
+                    <GridColumn Field=@nameof(물류담당자정보.물류담당자번호) HeaderText="사원코드" />
+                    <GridColumn Field=@nameof(물류담당자정보.사원명) HeaderText="사원명" />
+                    <GridColumn Field=@nameof(물류담당자정보.전화번호) HeaderText="전화번호" />
+                    <GridColumn Field=@nameof(물류담당자정보.팩스번호) HeaderText="팩스번호" />
+                    <GridColumn Field=@nameof(물류담당자정보.핸드폰번호) HeaderText="핸드폰번호" />
+                    <GridColumn Field=@nameof(물류담당자정보.담당그룹명) HeaderText="담당그룹명" />
+                    <GridColumn Field=@nameof(물류담당자정보.시작일) HeaderText="시작일" />
+                    <GridColumn Field=@nameof(물류담당자정보.종료일) HeaderText="종료일" />
+                    <GridColumn Field=@nameof(물류담당자정보.사용여부) HeaderText="사용여부" Width="100">
+                        <Template>
+                            @{
+                                var info = (context as 물류담당자정보);
+                                <div>
+                                    <div class="empimg">
+                                        @if (info.사용여부 == "0")
+                                        {
+                                            <span>미사용</span>
+                                        }
+                                        @if (info.사용여부 == "1")
+                                        {
+                                            <span>사용</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+
+
+@code {
+    private FGrid<물류담당자정보> grid;
+    private ObservableCollection<물류담당자정보> list;
+
+    private async Task RefreshAsync()
+    {
+
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        //부서VIEW
+        var result = await Remote.Command.기준정보.물류담당자정보_조회(회사코드);
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+
+    protected override void OnDispose()
+    {
+    }
+}

@@ -1,0 +1,435 @@
+﻿@page "/mdm/org/장소관리"
+@inherits CustomComponent
+
+<div class="row" style="display: none;">
+    <SfQRCodeGenerator Width="200px" Height="150px" Value="">
+        <QRCodeGeneratorDisplayText Visibility="true" />
+    </SfQRCodeGenerator>
+</div>
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="40%" Collapsible="true">
+            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                <SplitterPanes>
+                    <SplitterPane Size="65%" Collapsible="true">
+                        <div class="row section-header">
+                            <span class="my-auto">장소</span>
+                        </div>
+                        <FGrid @ref="grid" DataSource="@list" TValue="장소정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="10"
+                               OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(장소정보.No) Width="120" HeaderText="순번" AllowAdding="false" AllowEditing="false" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center">
+                                    <EditTemplate></EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(장소정보.장소코드) Visible="false" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" />
+                                <GridColumn Field=@nameof(장소정보.장소명) Width="350" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" />
+                                @*<GridColumn Field=@nameof(장소정보.장소유형코드) Width="0" Template=@CommonCodeTemplate(nameof(장소정보.장소유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(장소정보.장소유형코드), "장소유형", "B08") HeaderText="장소유형" />
+                                    <GridColumn Field="장소유형.코드명" HeaderText="장소유형">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>*@
+                                <GridColumn Field=@nameof(장소정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일" AllowAdding="false" AllowEditing="false" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center">
+                                    <EditTemplate></EditTemplate>
+                                </GridColumn>
+                                @*<GridColumn Field=@nameof(장소정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="변경일" AllowAdding="false" AllowEditing="false">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>*@
+                            </GridColumns>
+                        </FGrid>
+                    </SplitterPane>
+
+
+                </SplitterPanes>
+            </SfSplitter>
+        </SplitterPane>
+        <SplitterPane Size="60%" Collapsible="true">
+            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                <SplitterPanes>
+                    <SplitterPane Size="65%" Collapsible="true">
+                        <div class="row section-header">
+                            <span class="my-auto">장소 위치</span>
+                        </div>
+                        <FGrid @ref="grid2" DataSource="@list2" TValue="장소위치정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="15"
+                               OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnDataBound="OnDataBound위치" OnCheckAuth="CheckAuth">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(장소위치정보.No) Width="120" HeaderText="순번" AllowAdding="false" AllowEditing="false" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center">
+                                    <EditTemplate></EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(장소위치정보.장소위치코드) Visible="false" />
+                                <GridColumn Field=@nameof(장소위치정보.위치명) Width="350" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" />
+                                <GridColumn Field=@nameof(장소위치정보.위치분류코드) Width="0" Template=@CommonCodeTemplate(nameof(장소위치정보.위치분류코드)) EditTemplate=@CommonCodeEditTemplate(nameof(장소위치정보.위치분류코드), "위치분류", "B07") HeaderText="위치분류" />
+                                <GridColumn Field="위치분류.코드명" HeaderText="위치분류" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center">
+                                    <EditTemplate></EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(장소위치정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center">
+                                    <EditTemplate></EditTemplate>
+                                </GridColumn>
+                                @*<GridColumn Field=@nameof(장소위치정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="변경일">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>*@
+                            </GridColumns>
+                        </FGrid>
+                    </SplitterPane>
+                    <SplitterPane Size="35%" Collapsible="true">
+                        <div class="col section-header mr-auto mt-2">
+                            <span class="my-auto">바코드</span>
+                            <div class="form-row mt-2">
+                                @if (selectedRow장소위치 != null && selectedRow장소위치.장소코드 == "1000")
+                                {
+                                    <div class="form-group col-md-4">
+                                        @if (장소입고행위코드 != null)
+                                        {
+                                            <div class="row mb-2">
+                                                <span class="col text-center">장소입고</span>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col text-center">
+                                                    <SfQRCodeGenerator Width="200px" Height="150px" Value=@(장소입고행위코드)>
+                                                        <QRCodeGeneratorDisplayText Visibility="true" />
+                                                    </SfQRCodeGenerator>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col text-center">
+                                                    <SfButton OnClick="() => OnQRPrinte(1) ">출력</SfButton>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                @if (selectedRow장소위치 != null && selectedRow장소위치.장소코드 == "1000")
+                                {
+                                    <div class="form-group col-md-4">
+                                        @if (장소출고행위코드 != null)
+                                        {
+                                            <div class="row mb-2">
+                                                <span class="col text-center">장소출고</span>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col text-center">
+                                                    <SfQRCodeGenerator Width="200px" Height="150px" Value=@(장소출고행위코드)>
+                                                        <QRCodeGeneratorDisplayText Visibility="true" />
+                                                    </SfQRCodeGenerator>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col text-center">
+                                                    <SfButton OnClick="() => OnQRPrinte(2) ">출력</SfButton>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+
+                                <!--<div class="form-group col-md-4">
+                                if (장소입고불량행위코드 != null)
+                                 {
+                                     <div class="row mb-2">
+                                         <span class="col text-center">장소이동</span>
+                                     </div>
+                                     <div class="row mb-2">
+                                         <div class="col text-center">
+                                             <SfQRCodeGenerator Width="200px" Height="150px" Value=@(장소입고불량행위코드)>
+                                                 <QRCodeGeneratorDisplayText Visibility="true" />
+                                             </SfQRCodeGenerator>
+                                         </div>
+                                     </div>
+                                     <div class="row">
+                                         <div class="col text-center">-->
+                                @*<SfButton Disabled="true">출력</SfButton>*@
+                                <!--<SfButton OnClick="() => OnQRPrinte(3) ">출력</SfButton>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>-->
+                            </div>
+
+
+                        </div>
+                    </SplitterPane>
+                </SplitterPanes>
+            </SfSplitter>
+        </SplitterPane>
+
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<장소정보> grid;
+    private ObservableCollection<장소정보> list;
+    private 장소정보 selectedRow;
+    private 장소위치정보 selectedRow장소위치;
+
+    private FGrid<장소위치정보> grid2;
+    private ObservableCollection<장소위치정보> list2 = new ObservableCollection<장소위치정보>();
+
+    private FGrid<위치상세정보> grid3;
+    private ObservableCollection<위치상세정보> list3 = new ObservableCollection<위치상세정보>();
+
+    private string 장소입고행위코드;
+    private string 장소출고행위코드;
+    private string 장소입고불량행위코드;
+    private string 장소위치행위코드;
+    private string 위치상세행위코드;
+    private string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+        list2?.Clear();
+        list3?.Clear();
+        //StateHasChanged();
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await Remote.Command.기준정보.장소_조회(회사코드);
+        ModifyList(result, (x, map) =>
+        {
+            if (x.장소유형코드 != null)
+                x.장소유형 = map[x.장소유형코드];
+        }, false);
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<장소정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //state = "delete";
+
+            await Remote.Command.기준정보.장소_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            args.Data.장소유형 = null;
+            args.Data.회사코드 = 회사코드;
+
+            await Remote.Command.기준정보.장소_저장(args.Data, args.Action == "Add" ? true : false);
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<장소정보> args)
+    {
+
+        selectedRow = args.Data;
+        selectedRow장소위치 = null;
+
+
+        장소입고행위코드 = null;
+        장소출고행위코드 = null;
+        list2.Clear();
+
+        if (selectedRow.장소위치목록 == null)
+            return;
+
+        foreach (var item in selectedRow.장소위치목록)
+            list2.Add(item);
+        //list2 = selectedRow.장소위치목록.ToObservableCollection();
+        ModifyList(list2, (x, map) =>
+        {
+            if (x.위치분류코드 != null)
+                x.위치분류 = map[x.위치분류코드];
+        }, false);
+
+        //장소입고행위코드 = $"00 S9103 {selectedRow.장소코드}";
+        //장소출고행위코드 = $"00 S9106 {selectedRow.장소코드}";
+        //장소입고불량행위코드 = $"00 S9104 {selectedRow.장소코드}";
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<장소위치정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            if (selectedRow != default)
+            {
+                var newRow = args.Data;
+                newRow.장소코드 = selectedRow.장소코드;
+                newRow.회사코드 = 회사코드;
+            }
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //state = "delete";
+
+            await Remote.Command.기준정보.장소위치_삭제(args.Data, false);
+            //await RefreshAsync();
+
+            selectedRow.장소위치목록.Remove(args.Data);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            args.Data.위치분류 = null;
+
+            if (args.Data.장소코드 == null)
+            {
+                NotifyMessage(Message.PlaceSelectMessage);
+                return;
+
+            }
+            await Remote.Command.기준정보.장소위치_저장(args.Data, args.Action == "Add" ? true : false);
+            //await RefreshAsync();
+
+            ModifyList(selectedRow.장소위치목록, (x, map) =>
+            {
+                if (x.위치분류코드 != null)
+                    x.위치분류 = map[x.위치분류코드];
+            }, false);
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<장소위치정보> args)
+    {
+
+        //장소위치행위코드 = $"00 S9105 {args.Data.장소위치코드}";
+        selectedRow장소위치 = args.Data;
+        장소입고행위코드 = $"00 S9103 {selectedRow장소위치.장소위치코드}";
+        장소출고행위코드 = $"00 S9106 {selectedRow장소위치.장소위치코드}";
+        장소입고불량행위코드 = $"00 S9104 {selectedRow장소위치.장소위치코드}";
+
+        list3.Clear();
+
+        if (selectedRow장소위치.위치상세목록 == null)
+            return;
+
+        foreach (var item in selectedRow장소위치.위치상세목록)
+            list3.Add(item);
+        //list2 = selectedRow.장소위치목록.ToObservableCollection();
+        ModifyList(list3, (x, map) =>
+        {
+            if (x.위치분류코드 != null)
+                x.위치상세분류 = map[x.위치분류코드];
+        }, false);
+
+    }
+
+    private void OnDataBound위치(BeforeDataBoundArgs<장소위치정보> args)
+    {
+        // TODO: Syncfusion DataGrid 버그로 인해 추가. 버그 해결 뒤 삭제 예정
+        grid2.Grid.ClearRowSelection();
+    }
+
+    private async Task OnQRPrinte(int type)
+    {
+        string barcodeValue = null;
+        if (type == 1)
+        {
+            barcodeValue = 장소입고행위코드;
+        }
+        else if (type == 2)
+        {
+            barcodeValue = 장소출고행위코드;
+        }
+        else if (type == 3)
+        {
+            barcodeValue = 장소입고불량행위코드;
+        }
+        else if (type == 4)
+        {
+            barcodeValue = 장소위치행위코드;
+        }
+
+        await QRPrinte_Act(barcodeValue, 2);
+
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+
+    private async Task OnActionComplete상세(ActionEventArgs<위치상세정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var selectedRow = grid2.Grid.SelectedRecords.FirstOrDefault();
+            if (selectedRow != default)
+            {
+                var newRow = args.Data;
+                newRow.장소위치코드 = selectedRow.장소위치코드;
+            }
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //state = "delete";
+
+            //await Remote.Command.기준정보.장소위치_삭제(args.Data, false);
+            await RefreshAsync();
+
+            //selectedRow.장소위치목록.Remove(args.Data);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            args.Data.위치상세분류 = null;
+            args.Data.회사코드 = 회사코드;
+
+            if (args.Data.장소위치코드 == null)
+            {
+                NotifyMessage(Message.PlaceSelectMessage);
+                return;
+
+            }
+            await Remote.Command.기준정보.위치상세정보_저장(args.Data, args.Action == "Add" ? true : false);
+            if (args.Action == "Add")
+                await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+
+            StateHasChanged();
+        }
+    }
+
+    private void OnRowSelected상세(RowSelectEventArgs<위치상세정보> args)
+    {
+        위치상세행위코드 = $"00 S9105 {args.Data.위치상세코드}";
+    }
+
+    private void OnDataBound상세(BeforeDataBoundArgs<위치상세정보> args)
+    {
+        // TODO: Syncfusion DataGrid 버그로 인해 추가. 버그 해결 뒤 삭제 예정
+        grid3.Grid.ClearRowSelection();
+    }
+}

@@ -1,0 +1,402 @@
+﻿@inherits CustomComponent
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <HiSFS.WebApp.Pages.Common.단위 제목="기본항목">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <DInputSearch Placeholder="생산품" Target="#main" DialogHeader="생산품 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@(생산계획.생산품) Readonly=@보기모드>
+                            <DialogContent>
+                                <HiSFS.WebApp.Pages.Common.Popup.생산품Popup />
+                            </DialogContent>
+                        </DInputSearch>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <DInputSearch Placeholder="생산품공정" Target="#main" DialogHeader="생산품공정 조회" TValue="생산품공정정보" TCode="string" TextField="생산품공정명" @bind-Value=@(생산계획.생산품공정) Readonly=@보기모드>
+                            <DialogContent>
+                                <HiSFS.WebApp.Pages.Common.Popup.생산품공정Popup />
+                            </DialogContent>
+                        </DInputSearch>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <DInputSearch Placeholder="생산책임자" Target="#main" DialogHeader="생산책임자 조회" TValue="직원정보" TCode="string" TextField="사용자명" @bind-Value=@(생산계획.생산책임자) Readonly=@보기모드>
+                            <DialogContent>
+                                <HiSFS.WebApp.Pages.Common.Popup.직원Popup />
+                            </DialogContent>
+                        </DInputSearch>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfDatePicker FloatLabelType="FloatLabelType.Always" Placeholder="실행예정일" @bind-Value=@(생산계획.실행일시) Readonly=@보기모드 />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfDatePicker FloatLabelType="FloatLabelType.Always" Placeholder="완료목표일" @bind-Value=@(생산계획.종료일시) Readonly=@보기모드 />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="계획수량" @bind-Value=@(생산계획.계획수량) Readonly=@보기모드 />
+                    </div>
+                </div>
+            </HiSFS.WebApp.Pages.Common.단위>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+
+            <HiSFS.WebApp.Pages.Common.단위 제목="자재보유현황">
+                @if (생산계획.생산품공정 != null)
+                {
+                    <SfSplitter Height="200px" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                        <SplitterPanes>
+                            <SplitterPane Size="100%" Collapsible="true">
+                                <DGrid DataSource=@(생산계획자재보유현황목록) TValue="생산계획자재보유현황" DefaultMode="true" PageMode="PageMode.Inline">
+                                    <GridColumns>
+                                        <GridColumn Field=@nameof(생산계획자재보유현황.No) HeaderText="순번" Width="60" />
+                                        <GridColumn Field="필요자재.품목명" HeaderText="자재명" Width="160" />
+                                        <GridColumn Field="자재유형.코드명" HeaderText="자재유형" Width="80" />
+                                        <GridColumn Field=@nameof(생산계획자재보유현황.총필요수량) Width="80" />
+                                        <GridColumn Field="보유상태.코드명" Width="120" HeaderText="보유상태">
+                                            <Template>
+                                                @{
+                                                    var info = context as 생산계획자재보유현황;
+                                                    var color = info.보유상태코드 switch
+                                                    {
+                                                        "B1901" => "Red",
+                                                        "B1902" => "Orange",
+                                                        "B1903" => "Green",
+                                                        "B1904" => "LightGreen",
+                                                        _ => "Green"
+                                                    };
+                                                    <span style="color: @(color); font-weight:bold;">@info.보유상태.코드명</span>
+                                                }
+                                            </Template>
+                                        </GridColumn>
+                                        <GridColumn Field=@nameof(생산계획자재보유현황.보유수량) Width="80">
+                                            <Template>
+                                                @{ var info = context as 생산계획자재보유현황; }
+                                                <HiSFS.WebApp.Pages.Common.CodeBarLabel 보유수량=@info.보유수량 필요수량=@info.총필요수량 소요상태코드=@info.보유상태코드 />
+                                            </Template>
+                                        </GridColumn>
+                                    </GridColumns>
+                                </DGrid>
+                                </SplitterPane>
+                               </SplitterPanes>
+                            </SfSplitter>
+                                }
+                </HiSFS.WebApp.Pages.Common.단위>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <HiSFS.WebApp.Pages.Common.단위 제목="생산품공정">
+                @if (생산계획.생산품공정 != null)
+                {
+                    <DGrid DataSource="@(new List<생산품공정정보> { 생산계획.생산품공정 })" TValue="생산품공정정보" DefaultMode="true" PageMode="PageMode.Inline">
+                        <GridColumns>
+                            <GridColumn Field=@nameof(생산품공정정보.생산품공정코드) />
+                            <GridColumn Field=@nameof(생산품공정정보.관리차수) AllowEditing="false" />
+                            <GridColumn Field=@nameof(생산품공정정보.생산품공정명) />
+                            <GridColumn HeaderText="공정차수" AllowEditing="false">
+                                <Template>
+                                    @{ var info = context as 생산품공정정보; }
+                                    @info.생산품공정차수목록.Count()
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field="생산품.품목명" HeaderText="생산품명" />
+                            <GridColumn Field=@nameof(생산품공정정보.사용유무) HeaderText="확정유무" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+                        </GridColumns>
+                    </DGrid>
+                    <DGrid DataSource=@(생산계획.생산품공정.생산품공정차수목록) TValue="생산품공정차수정보" DefaultMode="true" PageMode="PageMode.Inline"
+                           OnRowSelected="OnSelected생산품공정차수">
+                        <GridColumns>
+                            <GridColumn Field=@nameof(생산품공정차수정보.공정차수) />
+                            <GridColumn Field="공정단위.공정단위명" HeaderText="공정명" />
+                            <GridColumn Field="공정단위.공정.공정유형.코드명" HeaderText="공정유형" />
+                            <GridColumn Field="공정단위.공정.공정명" HeaderText="공정" />
+                            <GridColumn Field="공정단위.공정예상시간" HeaderText="공정예상시간" />
+                            <GridColumn Field="공정단위.공정품유형.코드명" HeaderText="공정품유형" />
+                            <GridColumn Field="공정단위.도면" HeaderText="도면" />
+                        </GridColumns>
+                    </DGrid>
+                    <div class="container-fluid">
+                        <div class="row mt-2 ">
+                            <div class="col-6 pr-1">
+                                @if (selected생산품공정차수?.공정단위?.공정.공정유형코드 == "B0205")
+                                {
+                                    <div class="pb-1">| 검사항목</div>
+                                    <DGrid DataSource=@(selected생산품공정차수.공정단위.공정검사목록) DefaultMode="true" PageMode="PageMode.Inline" TValue="공정단위검사정보"
+                                           OnRowSelected="OnSelected공정검사목록">
+                                        <GridColumns>
+                                            <GridColumn Field=@nameof(공정단위검사정보.No) Width="80" />
+                                            <GridColumn Field="품질검사.품질검사명" Width="120" HeaderText="품질검사" />
+                                            <GridColumn Field=@nameof(공정단위검사정보.검사기준값) Width="120" />
+                                            <GridColumn Field=@nameof(공정단위검사정보.오차범위) Width="120" />
+                                        </GridColumns>
+                                    </DGrid>
+                                }
+                                else
+                                @if (selected생산품공정차수?.공정단위?.공정자재목록 != null)
+                                {
+                                    <div class="pb-1">| 소요자재</div>
+                                    <DGrid DataSource=@(selected생산품공정차수.공정단위.공정자재목록) DefaultMode="true" PageMode="PageMode.Inline" TValue="공정단위자재정보">
+                                        <GridColumns>
+                                            <GridColumn Field=@nameof(공정단위자재정보.No) Width="80" />
+                                            <GridColumn Field="자재.품목명" Width="160" HeaderText="자재" />
+                                            <GridColumn Field=@nameof(공정단위자재정보.수량) Width="100" />
+                                            <GridColumn Field="자재.규격" Width="100" HeaderText="규격" />
+                                            <GridColumn Field="자재.단위코드" Width="100" HeaderText="단위">
+                                                <Template>
+                                                    @코드[(context as 공정단위자재정보).자재.단위코드].코드명
+                                                </Template>
+                                            </GridColumn>
+                                        </GridColumns>
+                                    </DGrid>
+                                    @*<SfSplitter Height="200px" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                                        <SplitterPanes>
+                                            <SplitterPane Size="100%" Collapsible="true">
+                                                <DGrid @ref="grid2" DataSource=@(list2) TValue="공정단위자재정보" DefaultMode="true" PageMode="PageMode.Inline">
+                                                    <GridColumns>
+                                                        <GridColumn Field=@nameof(공정단위자재정보.No) HeaderText="순번" Width="80">
+                                                            <EditTemplate></EditTemplate>
+                                                        </GridColumn>
+                                                        <GridColumn Field=@nameof(공정단위자재정보.공정단위코드) Visible="false" />
+                                                        <GridColumn Field=@nameof(공정단위자재정보.자재코드) Width="0" IsPrimaryKey="true">
+                                                            <Template>
+                                                                @((context as 공정단위자재정보).자재?.품목명)
+                                                            </Template>
+                                                            <EditTemplate>
+                                                            </EditTemplate>
+                                                        </GridColumn>
+                                                        <GridColumn Field="자재.품목명" HeaderText="자재/부품">
+                                                            <EditTemplate></EditTemplate>
+                                                        </GridColumn>
+                                                        <GridColumn Field="자재.품목구분코드" Width="100" HeaderText="자재유형">
+                                                            <Template>
+                                                                @코드[(context as 공정단위자재정보).자재.품목구분코드].코드명
+                                                            </Template>
+                                                        </GridColumn>
+                                                        <GridColumn Field=@nameof(공정단위자재정보.수량) Width="100" HeaderText="수량" />
+                                                        <GridColumn Field="자재.규격" Width="150" HeaderText="규격" />
+                                                        <GridColumn Field="자재.단위코드" Width="100" HeaderText="단위">
+                                                            <Template>
+                                                                @코드[(context as 공정단위자재정보).자재.단위코드].코드명
+                                                            </Template>
+                                                        </GridColumn>
+
+
+                                                    </GridColumns>
+                                                </DGrid>
+                                                </SplitterPane>
+                                                </SplitterPanes>
+                                                </SfSplitter>*@
+                                                }
+                                </div>
+                            <div class="col-6 pl-1 mb-2">
+                                @if (selected생산품공정차수?.공정단위?.공정.공정유형코드 == "B0205")
+                                {
+                                    <div class="pb-1">| 검사장비</div>
+                                    <DGrid DataSource=@(selected공정검사장비목록) DefaultMode="true" PageMode="PageMode.Inline" TValue="공정단위검사장비">
+                                        <GridColumns>
+                                            <GridColumn Field=@nameof(공정단위검사장비.No) Width="80" />
+                                            <GridColumn Field="검사장비.장비명" Width="120" HeaderText="검사장비" />
+                                            <GridColumn Field="검사장비.연동장비유형.코드명" Width="120" HeaderText="연동장비유형" />
+                                        </GridColumns>
+                                    </DGrid>
+                                }
+                                else
+                                @if (selected생산품공정차수?.공정단위?.공정설비목록 != null)
+                                {
+                                    <div class="pb-1">| 공정설비</div>
+                                    <DGrid DataSource=@(selected생산품공정차수.공정단위.공정설비목록) DefaultMode="true" PageMode="PageMode.Inline" TValue="공정단위설비정보">
+                                        <GridColumns>
+                                            <GridColumn Field=@nameof(공정단위설비정보.No) Width="80" />
+                                            <GridColumn Field="설비.보유명" Width="160" HeaderText="공정설비" />
+                                            <GridColumn Field="설비.품목.품목명" Width="120" HeaderText="장비" />
+                                            <GridColumn Field="설비.장소.장소명" Width="100" HeaderText="장소" />
+                                            <GridColumn Field="설비.장소위치.위치명" Width="100" HeaderText="위치" />
+                                        </GridColumns>
+                                    </DGrid>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </HiSFS.WebApp.Pages.Common.단위>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <HiSFS.WebApp.Pages.PM.PP.공통.기록 제목="계획" @bind-내용=@(계획기록) 작성일=@(정보?.계획기록일) 작성자=@(정보?.계획자?.사용자명) 보기모드=@보기모드 />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <HiSFS.WebApp.Pages.PM.PP.공통.기록 제목="검토" @bind-내용=@(검토기록) 작성일=@(정보?.검토기록일) 작성자=@(정보?.검토자?.사용자명) />
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private 생산계획정보 _생산계획;
+    private ObservableCollection<생산계획자재보유현황> 생산계획자재보유현황목록;
+    private 생산품공정차수정보 selected생산품공정차수;
+    private 공정단위검사정보 selected공정단위공정검사;
+    private ObservableCollection<공정단위검사장비> selected공정검사장비목록;
+
+    private DGrid<공정단위자재정보> grid2;
+    private ObservableCollection<공정단위자재정보> list2 = new ObservableCollection<공정단위자재정보>();
+
+    private string 회사코드 = "";
+
+    [CascadingParameter(Name = "생산계획")]
+    public 생산계획정보 생산계획
+    {
+        get => _생산계획;
+        set
+        {
+            if (_생산계획 == value)
+                return;
+
+            _생산계획 = value;
+
+            if (생산계획.생산품공정 != null)
+            {
+                ModifyList(생산계획.생산품공정.생산품공정차수목록, (info, map) =>
+                {
+                    if (info.공정단위.공정.공정유형코드 != null)
+                        info.공정단위.공정.공정유형 = map[info.공정단위.공정.공정유형코드];
+                    if (info.공정단위.공정품유형코드 != null)
+                        info.공정단위.공정품유형 = map[info.공정단위.공정품유형코드];
+                });
+            }
+
+            InvokeAsync(async () =>
+            {
+                생산계획.PropertyChanged -= OnChanged계획수량;
+                생산계획.PropertyChanged += OnChanged계획수량;
+
+                회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+                var result = await Remote.Command.생산관리.생산계획생산자재소요현황_조회(생산계획.생산계획코드, 회사코드);
+                ModifyList(result, (info, map) =>
+                {
+                    if (info.자재유형코드 != null)
+                        info.자재유형 = map[info.자재유형코드];
+                    if (info.보유상태코드 != null)
+                        info.보유상태 = map[info.보유상태코드];
+
+                    info.총필요수량 = info.필요수량 * 생산계획.계획수량;
+                }, false);
+
+                생산계획자재보유현황목록 = result.ToObservableCollection();
+
+                StateHasChanged();
+            });
+        }
+    }
+
+    [CascadingParameter(Name = "보기모드")]
+    public bool 보기모드 { get; set; }
+
+    public string 계획기록
+    {
+        get => 정보?.계획기록;
+        set
+        {
+            if (정보 == null)
+                return;
+
+            정보.계획기록 = value;
+
+            정보.계획기록일 = DateTime.Now;
+            정보.계획자사번 = Context.직원.사번;
+        }
+    }
+
+    public string 검토기록
+    {
+        get => 정보?.검토기록;
+        set
+        {
+            if (정보 == null)
+                return;
+
+            정보.검토기록 = value;
+
+            정보.검토기록일 = DateTime.Now;
+            정보.검토자사번 = Context.직원.사번;
+        }
+    }
+
+    private 생산계획생산정보 정보 => 생산계획?.생산계획생산;
+
+    private void OnChanged계획수량(object s, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(생산계획정보.계획수량))
+        {
+            ModifyList(생산계획자재보유현황목록, (info, map) =>
+            {
+                info.총필요수량 = info.필요수량 * 생산계획.계획수량;
+            }, false);
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSelected생산품공정차수(RowSelectEventArgs<생산품공정차수정보> e)
+    {
+        selected생산품공정차수 = e.Data;
+
+        /*
+        if (selected생산품공정차수?.공정단위?.공정자재목록 != null)
+        {
+            ModifyList(selected생산품공정차수.공정단위.공정자재목록, (info, map) => { }, false);
+
+            var result = await Remote.Command.기준정보.BOM품목정보상세_조회(selected생산품공정차수.공정단위.공정품코드 , selected생산품공정차수.공정단위코드);
+
+            ModifyList(result, (x, map) =>
+            {
+            }, false);
+            list2.Clear();
+            if (result != null)
+            {
+                list2 = Enumerable.Range(1, result.Count()).Select(x => new 공정단위자재정보()
+                {
+                    No = result.FirstOrDefault(c => c.No == x).No,
+                    공정단위코드 = result.FirstOrDefault(c => c.No == x).공정단위코드,
+                    자재코드 = result.FirstOrDefault(c => c.No == x).품목코드,
+                    자재 = result.FirstOrDefault(c => c.No == x).품목,
+                    수량 = result.FirstOrDefault(c => c.No == x).필요수량
+                }).ToObservableCollection();
+            }
+
+        }
+        */
+
+        if (selected생산품공정차수?.공정단위?.공정자재목록 != null)
+            ModifyList(selected생산품공정차수.공정단위.공정자재목록, (info, map) => { }, false);
+
+        if (selected생산품공정차수?.공정단위?.공정설비목록 != null)
+            ModifyList(selected생산품공정차수.공정단위.공정설비목록, (info, map) => { }, false);
+        if (selected생산품공정차수?.공정단위?.공정검사목록 != null)
+            ModifyList(selected생산품공정차수.공정단위.공정검사목록, (info, map) => { }, false);
+    }
+
+    private void OnSelected공정검사목록(RowSelectEventArgs<공정단위검사정보> e)
+    {
+        selected공정단위공정검사 = e.Data;
+        selected공정검사장비목록 = selected공정단위공정검사.공정검사장비목록.ToObservableCollection();
+
+        if (selected공정단위공정검사?.공정검사장비목록 != null)
+            ModifyList(selected공정단위공정검사.공정검사장비목록, (info, map) => {
+                if (info.검사장비.연동장비유형코드 != null)
+                    info.검사장비.연동장비유형 = map[info.검사장비.연동장비유형코드];
+            }, false);
+    }
+
+    protected override void OnDispose()
+    {
+        생산계획.PropertyChanged -= OnChanged계획수량;
+    }
+}

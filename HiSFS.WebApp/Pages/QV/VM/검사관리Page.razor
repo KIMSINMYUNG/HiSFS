@@ -1,0 +1,70 @@
+﻿@page "/qv/vm/검사관리"
+
+@inherits CustomComponent
+
+<FGrid DataSource="list" TValue="품질검사정보" DefaultMode="true" EditMode="DGridEditMode.All" OnCheckAuth="CheckAuth"
+       OnCreated="RefreshAsync" OnActionComplete="OnActionComplete"
+       >
+    <GridColumns>
+        <GridColumn Field=@nameof(품질검사정보.No) HeaderText="순번" Width="60">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(품질검사정보.품질검사코드) IsPrimaryKey="true" Width="120" HeaderText="품질검사코드">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+
+        <GridColumn Field=@nameof(품질검사정보.품질검사명) Width="160" HeaderText="품질검사명" />
+        <GridColumn Field=@nameof(품질검사정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(품질검사정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+    </GridColumns>
+</FGrid>
+
+
+
+@code {
+    private ObservableCollection<품질검사정보> list;
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.품질관리.품질검사_조회();
+        ModifyList(result, (info, map) =>
+        {
+
+        });
+
+        list = result.ToObservableCollection();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<품질검사정보> e)
+    {
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+
+        }
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            var row = e.Data;
+            await Remote.Command.품질관리.품질검사_삭제(row, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = e.Data;
+
+            await Remote.Command.품질관리.품질검사_저장(newRow, e.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(e.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

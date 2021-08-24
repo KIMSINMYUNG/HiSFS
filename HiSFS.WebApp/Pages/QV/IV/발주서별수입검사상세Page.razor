@@ -1,0 +1,1283 @@
+﻿@page "/qv/iv/발주서별수입검사상세"
+@page "/qv/iv/발주서별수입검사상세/{Code}/{Code2:decimal}"
+
+
+
+@using WampSharp.V2;
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Syncfusion.Blazor.Data
+
+@implements IDisposable
+@inject IJSRuntime JSRuntime;
+
+@inject ProtectedSessionStorage ProtectedSessionStore
+@inherits CustomComponent
+
+
+@if (발주서수입검사 != null)
+{
+    <CascadingValue Name="수입검사" Value=@(발주서수입검사) TValue="발주서별수입검사">
+        <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top" @bind-SelectedItem=@(tabIndex)>
+            <TabItems>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="기본정보" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+
+                                <div class="col-auto mr-1">
+                                    @*<SfButton OnClick=@(() => OnSave("B2003")) IsPrimary=@(실행상태코드 == "B2003") Disabled="@(실행상태코드 == "B2004" ? true : false)">실행</SfButton>*@
+                                </div>
+                                <div class="col-auto mr-1">
+                                    @*<SfButton OnClick=@(() => OnSave("B2004")) IsPrimary=@(실행상태코드 == "B2004") Disabled="@(실행상태코드 == "B2004" ? true : false)">완료</SfButton>*@
+                                </div>
+                                <div class="col-auto mr-auto"></div>
+
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <HiSFS.WebApp.Pages.Common.단위 제목="기본정보">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="회사코드" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.회사코드) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="발주번호" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.발주번호) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="발주순번" @bind-Value=@(발주서수입검사.발주순번) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="발주일" Value=@(발주서수입검사.발주일) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="납기일" Value=@(발주서수입검사.납기일) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="출하예정일" Value=@(발주서수입검사.출하예정일) Readonly="true" />
+                                            </div>
+
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="품번" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.품번) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="품명" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.품명) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="거래처명" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.거래처명) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="거래구분" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.거래구분) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="검사구분" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.검사구분) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="과세구분명" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.과세구분명) Readonly="true" />
+                                            </div>
+
+                                        </div>
+
+                                        <div class="form-row">
+
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="규격" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.규격) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfTextBox Placeholder="관리단위" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.관리단위) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="발주수량" Value=@(발주서수입검사.발주수량) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="발주단가" Value=@(발주서수입검사.발주단가) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="공급가" Value=@(발주서수입검사.공급가) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="부가세" Value=@(발주서수입검사.부가세) Readonly="true" />
+                                            </div>
+
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-3">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="합계액" Value=@(발주서수입검사.합계액) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <SfTextBox Placeholder="관리구분명" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.관리구분명) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <SfTextBox Placeholder="프록젝트명" FloatLabelType="FloatLabelType.Always" Value=@(발주서수입검사.프록젝트명) Readonly="true" />
+
+                                            </div>
+
+                                        </div>
+
+                                    </HiSFS.WebApp.Pages.Common.단위>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="form-group col-md-6">
+                                    <HiSFS.WebApp.Pages.Common.단위 제목="비고">
+                                        <SfRichTextEditor @bind-Value=@(발주서수입검사.비고) />
+                                    </HiSFS.WebApp.Pages.Common.단위>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <HiSFS.WebApp.Pages.Common.단위 제목="비고내역">
+                                        <SfRichTextEditor @bind-Value=@(발주서수입검사.비고_내역) />
+                                    </HiSFS.WebApp.Pages.Common.단위>
+                                </div>
+                            </div>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+                <TabItem Visible="@Show품질검사">
+                    <ChildContent>
+                        <TabHeader Text="품질검사"></TabHeader>
+                    </ChildContent>
+                    <ContentTemplate>
+                        @* 공정정보 표현 *@
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+                                <div class="col-auto mr-auto"></div>
+                                <div class="col-auto my-auto mr-2">
+                                    @*<SfButton OnClick="() => OnPDFDown()" Disabled="@(실행상태코드 == "B2004" ? true : false)">PDF저장</SfButton>*@
+                                    @*<SfButton @onclick=@(() => OnShowWorkOrder(공정차수)) Disabled="@(보기모드 == false ? true : false)">PDF뷰어</SfButton>*@
+
+                                </div>
+
+                            </div>
+                            <HiSFS.WebApp.Pages.Common.단위 제목="품목정보">
+                                <div class="form-row">
+                                    <div class="form-group col-md-3">
+                                        <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="품번" Value=@(발주서수입검사.품번) Readonly="true" />
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="품명" Value=@(발주서수입검사.품명) Readonly="true" />
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="규격" Value=@(발주서수입검사.규격) Readonly="true" />
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="관리단위" Value=@(발주서수입검사.관리단위) Readonly="true" />
+                                    </div>
+
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-md-3">
+                                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="발주수량" Value=@(발주서수입검사.발주수량) Readonly="true" />
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="검사구분" @bind-Value=@(Edit검사구분) Readonly="true">
+
+                                        </SfTextBox>
+                                    </div>
+
+                                </div>
+
+                            </HiSFS.WebApp.Pages.Common.단위>
+
+
+
+                            @*공정검사목록*@
+                            <div class="mb-3"></div>
+
+                            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                                <SplitterPanes>
+                                    <SplitterPane Size="45%" Collapsible="true">
+                                        <HiSFS.WebApp.Pages.Common.단위 제목="검사 장비">
+                                            <FGrid @ref="grid5" DataSource=@(list5) TValue="발주서별품질검사장비" EditMode="DGridEditMode.All" DefaultMode="false"
+                                                   OnCreated="RefreshAsync" OnActionComplete="OnActionComplete">
+                                                <GridColumns>
+                                                    <GridColumn Field=@nameof(발주서별품질검사장비.No) HeaderText="순번" Width="80">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(발주서별품질검사장비.발주번호) Visible="false" />
+                                                    <GridColumn Field=@nameof(발주서별품질검사장비.품질검사코드) Visible="false" />
+                                                    <GridColumn Field=@nameof(발주서별품질검사장비.검사장비식별번호) Width="0" IsPrimaryKey="true">
+                                                        <Template>
+                                                            @((context as 발주서별품질검사장비).검사장비?.장비명)
+                                                        </Template>
+                                                        <EditTemplate>
+                                                            @{ var info = context as 발주서별품질검사장비; }
+                                                            <DInputSearch ID="검사장비식별번호" Placeholder="검사장비" Target="#root" DialogHeader="검사장비 조회" TValue="연동장비정보" TCode="int?" TextField="장비명" @bind-Value=@(info.검사장비) CodeField="식별번호" @bind-Code=@(info.검사장비식별번호)>
+                                                                <DialogContent>
+                                                                    <HiSFS.WebApp.Pages.Common.Popup.연동장비Popup />
+                                                                </DialogContent>
+                                                            </DInputSearch>
+                                                        </EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field="검사장비.장비명" Width="200" HeaderText="검사장비명">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field="검사장비.연동장비유형.코드명" Width="160" HeaderText="연동장비유형">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn HeaderText="" Width="120" TextAlign="TextAlign.Right" AllowEditing="false" AllowAdding="false">
+                                                        <Template>
+                                                            @{ var info = context as 발주서별품질검사장비; }
+                                                            @{
+                                                                if (info.검사장비식별번호 != null)
+                                                                {
+                                                                    <SfButton Disabled="@(실행상태코드 == "B2004" ? true : false)" @onclick=@(() => OnConnection(info, true, Sid))>
+                                                                        @(RowButton.Count > 0 ? RowButton[info.검사장비식별번호] : "" )
+                                                                    </SfButton>
+
+                                                                }
+                                                            }
+
+
+                                                        </Template>
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+
+                                                </GridColumns>
+                                            </FGrid>
+                                        </HiSFS.WebApp.Pages.Common.단위>
+                                    </SplitterPane>
+                                </SplitterPanes>
+                            </SfSplitter>
+
+
+                            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+                                <SplitterPanes>
+                                    <SplitterPane Size="30%" Collapsible="true">
+                                        <HiSFS.WebApp.Pages.Common.단위 제목="품목">
+                                            <SfGrid @ref="grid3" DataSource="@품질검사생산품목록" AllowSelection="true" Height="200">
+                                                <GridEvents RowSelected="RowSelectHandler" OnActionComplete="OnActionComplete" TValue="품질검사생산품"></GridEvents>
+                                                <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple" PersistSelection="true"></GridSelectionSettings>
+                                                <SfToolbar>
+                                                    <ToolbarEvents Clicked="ToolbarClickHandler"></ToolbarEvents>
+                                                    <Syncfusion.Blazor.Navigations.ToolbarItems>
+
+                                                        <ToolbarItem Type="@Syncfusion.Blazor.Navigations.ItemType.Input" Align="Syncfusion.Blazor.Navigations.ItemAlign.Right">
+                                                            <Template>
+                                                                <SfTextBox Width="200" @ref="@_searchBox" @bind-Value="검사수량입력" Placeholder="검사수량을 입력하세요" Enabled="@IsEnable" />
+                                                            </Template>
+                                                        </ToolbarItem>
+                                                        <ToolbarItem Type="@Syncfusion.Blazor.Navigations.ItemType.Button" Align="Syncfusion.Blazor.Navigations.ItemAlign.Right" PrefixIcon="검사수량" Text="검사수량설정" Disabled="@IsBtnEnable" />
+                                                    </Syncfusion.Blazor.Navigations.ToolbarItems>
+                                                </SfToolbar>
+                                                <GridColumns>
+                                                    <GridColumn Field=@nameof(품질검사생산품.Seq) HeaderText="SEQ" TextAlign="TextAlign.Left" Width="50" IsPrimaryKey="true"></GridColumn>
+                                                    <GridColumn Field=@nameof(품질검사생산품.생산품공정코드) HeaderText="생산품공정코드" Width="100" HeaderTextAlign="TextAlign.Left"></GridColumn>
+                                                    <GridColumn Field=@nameof(품질검사생산품.Result) HeaderText="테스트여부" Width="100"></GridColumn>
+                                                    <GridColumn Field=@nameof(품질검사생산품.CheckDate) HeaderText="측정날짜" Format="d" Type="ColumnType.Date" TextAlign="TextAlign.Right" Width="100"></GridColumn>
+                                                </GridColumns>
+                                            </SfGrid>
+                                        </HiSFS.WebApp.Pages.Common.단위>
+                                    </SplitterPane>
+                                    <SplitterPane Size="70%" Collapsible="true">
+                                        <HiSFS.WebApp.Pages.Common.단위 제목="검사 항목">
+                                            <HGrid @ref="grid4" DataSource=@(list4) TValue="발주서별품질검사정보" DefaultMode="false" EditMode="DGridEditMode.All" OnCheckSave="OnCheckSave" OnCheckReset="OnCheckReset"
+                                                   OnCreated="RefreshAsync2" QueryCellInfoHandler="QueryCellInfoHandler" OnActionBegin="OnActionBegin" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+
+                                                <GridColumns>
+                                                    <GridColumn Type="ColumnType.CheckBox" AllowFiltering="false" AllowSorting="false" AllowEditing="false"
+                                                                AllowReordering="false" AllowAdding="false" Width="60">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(발주서별품질검사정보.No) HeaderText="순번" Width="80" IsPrimaryKey="true">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(발주서별품질검사정보.발주번호) Visible="false" />
+                                                    <GridColumn Field=@nameof(발주서별품질검사정보.품질검사코드) Width="0" IsPrimaryKey="true">
+                                                        <Template>
+                                                            @((context as 발주서별품질검사정보).품질검사?.품질검사명)
+                                                        </Template>
+                                                        <EditTemplate>
+                                                            @{ var info = context as 발주서별품질검사정보; }
+                                                            <DInputSearch ID="품질검사코드" Placeholder="품질검사" Target="#root" DialogHeader="품질검사 조회" TValue="품질검사정보" TCode="string" TextField="품질검사명" @bind-Value=@(info.품질검사) CodeField="품질검사코드" @bind-Code=@(info.품질검사코드)>
+                                                                <DialogContent>
+                                                                    <HiSFS.WebApp.Pages.Common.Popup.검사Popup />
+                                                                </DialogContent>
+                                                            </DInputSearch>
+                                                        </EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field="품질검사.품질검사명" Width="160" HeaderText="품질검사">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(발주서별품질검사정보.검사단위코드) Width="0">
+                                                        <Template>
+                                                            @{ var info = context as 발주서별품질검사정보; }
+                                                            @info.검사단위?.코드명
+                                                        </Template>
+                                                        <EditTemplate>
+                                                            @{ var info = context as 발주서별품질검사정보; }
+                                                            <DCommonCodeDropList ID="검사단위코드" Placeholder="검사단위" ParentCode="B24" @bind-Value=@(info.검사단위코드) />
+                                                        </EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field="검사단위.코드명" Width="120" HeaderText="검사단위">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+
+                                                    <GridColumn Field=@nameof(발주서별품질검사정보.검사기준값) HeaderText="검사기준값" Width="120" />
+                                                    <GridColumn Field=@nameof(발주서별품질검사정보.오차범위상한) HeaderText="오차범위상한" Width="120" />
+                                                    <GridColumn Field=@nameof(발주서별품질검사정보.오차범위하한) HeaderText="오차범위하한" Width="120" />
+                                                    <GridColumn Field=@nameof(발주서별품질검사정보.합격여부) HeaderText="합격여부" Width="120">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(발주서별품질검사정보.검사측정값) HeaderText="검사측정값" Width="100" Format="C2">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                </GridColumns>
+                                            </HGrid>
+                                        </HiSFS.WebApp.Pages.Common.단위>
+                                    </SplitterPane>
+                                </SplitterPanes>
+                            </SfSplitter>
+
+                            <div class="mb-3"></div>
+
+                            <HiSFS.WebApp.Pages.Common.단위 제목="바코드">
+                                <div class="form-row">
+                                    <div class="form-group col-md-3">
+                                        <div class="row mb-2">
+                                            <span class="col text-center">
+                                                <SfButton @ref="btnStart" OnClick="onClickStart" Content="품질검사 시작" Disabled="@IsBtnStartEnable"></SfButton>
+                                            </span>
+                                        </div>
+                                        @if (pum_barcodeStart != null)
+                                        {
+                                            <!--<div class="row mb-2">
+                                                <div class="col text-center">-->
+                                            @*$"00 S9112 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}"*@
+                                            <!--<SfQRCodeGenerator Width="300px" Height="150px" Value=@(pum_barcodeStart)>-->
+                                            @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                            <!--</SfQRCodeGenerator>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col text-center">-->
+                                            @*<SfButton Disabled="true">출력</SfButton>*@
+                                            <!--<SfButton OnClick="() => OnQRPrinte(pum_barcodeStart, 2) ">출력</SfButton>
+                                                </div>
+                                            </div>-->
+                                        }
+
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <div class="row mb-2">
+                                            <span class="col text-center">
+                                                <SfButton @ref="btnEnd" OnClick="onClickEnd" Content="품질검사 종료" Disabled="@IsBtnEndEnable"></SfButton>
+                                            </span>
+                                        </div>
+                                        @if (pum_barcodeEnd != null)
+                                        {
+                                            <!--<div class="row mb-2">
+                                                <div class="col text-center">-->
+                                            @*$"00 S9113 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}"*@
+                                            <!--<SfQRCodeGenerator Width="300px" Height="150px" Value=@(pum_barcodeEnd)>-->
+                                            @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                            <!--</SfQRCodeGenerator>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col text-center">-->
+                                            @*<SfButton Disabled="true">출력</SfButton>*@
+                                            <!--<SfButton OnClick="() => OnQRPrinte(pum_barcodeEnd, 2) ">출력</SfButton>
+                                                </div>
+                                            </div>-->
+                                        }
+
+                                    </div>
+
+
+                                    <div class="form-group col-md-3">
+                                        <div class="row mb-2">
+                                            <span class="col text-center">
+                                                <SfButton @ref="실적등록" OnClick="실적등록클릭" Content="실적등록및입고처리" Disabled="@실적등록Disabled" CssClass="e-info"></SfButton>
+                                            </span>
+                                        </div>
+                                        @if (실적등록바코드 != null)
+                                        {
+                                            <!--<div class="row mb-2">
+                                                <div class="col text-center">
+                                                    <SfQRCodeGenerator Width="300px" Height="150px" Value=@(실적등록바코드)>-->
+                                            @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                            <!--</SfQRCodeGenerator>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col text-center">-->
+                                            @*<SfButton Disabled="true">출력</SfButton>*@
+                                            <!--<SfButton OnClick="() => OnQRPrinte(실적등록바코드, 2) ">출력</SfButton>
+                                                </div>
+                                            </div>-->
+                                        }
+                                    </div>
+                                </div>
+                            </HiSFS.WebApp.Pages.Common.단위>
+
+
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+            </TabItems>
+
+            <TabEvents Selected="OnSelected" />
+        </SfTab>
+    </CascadingValue>
+
+
+
+    <SfDialog Target="#main" Width="800px" Height="600px" IsModal="true" @bind-Visible="isDialogVisible" CloseOnEscape="true">
+        <DialogTemplates>
+            <Header>
+                <b>수입실적등록</b>
+            </Header>
+            <Content>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="회사코드" Value="@(발주서수입검사?.회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Readonly="true"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="발주번호" Value="@(발주서수입검사?.발주번호)" FloatLabelType="FloatLabelType.Always" Placeholder="발주번호" Readonly="true"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal?" Placeholder="발주순번" Value=@(발주서수입검사.발주순번) Enabled="true" />
+                    </div>
+
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="품번" Value="@(발주서수입검사?.품번)" FloatLabelType="FloatLabelType.Always" Placeholder="품번" Readonly="true"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="품명" Value="@(발주서수입검사?.품명)" FloatLabelType="FloatLabelType.Always" Placeholder="품명" Readonly="true"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="거래처명" Value="@(발주서수입검사?.거래처명)" FloatLabelType="FloatLabelType.Always" Placeholder="거래처명" Readonly="true"></SfTextBox>
+                    </div>
+
+                </div>
+                <div class="form-row">
+
+                    <div class="form-group col-md-4">
+                        <Dept @bind-ListItem="@Edit부서코드" Validate="@Validate" ValueChanged="DeptValueChanged" />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <Employee @ref="employee" @bind-ListItem="@Edit사원코드" Validate="@Validate" 부서코드=@Edit부서코드 />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfDatePicker FloatLabelType="FloatLabelType.Always" TValue="DateTime?" Placeholder="실적등록일" Value="@실적등록일selected" Enabled="true">
+                            <DatePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler"></DatePickerEvents>
+                        </SfDatePicker>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <장소목록 @bind-ListItem="@Edit이동공정_입고창고코드" Validate="@Validate"  ValueChanged="장소ValueChanged"/>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <장소위치목록 @ref="_장소위치목록" @bind-ListItem="@Edit이동작업장_입고장소코드" Validate="@Validate" />
+
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal?" Placeholder="발주수량" Value=@(발주서수입검사.발주수량) Enabled="true" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="검사수량" @bind-Value=@(Edit검사수량) Enabled="true" />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="실적수량" @bind-Value=@(Edit실적수량) Enabled="true" />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="불량수량" @bind-Value=@(Edit불량수량) Enabled="true" />
+                    </div>
+
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <SfTextBox ID="비고" Value="@(Edit비고)" FloatLabelType="FloatLabelType.Always" Placeholder="비고" Enabled="true" Multiline="true"></SfTextBox>
+                    </div>
+                </div>
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="실적등록" OnClick=@(실적등록저장) IsPrimary="true" />
+            <DialogButton Content="취소" OnClick=@(() => {  isDialogVisible = false; }) />
+        </DialogButtons>
+    </SfDialog>
+
+
+}
+
+@code {
+
+    [Parameter]
+    public string Edit사원코드 { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Edit부서코드 { get; set; } = string.Empty;
+
+
+    public Employee employee { get; set; }
+    public 장소위치목록 _장소위치목록 { get; set; }
+
+    [Parameter]
+    public string Code { get; set; }
+    [Parameter]
+    public decimal Code2 { get; set; }
+
+    public 발주서별수입검사 발주서수입검사;
+    private int tabIndex = 0;
+    public string 회사코드;
+    private int selected차수;
+    private string 실행상태코드;
+
+    private string pum_barcodeStart;
+    private string pum_barcodeEnd;
+
+    protected SfButton btnStart, btnEnd, btnProcStart, btnProcEnd, btnSystem;
+
+    protected bool btnStartFlag = false;
+    public bool IsBtnStartEnable { get; set; } = false;
+    public bool IsBtnEndEnable { get; set; } = false;
+
+    protected bool btnProcStartFlag = false;
+    public bool IsBtnProcEndEnable { get; set; } = true;
+    public bool IsBtnProcStartEnable { get; set; } = true;
+
+    private SfTextBox _searchBox;
+
+    public bool IsEnable { get; set; } = true;
+    public bool IsBtnEnable { get; set; } = false;
+
+
+    public string 검사수량입력 { get; set; }
+    public int 검사수량입력_숫자 { get; set; }
+
+
+    private string Edit검사구분 = "";
+    public bool Show품질검사 = true;
+
+    public bool 실적등록Disabled { get; set; } = false;
+
+    private async Task DeptValueChanged(string value)
+    {
+        Edit사원코드 = "";
+        await employee.Reload(value);
+        StateHasChanged();
+    }
+
+    private async Task 장소ValueChanged(string value)
+    {
+        Edit이동작업장_입고장소코드 = "";
+        await _장소위치목록.Reload(value);
+        StateHasChanged();
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(100);
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        if (Code == null)
+            Code = Params as string;
+
+        if (Code2 == 0)
+            Code2 = Params2;
+
+        decimal 발주순번 = Convert.ToDecimal(Code2);
+
+        발주서수입검사 = await Remote.Command.기준정보.발주서별발주번호수입검사_조회Dz(회사코드, Code, 발주순번);
+
+        if (발주서수입검사 == null)
+            return;
+
+        var userId = await SessionStorage.GetAsync<string>("userId");
+        bool nowPoint = await Remote.Command.공통.수입검사포인트_삭제(userId, 발주서수입검사.품번);
+
+        if (발주서수입검사.실행상태코드 == "B2004")
+        {
+            IsBtnStartEnable = true;
+            IsBtnEndEnable = true;
+            실적등록Disabled = true;
+            IsBtnEnable = true;
+        }
+        //if (발주서수입검사.검사구분.Equals("0"))
+        //{
+        //    Show품질검사 = false;
+        //    Edit검사구분 = "무검사";
+        //}
+        //else
+        //{
+        //    Show품질검사 = true;
+        //    Edit검사구분 = "검사";
+        //}
+
+    }
+
+
+    private async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        //var 장비리스트 = await Remote.Command.생산관리.공정단위검사장비_조회("PU0002:1", 회사코드);
+        var 장비리스트 = await Remote.Command.생산관리.발주서별품질검사장비_조회(발주서수입검사.발주번호, 발주서수입검사.발주순번, 회사코드);
+
+        ModifyList(장비리스트, (x, map) =>
+        {
+            if (x.검사장비?.연동장비유형코드 != null)
+                x.검사장비.연동장비유형 = map[x.검사장비?.연동장비유형코드];
+        });
+
+        list5?.Clear();
+
+        list5 = 장비리스트.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task RefreshAsync2()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        //var 장비리스트 = await Remote.Command.생산관리.공정단위검사장비_조회("PU0002:1", 회사코드);
+        var 검사리스트 = await Remote.Command.생산관리.발주서별별검사정보_조회(발주서수입검사.발주번호, 발주서수입검사.발주순번, 회사코드);
+
+        ModifyList(검사리스트, (info, map) =>
+        {
+            if (info.검사단위코드 != null)
+                info.검사단위 = map[info.검사단위코드];
+        }, false);
+
+        list4?.Clear();
+
+        list4 = 검사리스트.ToObservableCollection();
+    }
+
+    private async Task OnSelected(Syncfusion.Blazor.Navigations.SelectEventArgs e)
+    {
+        await Task.Delay(300);
+
+        var index = e.SelectedIndex;
+
+        selected차수 = index;
+
+        var 품질검사목록 = await Remote.Command.품질관리.수입검사품질검사측정완료유무_조회(발주서수입검사.발주번호, 발주서수입검사.발주순번, 회사코드);
+        var 검사항목전체 = grid4.Grid.GetCurrentViewRecords();
+
+        Console.WriteLine("검사항목전체.Count()--> " + list4.Count);
+        //품목라스트포인트 =  품질검사목록.OrderByDescending(i => i.시리얼넘버 ).First().시리얼넘버;
+
+        if (list4.Count > 0)
+        {
+            list3 = Enumerable.Range(1, Convert.ToInt32(발주서수입검사.발주수량)).Select(cnt => new 품질검사생산품()
+            {
+                Seq = cnt,
+                생산지시코드 = 발주서수입검사.발주번호,
+                발주순번 = 발주서수입검사.발주순번,
+                생산품공정코드 = 발주서수입검사.품번,
+                생산품공정명 = null,
+                공정단위코드 = null,
+                Result =
+            품질검사목록.Where(x => x.시리얼넘버 == cnt).Count() == list4.Count ? "완료" : (품질검사목록.Where(x => x.시리얼넘버 == cnt).Count() == 0 ? "" : "진행중"),
+
+                //Result = (from m in 품질검사목록 where m.시리얼넘버 == cnt && m.생산지시코드 == 생산지시.생산지시코드 select m.합격여부).FirstOrDefault() != null ? "완료" : ""  ,
+                보유품목코드 = 발주서수입검사.품번,
+                CheckDate = DateTime.Now,
+            }).ToList();
+        }
+        else
+        {
+            list3 = Enumerable.Range(1, Convert.ToInt32(발주서수입검사.발주수량)).Select(cnt => new 품질검사생산품()
+            {
+                Seq = cnt,
+                생산지시코드 = 발주서수입검사.발주번호,
+                발주순번 = 발주서수입검사.발주순번,
+                생산품공정코드 = 발주서수입검사.품번,
+                생산품공정명 = null,
+                공정단위코드 = null,
+                Result =
+            품질검사목록.Where(x => x.시리얼넘버 == cnt).Count() == list4.Count ? "" : (품질검사목록.Where(x => x.시리얼넘버 == cnt).Count() == 0 ? "" : "진행중"),
+
+                //Result = (from m in 품질검사목록 where m.시리얼넘버 == cnt && m.생산지시코드 == 생산지시.생산지시코드 select m.합격여부).FirstOrDefault() != null ? "완료" : ""  ,
+                보유품목코드 = 발주서수입검사.품번,
+                CheckDate = DateTime.Now,
+            }).ToList();
+
+        }
+
+        품질검사생산품목록 = new ObservableCollection<품질검사생산품>(list3);
+
+        pum_barcodeStart = $"00 S9112 {발주서수입검사.발주번호} {발주서수입검사.품번}";
+        pum_barcodeEnd = $"00 S9113 {발주서수입검사.발주번호} {발주서수입검사.품번}";
+        실적등록바코드 = $"00 S9140 {발주서수입검사.발주번호} {발주서수입검사.품번}";
+
+    }
+
+    private void OnActionBegin(ActionEventArgs<발주서별품질검사장비> args)
+    {
+        //await Task.Yield();
+
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.발주번호 = 발주서수입검사.발주번호;
+            newRow.회사코드 = 발주서수입검사.회사코드;
+            newRow.발주순번 = 발주서수입검사.발주순번;
+
+        }
+    }
+    private async Task OnActionComplete(ActionEventArgs<발주서별품질검사장비> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.발주번호 = 발주서수입검사.발주번호;
+            newRow.회사코드 = 발주서수입검사.회사코드;
+            newRow.발주순번 = 발주서수입검사.발주순번;
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.발주서별품질검사장비_삭제(args.Data, true);
+
+            await RefreshAsync();
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newData = args.Data;
+            newData.발주번호 = 발주서수입검사.발주번호;
+            newData.회사코드 = 발주서수입검사.회사코드;
+            newData.발주순번 = 발주서수입검사.발주순번;
+
+            await Remote.Command.생산관리.발주서별품질검사장비_저장(newData, args.Action == "Add" ? true : false);
+            if (args.Action == "Add")
+                await RefreshAsync();
+
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private void OnActionBegin(ActionEventArgs<발주서별품질검사정보> args)
+    {
+        //await Task.Yield();
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.발주번호 = 발주서수입검사.발주번호;
+            newRow.회사코드 = 발주서수입검사.회사코드;
+            newRow.발주순번 = 발주서수입검사.발주순번;
+        }
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<발주서별품질검사정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.발주번호 = 발주서수입검사.발주번호;
+            newRow.회사코드 = 발주서수입검사.회사코드;
+            newRow.발주순번 = 발주서수입검사.발주순번;
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.발주서별품질검사정보_삭제(args.Data, true);
+
+            await RefreshAsync2();
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newData = args.Data;
+            newData.발주번호 = 발주서수입검사.발주번호;
+            newData.회사코드 = 발주서수입검사.회사코드;
+            newData.발주순번 = 발주서수입검사.발주순번;
+
+            await Remote.Command.생산관리.발주서별품질검사정보_저장(newData, args.Action == "Add" ? true : false);
+            if (args.Action == "Add")
+                await RefreshAsync2();
+
+            ModifyList(list4, (info, map) =>
+            {
+                if (info.검사단위코드 != null)
+                    info.검사단위 = map[info.검사단위코드];
+            }, false);
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<품질검사생산품> args)
+    {
+        if (list3.Count > 0)
+            await grid3.SelectRow(nowItem, true);
+    }
+
+    private async Task OnQRPrinte(string _type, int size)
+    {
+        var barcodeValue = _type;
+        await QRPrinte_Act(barcodeValue, size);
+    }
+
+    private string barcodeValue;
+    private string barcodeValueLOT = null;
+    private async Task<string> OnQRPrinte(int type, decimal _수량, string 품목코드)
+    {
+        string lotNo = "";
+        var sawon = await SessionStorage.GetAsync<string>("userId");
+
+        //var YesOrNo = await ShowMessageBox("LOT번호발급", "LOT번호를 발급하시겠습니까?", MessageBoxResultType.YesOrNo);
+
+        bool YesOrNo = true;
+
+        var 수량 = Convert.ToInt32(Convert.ToInt32(_수량)).ToString();
+
+        if (YesOrNo)
+        {
+            //lotNo = await Remote.Command.자재관리.품목코드_NOT바코드발급(품목코드, 회사코드, 수량, sawon, YesOrNo);
+            // 생산2, 외주1, 원자재0
+            lotNo = await Remote.Command.자재관리.품목코드_바코드발급(품목코드, 회사코드, 수량, sawon, YesOrNo, "0");
+        }
+
+        barcodeValueLOT = barcodeValue + ':' + lotNo;
+
+        // StateHasChanged();
+
+        //await Task.Delay(1000);
+
+        //await QRPrinte_바코드Act(barcodeValueLOT, 수량, 2);
+
+        //NotifyMessage(Message.반영성공);
+
+        return lotNo;
+
+    }
+
+
+
+    #region 실적등록
+
+    private DateTime 실적등록일selected { get; set; } = DateTime.Now;
+
+    public SfButton 실적등록;
+    private string 실적등록바코드;
+
+    private int 입고창고Index = 0;
+    private int 입고장소Index = 0;
+
+    public Query Query;
+    public Query Query2;
+
+    public List<직원정보> 직원정보List { get; set; }
+    public List<부서정보> 부서정보List { get; set; }
+
+    public List<장소정보> 이동공정코드_이동창고코드List { get; set; }
+    public List<장소위치정보> 이동공정코드_이동장소코드List { get; set; }
+
+
+    public string Edit이동공정_입고창고코드 = "";
+    public string Edit이동작업장_입고장소코드 = "";
+    public decimal Edit실적수량 = 0;
+    public decimal Edit사용수량 = 0;
+    public decimal Edit불량수량 = 0;
+    public decimal Edit검사수량 = 0;
+
+    public string Edit비고 = "";
+
+    private string Edit_발주번호;
+
+    public string Validate = "e-multi-column";
+
+    private bool isDialogVisible;
+
+    public void ValueChangeHandler(ChangedEventArgs<DateTime?> args)
+    {
+        // Here you can customize your code
+        실적등록일selected = new(args.Value.Value.Year, args.Value.Value.Month, args.Value.Value.Day);
+    }
+    private async Task 실적등록클릭()
+    {
+        //if (selectedRow == null)
+        //    return;
+        await Task.Delay(200);
+
+        발주서수입검사 = await Remote.Command.기준정보.발주서별발주번호수입검사_조회Dz(회사코드, 발주서수입검사.발주번호, 발주서수입검사.발주순번);
+
+        isDialogVisible = true;
+
+        //var result = await this.Remote.Command.기준정보.직원_조회(true, 회사코드);
+        //직원정보List = result.ToList();
+
+        //var result2 = await Remote.Command.기준정보.부서정보_조회(회사코드);
+        //부서정보List = result2.ToList();
+
+        var 품목 = await Remote.Command.기준정보.품목구분_조회(발주서수입검사.품번);
+
+        // ACCT_FG 0.원재료 1.부재료 2.제품 4.반제품 5.상품 6.저장품 7.비용 8.수익
+
+        //var result3 = await Remote.Command.기준정보.장소_조회(회사코드);
+        //이동공정코드_이동창고코드List = result3.ToList();
+
+        //var result4 = await Remote.Command.기준정보.장소위치_조회(회사코드);
+        //이동공정코드_이동장소코드List = result4.ToList();
+
+
+        if (품목?.품목구분코드 == "B1201" || 품목?.품목구분코드 == "B1202")
+            Edit이동작업장_입고장소코드 = "1000";
+        else if (품목?.품목구분코드 == "B1203")
+            Edit이동작업장_입고장소코드 = "1001";
+        else if (품목?.품목구분코드 == "B1204")
+            Edit이동작업장_입고장소코드 = "1002";
+        else
+            Edit이동작업장_입고장소코드 = "1000";
+
+        Edit이동공정_입고창고코드 = "1000";
+        //Query = new Query().Select(new List<string> { "장소코드" }).Where("장소코드", "equal", Edit이동공정_입고창고코드);
+        //Query2 = new Query().Select(new List<string> { "위치코드" }).Where("위치코드", "equal", Edit이동작업장_입고장소코드);
+
+        Edit_발주번호 = 발주서수입검사.발주번호;
+
+        Edit불량수량 = 발주서수입검사.불량수량;
+        Edit실적수량 = 발주서수입검사.발주수량 - 발주서수입검사.불량수량;
+        Edit검사수량 = 발주서수입검사.검사수량;
+
+    }
+
+
+    private async Task 실적등록저장()
+    {
+        string lotNo = await OnQRPrinte(4, Edit실적수량, 발주서수입검사.품번);
+        await Task.Delay(1000);
+        isDialogVisible = true;
+        if (string.IsNullOrEmpty(Edit사원코드) || string.IsNullOrEmpty(Edit부서코드) || string.IsNullOrEmpty(Edit이동공정_입고창고코드) || string.IsNullOrEmpty(Edit이동작업장_입고장소코드))
+        {
+            this.Validate = "e-error e-multi-column";
+            StateHasChanged();
+            return;
+        }
+
+        var 수입실적등록 = new 수입실적등록정보
+        {
+            회사코드 = 발주서수입검사.회사코드,
+            부서코드 = Edit부서코드,
+            사원코드 = Edit사원코드,
+            사업장코드 = "1000",
+            작업일자 = DateTime.Now,
+            실적일자 = 실적등록일selected,
+
+            발주번호 = 발주서수입검사.발주번호,
+            발주순번 = 발주서수입검사.발주순번,
+
+            처리구분 = "1", //입고
+            이동공정_입고창고코드 = Edit이동공정_입고창고코드, //입고시 처리
+            이동작업장_입고장소코드 = Edit이동작업장_입고장소코드, //입고시처리
+            검사구분 = 발주서수입검사.검사구분,
+            실적구분 = "0",
+            비고 = Edit비고,
+
+            품번 = 발주서수입검사.품번,
+
+            실적수량 = Edit실적수량,
+            불량수량 = Edit불량수량,
+            검사수량 = Edit검사수량,
+            총수량 = 발주서수입검사.발주수량,
+            LOT번호 = lotNo,
+
+        };
+
+        try
+        {
+            var result1 = await Remote.Command.기준정보.수입검사입고처리_등록(수입실적등록);
+
+            if (!result1)
+            {
+                NotifyMessage(Message.반영실패);
+                isDialogVisible = false;
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotifyMessage(Message.반영실패);
+            isDialogVisible = false;
+            return;
+        }
+
+        NotifyMessage(Message.반영성공);
+
+        Edit사원코드 = "";
+        Edit부서코드 = "";
+        Edit이동공정_입고창고코드 = "";
+        Edit이동작업장_입고장소코드 = "";
+        Edit실적수량 = 0;
+        Edit사용수량 = 0;
+        Edit불량수량 = 0;
+        Edit비고 = "";
+        실적등록일selected = DateTime.Now;
+
+        isDialogVisible = false;
+
+        this.Validate = "e-multi-column";
+
+    }
+    #endregion
+
+
+    private async Task RefreshCheckAfterAsync()
+    {
+
+        if (list3.Count > 0)
+        {
+            var 품질검사목록 = await Remote.Command.품질관리.발주서별품질검사측정완료유무_조회(발주서수입검사.발주번호, 발주서수입검사.발주순번, 발주서수입검사.회사코드);
+
+            var 검사항목전체 = await grid4.Grid.GetCurrentViewRecords();
+
+            //var 검사카운트 = 품질검사목록.GroupBy(x => x.시리얼넘버).Select(g => g.First()).ToList();
+
+            foreach (var item in 품질검사목록)
+            {
+                var found = list3.FirstOrDefault(x => x.Seq == item.시리얼넘버);
+                //var 검사차수 = 품질검사목록.GroupBy(x => x.시리얼넘버 == item.시리얼넘버).FirstOrDefault().Count();
+                var 검사카운트 = 품질검사목록.Where(x => x.시리얼넘버 == item.시리얼넘버).GroupBy(x => x.시리얼넘버).FirstOrDefault().Count();
+                found.Result = 검사항목전체.Count() == 검사카운트 ? "완료" : "진행중";
+                //found.Result = (Convert.ToInt32(생산지시.생산수량) * 검사항목전체.Count()) == 품질검사목록.Count() ? "완료" : "진행중"; //item.합격여부 != null ? "완료" : "";
+
+            }
+            if (검사수량입력_숫자 > 0)
+            {
+                if (nowItem == 검사수량입력_숫자)
+                {
+                    var userId = await SessionStorage.GetAsync<string>("userId");
+                    await Remote.Command.공통.수입검사포인트_설정(userId, 발주서수입검사.품번, -1, 0);
+                    await grid4.Grid.ClearRowSelection();
+                    await grid3.SelectRow(0, true);
+                }
+                else
+                {
+                    await grid3.SelectRow(nowItem, true);
+                }
+            }
+            else
+            {
+                if (nowItem == Convert.ToInt32(발주서수입검사.발주수량))
+                {
+                    var userId = await SessionStorage.GetAsync<string>("userId");
+                    await Remote.Command.공통.수입검사포인트_설정(userId, 발주서수입검사.품번, -1, 0);
+                    await grid4.Grid.ClearRowSelection();
+                    await grid3.SelectRow(0, true);
+                }
+                else
+                {
+                    await grid3.SelectRow(nowItem, true);
+                }
+            }
+
+            Console.WriteLine("RefreshCheckAfterAsync --> " + nowItem);
+
+            await InvokeAsync(() =>
+            {
+                StateHasChanged();
+            });
+
+        }
+    }
+
+    protected async override void OnReceivedMessage(Services.Message message, bool isGlobal, dynamic[] args)
+    {
+        base.OnReceivedMessage(message, isGlobal, args);
+
+
+        if (message == Services.Message.StartScan)
+        {
+            var user_id = args[0] as string;
+
+            var userId = await SessionStorage.GetAsync<string>("userId");
+            if (user_id == userId.ToString())
+            {
+                if (btnStartFlag == false)
+                {
+                    btnStartFlag = true;
+
+                    IsBtnStartEnable = true;
+                    IsBtnEndEnable = false;
+
+                    //btnStart.Disabled = true;
+                    //btnEnd.Disabled = false;
+                    var 검사항목수 = await grid4.Grid.GetCurrentViewRecords();
+                    //await Remote.Command.공통.포인트_저장(userId.ToString(), 생산지시.생산계획.생산품공정코드, Convert.ToInt32(생산지시.생산수량));
+                    await Remote.Command.공통.수입검사포인트_저장2(userId, 발주서수입검사.발주번호, Convert.ToInt32(발주서수입검사.발주수량), 검사항목수.Count);
+
+
+                    //await Remote.Command.품질관리.품질검사시작_보유품목코드_저장(생산품코드, 생산지시.생산계획.생산품.품목구분코드, Convert.ToInt32(외주작업지시.수량), 회사코드);
+
+
+                    // 품질검사시작시 켈리퍼스 측정해야 보유품목정보 수량업데이트 됨
+                    /* 20210513  재정의
+                    await Remote.Command.품질관리.품질검사시작_보유품목코드_저장(생산품코드, 생산지시.생산계획.생산품.품목구분코드, Convert.ToInt32(생산지시.생산수량));
+
+                    await Remote.Command.품질관리.보유품목일지_저장(생산지시.생산계획.생산품코드, Convert.ToInt32(생산지시.생산수량), 생산지시.생산지시코드);
+
+                    await Remote.Command.품질관리.품질검사측정_보유품목일련번호생성_저장(생산지시.생산지시코드, 생산지시.생산계획.생산품코드, Convert.ToInt32(생산지시.생산수량));
+                    */
+
+                    NotifyMessage(Message.CheckStart);
+                }
+                else
+                {
+                    await Remote.Command.공통.PDA_메시지(user_id);
+                    ShowMessageBox(user_id, "검사중 입니다 확인바랍니다", MessageBoxResultType.Okay);
+                }
+
+            }
+            else
+            {
+                await Remote.Command.공통.PDA_메시지(user_id);
+                NotifyMessage(Message.CheckStart);
+                ShowMessageBox(user_id, "사용자 ID가 틀립니다 확인바랍니다", MessageBoxResultType.Okay);
+            }
+        }
+
+        if (message == Services.Message.EndScan)
+        {
+            var user_id = args[0] as string;
+
+            var userId = await SessionStorage.GetAsync<string>("userId");
+            if (user_id == userId.ToString())
+            {
+                if (btnStartFlag == true)
+                {
+                    btnStartFlag = false;
+
+                    IsBtnStartEnable = false;
+                    IsBtnEndEnable = true;
+                    //btnStart.Disabled = false;
+                    //btnEnd.Disabled = true;
+                    await Remote.Command.공통.수입검사포인트_삭제(userId.ToString(), 발주서수입검사.발주번호);
+
+                    NotifyMessage(Message.CheckEnd);
+                }
+                else
+                {
+                    await Remote.Command.공통.PDA_메시지(user_id);
+                    ShowMessageBox(user_id, "검사중인 것이 없습니다 확인바랍니다", MessageBoxResultType.Okay);
+                }
+            }
+            else
+            {
+                await Remote.Command.공통.PDA_메시지(user_id);
+                NotifyMessage(Message.CheckStart);
+                ShowMessageBox(user_id, "사용자 ID가 틀립니다 확인바랍니다", MessageBoxResultType.Okay);
+            }
+        }
+
+
+        //공정시작
+        if (message == Services.Message.StartProcScan)
+        {
+            var user_id = args[0] as string;
+
+            var userId = await SessionStorage.GetAsync<string>("userId");
+            if (user_id == userId.ToString())
+            {
+                if (btnProcStartFlag == false)
+                {
+                    btnProcStartFlag = true;
+
+                    IsBtnProcStartEnable = true;
+                    IsBtnProcEndEnable = false;
+
+
+                    //await Remote.Command.생산관리.공정이력정보_저장(생산지시, 생산지시.생산지시공정차수목록[selected차수 - 1], 0, "공정시작", true);
+
+                    NotifyMessage(Message.CheckProcStart);
+                }
+                else
+                {
+                    await Remote.Command.공통.PDA_공정메시지(user_id);
+                    ShowMessageBox(user_id, "공정작업중 입니다 확인바랍니다", MessageBoxResultType.Okay);
+                }
+            }
+            else
+            {
+                await Remote.Command.공통.PDA_공정메시지(user_id);
+                NotifyMessage(Message.CheckProcStart);
+                ShowMessageBox(user_id, "사용자 ID가 틀립니다 확인바랍니다", MessageBoxResultType.Okay);
+            }
+        }
+
+        //공정종료
+        if (message == Services.Message.EndProcScan)
+        {
+            var user_id = args[0] as string;
+
+            var userId = await SessionStorage.GetAsync<string>("userId");
+            if (user_id == userId.ToString())
+            {
+                if (btnProcStartFlag == true)
+                {
+                    btnProcStartFlag = false;
+
+                    IsBtnProcStartEnable = false;
+                    IsBtnProcEndEnable = true;
+
+
+                    NotifyMessage(Message.CheckProcEnd);
+                }
+                else
+                {
+                    await Remote.Command.공통.PDA_공정메시지(user_id);
+                    ShowMessageBox(user_id, "공정작업중인 것이 없습니다 확인바랍니다", MessageBoxResultType.Okay);
+                }
+            }
+            else
+            {
+                await Remote.Command.공통.PDA_공정메시지(user_id);
+                NotifyMessage(Message.CheckProcStart);
+                ShowMessageBox(user_id, "사용자 ID가 틀립니다 확인바랍니다", MessageBoxResultType.Okay);
+            }
+        }
+
+        if (isGlobal == true && message == Services.Message.ChangeCheckState)
+        {
+            RefreshCheckAfterAsync();
+        }
+
+    }
+
+
+    private bool IsVisible { get; set; } = true;
+    private void OpenDialog()
+    {
+        this.IsVisible = true;
+    }
+
+
+    protected override void OnDispose()
+    {
+        myValue?.Clear();
+        nowItem = 0;
+    }
+}

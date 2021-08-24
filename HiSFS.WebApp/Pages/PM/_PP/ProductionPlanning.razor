@@ -1,0 +1,275 @@
+﻿@inherits CustomComponent
+@page "/pm/_pp/ProductionPlanning"
+
+<SfSplitter Width="100%" Height="100%" SeparatorSize="4">
+    <SplitterPanes>
+        <SplitterPane Size="30%" Min="300px">
+            <ContentTemplate>
+                <div class="container-fluid py-2">
+                    <div class="row mb-2 mx-2">
+                        <div class="col mr-auto">
+                        </div>
+                        @if (canWorkOrder == true)
+                        {
+                            <div class="col-auto mr-1">
+                                <SfButton IsPrimary="true" @onclick="OnClick작업지시">작업지시</SfButton>
+                            </div>
+                        }
+                        <div class="col-auto">
+                            <SfButton>등록</SfButton>
+                        </div>
+                    </div>
+                    <div class="row mx-2">
+                        <div class="col">
+                            <SfGrid DataSource="@list" AllowPaging="true" Width="100%" Height="100%">
+                                <GridEvents RowSelected="RowSelectedHandler" TValue="MockInfo" />
+
+                                <GridColumns>
+                                    <GridColumn Field=@nameof(MockInfo.순번) Width="80" />
+                                    <GridColumn Field=@nameof(MockInfo.제목) Width="200" />
+                                    <GridColumn Field=@nameof(MockInfo.상태) Width="120" />
+                                    <GridColumn Field=@nameof(MockInfo.계획수량) Width="120" />
+                                    <GridColumn Field=@nameof(MockInfo.생산수량) Width="120" />
+                                    <GridColumn Field=@nameof(MockInfo.비고) Width="240" />
+                                    <GridColumn Field=@nameof(MockInfo.등록일) Width="120" Format="yy\/MM\/dd" />
+                                    <GridColumn Field=@nameof(MockInfo.확정일) Width="120" Format="yy\/MM\/dd" />
+                                    <GridColumn Field=@nameof(MockInfo.종료일) Width="120" Format="yy\/MM\/dd" />
+                                </GridColumns>
+                            </SfGrid>
+                        </div>
+                    </div>
+                </div>
+            </ContentTemplate>
+        </SplitterPane>
+        <SplitterPane @ref="contentsPane" Size="70%" Min="0px" Collapsible="true" @bind-Collapsed="isCollapsed">
+            <ContentTemplate>
+                @if (isCollapsed == false)
+                {
+                    <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                        <TabItems>
+                            <TabItem>
+                                <ChildContent>
+                                    <TabHeader Text="전체" />
+                                </ChildContent>
+                                <ContentTemplate>
+                                    <div class="px-2 py-2">
+                                        <div class="container-fluid py-2">
+                                            <div class="row mb-2">
+                                                <div class="col mr-auto">
+                                                </div>
+                                                <div class="col-auto px-0">
+                                                    <SfButton IsPrimary="true">저장</SfButton>
+                                                </div>
+                                                <div class="col-auto pl-1">
+                                                    <SfButton CssClass="e-warning">확정</SfButton>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.영업.수주정보 />
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.생산.생산계획 />
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.생산.자재소요현황 />
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.구매.구매발주내역 />
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.구매.자재소요계획 />
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.생산관리.생산관리계획 />
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.품질.수입검사계획 />
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.품질.공정검사계획 />
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.품질.제품검사계획 />
+                                            </div>
+
+                                            <div class="row mb-2">
+                                                <HiSFS.WebApp.Pages.PM._PP.영업.출하계획 />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ContentTemplate>
+                            </TabItem>
+                            <TabItem>
+                                <ChildContent>
+                                    <TabHeader Text="기본" />
+                                </ChildContent>
+                                <ContentTemplate>
+                                    <div class="px-2 py-2">
+                                    </div>
+                                </ContentTemplate>
+                            </TabItem>
+                            <TabItem>
+                                <ChildContent>
+                                    <TabHeader Text="영업" />
+                                </ChildContent>
+                                <ContentTemplate>
+                                    <div class="px-2 py-2">
+                                        <탭1영업 />
+                                    </div>
+                                </ContentTemplate>
+                            </TabItem>
+                            <TabItem>
+                                <ChildContent>
+                                    <TabHeader Text="구매" />
+                                </ChildContent>
+                                <ContentTemplate>
+                                    <div class="px-2 py-2">
+                                        <탭2구매 />
+                                    </div>
+                                </ContentTemplate>
+                            </TabItem>
+                            <TabItem>
+                                <ChildContent>
+                                    <TabHeader Text="생산" />
+                                </ChildContent>
+                                <ContentTemplate>
+                                    <div class="px-2 py-2">
+                                        <탭3생산 />
+                                    </div>
+                                </ContentTemplate>
+                            </TabItem>
+                            <TabItem>
+                                <ChildContent>
+                                    <TabHeader Text="품질" />
+                                </ChildContent>
+                                <ContentTemplate>
+                                    <div class="px-2 py-2">
+                                        <탭4품질 />
+                                    </div>
+                                </ContentTemplate>
+                            </TabItem>
+                            <TabItem>
+                                <ChildContent>
+                                    <TabHeader Text="생산관리" />
+                                </ChildContent>
+                                <ContentTemplate>
+                                    <div class="px-2 py-2">
+                                        <탭5생산관리 />
+                                    </div>
+                                </ContentTemplate>
+                            </TabItem>
+                        </TabItems>
+
+                        <TabAnimationSettings>
+                            <TabAnimationPrevious Effect="AnimationEffect.None" />
+                            <TabAnimationNext Effect="AnimationEffect.None" />
+                        </TabAnimationSettings>
+                    </SfTab>
+                }
+            </ContentTemplate>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+<SfDialog Target="#main" Width="1024px" Height="600px" ShowCloseIcon="true" IsModal="true" @bind-Visible="작업지시팝업유무">
+    <DialogTemplates>
+        <Header>작업지시서</Header>
+        <Content>
+        </Content>
+    </DialogTemplates>
+    @*<DialogEvents OnOpen="@DialogOpen" Closed="@DialogClose"></DialogEvents>*@
+    <DialogButtons>
+        <DialogButton OnClick="OnClick작업지시확정">
+            <DialogButton IsPrimary="true" Content="작업지시" />
+        </DialogButton>
+        <DialogButton OnClick="OnClick작업지시취소">
+            <DialogButton Content="취소" />
+        </DialogButton>
+    </DialogButtons>
+</SfDialog>
+
+@code {
+    SplitterPane contentsPane;
+    bool isCollapsed = true;
+    bool canWorkOrder = false;
+    bool 작업지시팝업유무 = false;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        for (var i = 0; i < list.Count; i++)
+            list[i].순번 = i + 1;
+
+        list.Sort((x, y) => x.순번 == y.순번 ? 0 : (x.순번 > y.순번 ? -1 : 1));
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+    }
+
+    void RowSelectedHandler(RowSelectEventArgs<MockInfo> args)
+    {
+        var selected = args.Data;
+
+        if (selected.상태 == "계획중")
+            canWorkOrder = false;
+        else
+            canWorkOrder = true;
+
+        //contentsPane.Collapsible = true;
+        //contentsPane.Collapsed = false;
+        isCollapsed = false;
+
+        //StateHasChanged();
+    }
+
+    protected override void OnDispose()
+    {
+    }
+
+    List<MockInfo> list = new List<MockInfo>
+    {
+        new MockInfo { 제목 = "1차 생산계획", 상태 = "완료", 계획수량 = 100, 생산수량 = 110, 비고 = "비고", 등록일 = DateTime.Parse("2020-05-01"), 확정일 = DateTime.Parse("2020-05-03"), 종료일 = DateTime.Parse("2020-05-15") },
+        new MockInfo { 제목 = "2차 생산계획", 상태 = "진행중", 계획수량 = 200, 생산수량 = 80, 비고 = "비고", 등록일 = DateTime.Parse("2020-05-01"), 확정일 = DateTime.Parse("2020-05-03") },
+        new MockInfo { 제목 = "3차 생산계획", 상태 = "계획중", 계획수량 = 150, 생산수량 = 0, 비고 = "비고", 등록일 = DateTime.Parse("2020-05-11") },
+    };
+
+    public class MockInfo
+    {
+        public int 순번 { get; set; }
+        public string 제목 { get; set; }
+        public string 상태 { get; set; }
+        public int 계획수량 { get; set; }
+        public int 생산수량 { get; set; }
+        public string 비고 { get; set; }
+        public DateTime 등록일 { get; set; }
+        public DateTime? 확정일 { get; set; }
+        public DateTime? 종료일 { get; set; }
+    }
+
+    void OnClick작업지시()
+    {
+        작업지시팝업유무 = true;
+    }
+
+    void OnClick작업지시확정()
+    {
+        작업지시팝업유무 = false;
+    }
+
+    void OnClick작업지시취소()
+    {
+        작업지시팝업유무 = false;
+    }
+}

@@ -1,0 +1,55 @@
+﻿<SfCard>
+    <CardHeader>
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col mr-auto">
+                    <b>@Title</b>
+                </div>
+                <div class="col-auto">
+                    @TitleExtend
+                </div>
+            </div>
+        </div>
+    </CardHeader>
+    <CardContent>
+        <div class="container-fluid">
+            <div class="row align-self-center">
+                <div class="col">
+                    @if (EditMode == true)
+                    {
+                        <SfInPlaceEditor CssClass="w-100" Mode="RenderMode.Inline" Type="Syncfusion.Blazor.InPlaceEditor.InputType.RTE" EditableOn="EditableType.EditIconClick" SubmitOnEnter="false" EmptyText="@EmptyText" Name="RTE" Value="@Value" ShowButtons="false" Model="@editorData">
+                        </SfInPlaceEditor>
+                    }
+                    else
+                    {
+                        @Value
+                    }
+                </div>
+            </div>
+        </div>
+    </CardContent>
+</SfCard>
+
+@code {
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public RenderFragment TitleExtend { get; set; }
+
+    [Parameter]
+    public string EmptyText { get; set; }
+
+    [Parameter]
+    public string Value { get; set; }
+
+    [Parameter]
+    public bool EditMode { get; set; } = false;
+
+    private object editorData = new
+    {
+        toolbarSettings = new
+        {
+        }
+    };
+}

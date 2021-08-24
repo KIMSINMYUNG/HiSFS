@@ -1,0 +1,478 @@
+﻿@inherits CustomComponent
+@page "/mm/mio/일괄생산실적2"
+
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Popups
+<SfSplitter Width="100%" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="50%" Collapsible="true">
+            <SfGrid @ref="grid1" DataSource="@list1" AllowPaging="true" Toolbar="@(new string[] {"Add","Cancel" })">
+                <GridEvents OnActionComplete="ActionCompleteHandler" TValue="일괄생산실적헤더정보" Created="RefreshAsync" RowSelected="OnRowSelected"></GridEvents>
+                <GridEditSettings AllowAdding="true" AllowEditing="false" AllowDeleting="false" Mode="@Syncfusion.Blazor.Grids.EditMode.Dialog" Dialog="DialogParams">
+                    <Template>
+                        @{
+                            var 헤더 = (context as 일괄생산실적헤더정보);
+                        }
+                        <div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="@회사코드Check"></SfTextBox>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <SfTextBox ID="사업장코드" @bind-Value="@(헤더.사업장코드)" FloatLabelType="FloatLabelType.Always" Placeholder="사업장코드" Enabled="false"></SfTextBox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+
+                                <div class="form-group col-md-6">
+                                    @*<SfTextBox ID="회사코드" @bind-Value="@(헤더.회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="@회사코드Check"></SfTextBox>*@
+                                    <SfTextBox ID="작업번호" @bind-Value="@(헤더.작업번호)" FloatLabelType="FloatLabelType.Always" Placeholder="작업번호" Enabled="@작업번호Check"></SfTextBox>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <SfDatePicker ID="작업일자" @bind-Value="@(헤더.작업일자)" FloatLabelType="FloatLabelType.Always" Placeholder="작업일자">
+                                    </SfDatePicker>
+                                </div>
+                            </div>
+
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    @*<SfAutoComplete TItem="직원정보" ID="사번" @bind-Value="@(헤더.사원코드)" TValue="string" DataSource="@list직원정보" FloatLabelType="FloatLabelType.Always" Placeholder="직원정보">
+                    <AutoCompleteFieldSettings Text="Text" Value="ID"></AutoCompleteFieldSettings>
+                </SfAutoComplete>*@
+
+
+                                    <SfComboBox TValue="string" TItem="직원정보" @bind-Value="@(헤더.사원코드)" PopupWidth="300px" DataSource="@직원정보List" PopupHeight="400px" CssClass="e-multi-column" Placeholder="사원코드" AllowFiltering="true">
+                                        <ComboBoxTemplates TItem="직원정보">
+                                            <HeaderTemplate>
+                                                <table><tr><th class="e-text-center">사번</th><th width="100px">사용자명</th><th width="100px">부서코드</th></tr></table>
+                                            </HeaderTemplate>
+                                            <ItemTemplate Context="anotherContext">
+                                                @{
+                                                    var 직원정보 = (anotherContext as 직원정보);
+                                                }
+                                                <table>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>@직원정보.사번</td>
+                                                            <td>@직원정보.사용자명</td>
+                                                            <td>@직원정보.부서코드</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </ItemTemplate>
+                                        </ComboBoxTemplates>
+                                        <ComboBoxFieldSettings Text="사용자명" Value="사번"></ComboBoxFieldSettings>
+                                    </SfComboBox>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <SfComboBox TValue="string" TItem="부서정보" @bind-Value="@(헤더.부서코드)"  PopupWidth="400px" DataSource="@부서정보List" PopupHeight="400px" CssClass="e-multi-column" Placeholder="부서코드" AllowFiltering="true">
+                                        <ComboBoxTemplates TItem="부서정보">
+                                            <HeaderTemplate>
+                                                <table>
+                                                    <tr>
+                                                        <th width="100px">부서코드</th>
+                                                        <th width="100px">부서명</th>
+                                                        <th width="100px">부문코드</th>
+                                                        <th width="100px">부문명</th>
+                                                    </tr>
+                                                </table>
+                                            </HeaderTemplate>
+                                            <ItemTemplate Context="anotherContext">
+                                                @{
+                                                    var 부서 = (anotherContext as 부서정보);
+                                                }
+                                                <table>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>@부서.부서코드</td>
+                                                            <td>@부서.부서명</td>
+                                                            <td>@부서.부문코드</td>
+                                                            <td>@부서.부문명</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </ItemTemplate>
+                                        </ComboBoxTemplates>
+                                        <ComboBoxFieldSettings Text="부서코드" Value="부서코드"></ComboBoxFieldSettings>
+                                    </SfComboBox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <SfDatePicker ID="실적일자" @bind-Value="@(헤더.실적일자)" FloatLabelType="FloatLabelType.Always" Placeholder="실적일자">
+                                    </SfDatePicker>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <SfDropDownList ID="실적구분" TItem="실적구분필드" @bind-Value="@(헤더.실적구분)" TValue="string" DataSource="@list실적구분" FloatLabelType="FloatLabelType.Always" Placeholder="실적구분">
+                                        <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <DInputSearch Placeholder="실적공정코드/창고코드" Target="#main" DialogHeader="실적공정코드/창고코드" TValue="장소위치정보" TCode="string" TextField="장소코드" @bind-Value="실적공정코드_창고코드Selected"  CodeField="장소코드" @bind-Code=@(헤더.실적공정코드_창고코드) >
+                                        <DialogContent>
+                                            <HiSFS.WebApp.Pages.Common.Popup.장소위치Popup />
+                                        </DialogContent>
+                                    </DInputSearch>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <DInputSearch Placeholder="실적작업장코드/장소코드" Target="#main" DialogHeader="실적작업장코드/장소코드" TValue="장소위치정보" TCode="string" TextField="위치코드" @bind-Value="실적작업장코드_장소코드Selected" CodeField="위치코드" @bind-Code=@(헤더.실적작업장코드_장소코드) >
+                                        <DialogContent>
+                                            <HiSFS.WebApp.Pages.Common.Popup.장소위치Popup />
+                                        </DialogContent>
+                                    </DInputSearch>
+                                </div>
+                            </div>
+
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <SfDropDownList ID="재작업여부" TItem="재작업필드" @bind-Value="@(헤더.재작업여부)" TValue="string" DataSource="@list재작업여부" FloatLabelType="FloatLabelType.Always" Placeholder="재작업여부">
+                                        <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <DInputSearch Placeholder="품번" Target="#main" DialogHeader="품목 조회" TValue="품목정보" TCode="string" TextField="품목코드" CodeField="품목코드" @bind-Code=@(헤더.실적품번)>
+                                        <DialogContent>
+                                            <HiSFS.WebApp.Pages.Common.Popup.품목Popup />
+                                        </DialogContent>
+                                    </DInputSearch>
+
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="실적수량" @bind-Value=@(헤더.실적수량) Enabled="true" />
+                                </div>
+                                <div class="form-group col-md-6">
+                                </div>
+                            </div>
+
+                        </div>
+                    </Template>
+                </GridEditSettings>
+                <GridColumns>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.회사코드) HeaderText="회사코드" IsPrimaryKey="true" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" Width="140"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.사업장코드) HeaderText="사업장코드" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.작업번호) HeaderText="작업번호" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.부서코드) HeaderText="부서코드" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.사원코드) HeaderText="사원코드" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.실적번호) HeaderText="실적번호" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.실적일자) HeaderText="실적일자" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.실적공정코드_창고코드) HeaderText="실적공정코드/창고코드" Width="120" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.실적작업장코드_장소코드) HeaderText="실적작업장코드/장소코드" Width="120" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.재작업여부) HeaderText="재작업여부" Width="120" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.실적품번) HeaderText="실적품번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.실적구분) HeaderText="실적구분" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적헤더정보.실적수량) HeaderText="실적수량" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+
+                </GridColumns>
+            </SfGrid>
+        </SplitterPane>
+        <SplitterPane Size="50%" Collapsible="true">
+
+            <SfGrid @ref="grid2" DataSource="@list2" AllowPaging="true" Toolbar="@(new string[] {"Add","Cancel" })">
+                <GridEvents OnActionComplete="ActionCompleteHandler" TValue="일괄생산실적상세정보" OnActionBegin="OnActionBegin"></GridEvents>
+                <GridEditSettings AllowAdding="true" AllowEditing="false" AllowDeleting="false" Mode="@Syncfusion.Blazor.Grids.EditMode.Dialog" Dialog="DialogParams">
+                    <Template>
+                        @{
+                            var 상세 = (context as 일괄생산실적상세정보);
+                        }
+                        <div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="false"></SfTextBox>
+                                </div>
+                                <div class="form-group col-md-6">
+
+                                </div>
+                            </div>
+                            <div class="form-row">
+
+                                <div class="form-group col-md-6">
+                                    <SfTextBox @bind-Value=@(상세.작업순번) FloatLabelType="FloatLabelType.Always" TValue="string" Placeholder="작업순번" Enabled="false" />
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <SfTextBox ID="작업번호" @bind-Value="@(상세.작업번호)" FloatLabelType="FloatLabelType.Always" Placeholder="작업번호" Enabled="false"></SfTextBox>
+                                </div>
+                            </div>
+
+
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <DInputSearch Placeholder="품번" Target="#main" DialogHeader="품목 조회" @bind-Value=@품목코드Selected TValue="품목정보" TCode="string" TextField="품목코드" CodeField="품목코드" @bind-Code=@(상세.사용품번)>
+                                        <DialogContent>
+                                            <HiSFS.WebApp.Pages.Common.Popup.품목Popup />
+                                        </DialogContent>
+                                    </DInputSearch>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <SfDropDownList ID="창고구분" TItem="창고구분필드" @bind-Value="@(상세.창고구분)" TValue="string" DataSource="@list창고구분" FloatLabelType="FloatLabelType.Always" Placeholder="창고구분">
+                                        <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <DInputSearch Placeholder="사용공정/사용창고" Target="#main" DialogHeader="사용공정/사용창고"  @bind-Value=@사용공정_사용창고selected TValue="장소위치정보" TCode="string" TextField="장소코드" CodeField="장소코드" @bind-Code=@(상세.사용공정_사용창고) >
+                                        <DialogContent>
+                                            <HiSFS.WebApp.Pages.Common.Popup.장소위치Popup />
+                                        </DialogContent>
+                                    </DInputSearch>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <DInputSearch Placeholder="사용작업장/사용장소" Target="#main" DialogHeader="사용작업장/사용장소"  @bind-Value=@사용작업장_사용장소selected TValue="장소위치정보" TCode="string" TextField="위치코드" CodeField="위치코드" @bind-Code=@(상세.사용작업장_사용장소) >
+                                        <DialogContent>
+                                            <HiSFS.WebApp.Pages.Common.Popup.장소위치Popup />
+                                        </DialogContent>
+                                    </DInputSearch>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="사용수량" @bind-Value=@(상세.사용수량) Enabled="true" />
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <SfTextBox ID="LOTNO" @bind-Value="@(상세.LOTNO)" FloatLabelType="FloatLabelType.Always" Placeholder="LOTNO" Enabled="true"></SfTextBox>
+                                </div>
+                            </div>
+
+                        </div>
+                    </Template>
+                </GridEditSettings>
+                <GridColumns>
+                    <GridColumn Field=@nameof(일괄생산실적상세정보.회사코드) HeaderText="회사코드" IsPrimaryKey="true" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" Width="140"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적상세정보.작업번호) HeaderText="작업번호" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적상세정보.작업순번) HeaderText="작업순번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적상세정보.사용공정_사용창고) HeaderText="사용공정/사용창고" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적상세정보.사용작업장_사용장소) HeaderText="사용작업장/사용장소" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적상세정보.사용품번) HeaderText="사용품번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적상세정보.사용수량) HeaderText="사용수량" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적상세정보.창고구분) HeaderText="창고구분" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(일괄생산실적상세정보.LOTNO) HeaderText="LOTNO" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+
+    public List<일괄생산실적헤더정보> list1 { get; set; }
+    private SfGrid<일괄생산실적헤더정보> grid1;
+
+    public List<일괄생산실적상세정보> list2 { get; set; }
+    private SfGrid<일괄생산실적상세정보> grid2;
+
+
+    public List<직원정보> 직원정보List { get; set; }
+    public List<부서정보> 부서정보List { get; set; }
+
+
+    private 장소위치정보 실적공정코드_창고코드Selected { get; set; }
+    private 장소위치정보 실적작업장코드_장소코드Selected { get; set; }
+
+    private 장소위치정보 사용공정_사용창고selected { get; set; }
+    private 장소위치정보 사용작업장_사용장소selected { get; set; }
+    private 품목정보 품목코드Selected { get; set; }
+
+    private Boolean 회사코드Check = false, 작업번호Check = false, 출고장소Check = true, 입고고장소Check = true;
+
+    private Boolean Check = false;
+
+    private DialogSettings DialogParams = new DialogSettings { MinHeight = "400px", Width = "450px" };
+
+    private string 회사코드 = "";
+    private string 작업번호 = "";
+
+    public string 실적공정코드_창고코드 = "";
+    public string 실적공정코드_장소코드 = "";
+
+    public void 실적공정코드_창고코드Changed(장소위치정보 value)
+    {
+        실적공정코드_창고코드 = value.장소코드;
+        실적공정코드_장소코드 = value.위치코드;
+    }
+
+    public string 실적작업장코드_창고코드 = "";
+    public string 실적작업장코드_장소코드 = "";
+
+    public void 실적작업장코드_장소코드Changed(장소위치정보 value)
+    {
+        실적작업장코드_창고코드 = value.장소코드;
+        실적작업장코드_장소코드 = value.위치코드;
+    }
+
+
+    public class 재작업필드
+    {
+        public int ID { get; set; }
+        public string Text { get; set; }
+    }
+    public List<재작업필드> list재작업여부 = new List<재작업필드>() {
+        new 재작업필드(){ ID=0, Text="정상작업"},
+        new 재작업필드(){ ID=1, Text="재작업"},
+    };
+
+    public class 실적구분필드
+    {
+        public int ID { get; set; }
+        public string Text { get; set; }
+    }
+    public List<실적구분필드> list실적구분 = new List<실적구분필드>() {
+        new 실적구분필드(){ ID=0, Text="창고"},
+        new 실적구분필드(){ ID=1, Text="공정"},
+        new 실적구분필드(){ ID=2, Text="외주"},
+    };
+
+    public class 창고구분필드
+    {
+        public int ID { get; set; }
+        public string Text { get; set; }
+    }
+    public List<창고구분필드> list창고구분 = new List<창고구분필드>() {
+        new 창고구분필드(){ ID=0, Text="창고"},
+        new 창고구분필드(){ ID=1, Text="공정"},
+        new 창고구분필드(){ ID=2, Text="외주"},
+    };
+
+    protected async override void OnInitialized()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await this.Remote.Command.기준정보.직원_조회(true, 회사코드);
+        직원정보List = result.ToList();
+
+        var result2 = await Remote.Command.기준정보.부서정보_조회(회사코드);
+        부서정보List = result2.ToList();
+    }
+
+    async Task RefreshAsync()
+    {
+        await grid1.ClearCellSelection();
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await Remote.Command.기준정보.MES생산관리_일괄생산실적헤더정보_조회(회사코드);
+
+        list1 = result.ToList();
+
+        StateHasChanged();
+
+    }
+
+    async Task RefreshAsync2()
+    {
+        await grid2.ClearCellSelection();
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await Remote.Command.기준정보.MES생산관리_일괄생산실적상세정보_조회(작업번호, 회사코드);
+        list2 = result.ToList();
+
+        StateHasChanged();
+
+    }
+
+
+    private async Task OnRowSelected(RowSelectEventArgs<일괄생산실적헤더정보> e)
+    {
+        await grid2.ClearCellSelection();
+        작업번호 = e.Data.작업번호;
+        //회사코드 = e.Data.회사코드;
+
+        var result = await Remote.Command.기준정보.MES생산관리_일괄생산실적상세정보_조회(e.Data.작업번호, 회사코드);
+        list2 = result.ToList();
+
+        StateHasChanged();
+    }
+
+    private void OnActionBegin(ActionEventArgs<일괄생산실적상세정보> args)
+    {
+        //await Task.Yield();
+
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var parentRow = grid1.SelectedRecords.FirstOrDefault();
+            if (parentRow == null)
+            {
+                args.Cancel = true;
+                return;
+            }
+        }
+    }
+
+    public async Task ActionCompleteHandler(ActionEventArgs<일괄생산실적헤더정보> args)
+    {
+        if (args.RequestType.ToString() == "Add")
+        {
+            Check = true;
+        }
+        if (args.RequestType.ToString() == "Save")
+        {
+            var newRow = args.Data;
+            newRow.회사코드 = 회사코드;
+            newRow.사업장코드 = "1000";
+            //newRow.실적공정코드_창고코드 = 실적공정코드_창고코드;
+            //newRow.실적작업장코드_장소코드 = 실적공정코드_장소코드;
+            if (newRow.실적구분.Equals("0"))
+            {
+                newRow.실적공정코드 = "";
+                newRow.실적작업장코드 = "";
+            }
+
+
+            await Remote.Command.기준정보.MES재고이동_일괄생산실적헤더정보_등록(newRow, args.Action == "Add" ? true : false);
+
+            RefreshAsync();
+        }
+        else
+        {
+            Check = false;
+        }
+    }
+
+    public async Task ActionCompleteHandler(ActionEventArgs<일괄생산실적상세정보> args)
+    {
+        if (args.RequestType.ToString() == "Add")
+        {
+            Check = true;
+        }
+        if (args.RequestType.ToString() == "Save")
+        {
+            var newRow = args.Data;
+
+            //newRow.사업장코드 = "1000";
+
+            newRow.작업번호 = 작업번호;
+            newRow.회사코드 = 회사코드;
+            //newRow.재공운영여부 = "1";
+            //newRow.APP_FG = "0";
+            //newRow.사용여부 = "1";
+            //newRow.만료여부 = "1";
+
+
+
+            await Remote.Command.기준정보.MES재고이동_일괄생산실적상세정보_등록(newRow, args.Action == "Add" ? true : false);
+
+            RefreshAsync2();
+        }
+        else
+        {
+            Check = false;
+        }
+    }
+
+
+    protected override void OnDispose()
+    {
+        //throw new NotImplementedException();
+    }
+}

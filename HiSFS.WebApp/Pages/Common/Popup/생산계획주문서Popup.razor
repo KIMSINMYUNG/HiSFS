@@ -1,0 +1,102 @@
+﻿@page "/popup/생산계획주문서"
+
+@inherits CustomComponent
+
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="주문서정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(주문서정보.회사코드) HeaderText="회사코드" Width="110" />
+        <GridColumn Field=@nameof(주문서정보.주문번호) HeaderText="주문번호" Width="200" />
+        <GridColumn Field=@nameof(주문서정보.주문일자) HeaderText="주문일자" Width="120" />
+        <GridColumn Field=@nameof(주문서정보.납기일) HeaderText="납기일" Width="120" />
+        <GridColumn Field=@nameof(주문서정보.출하예정일) HeaderText="출하예정일" Width="120" />
+        <GridColumn Field=@nameof(주문서정보.고객코드) HeaderText="고객코드" Width="110" />
+        <GridColumn Field=@nameof(주문서정보.고객명) HeaderText="고객명" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.주문구분) HeaderText="주문구분" Width="100" />
+        <GridColumn Field=@nameof(주문서정보.과세구분) HeaderText="과세구분" Width="100" />
+        <GridColumn Field=@nameof(주문서정보.과세구분명) HeaderText="과세구분명" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.단가구분) HeaderText="단가구분" Width="100" />
+        <GridColumn Field=@nameof(주문서정보.단가구분명) HeaderText="단가구분명" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.납품처명) HeaderText="납품처명" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.담당자명) HeaderText="담당자명" Width="110" />
+        <GridColumn Field=@nameof(주문서정보.관리번호) HeaderText="관리번호" Width="110" />
+        <GridColumn Field=@nameof(주문서정보.헤더비고) HeaderText="헤더비고" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.순번) HeaderText="순번" Width="110" />
+        <GridColumn Field=@nameof(주문서정보.품목코드) HeaderText="품목코드" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.품목명) HeaderText="품목명" Width="200" />
+        <GridColumn Field=@nameof(주문서정보.규격) HeaderText="규격" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.관리단위) HeaderText="관리단위" Width="100" />
+        <GridColumn Field=@nameof(주문서정보.수량) HeaderText="수량" Width="100" />
+        <GridColumn Field=@nameof(주문서정보.단가) HeaderText="단가" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.부가세단가) HeaderText="부가세단가" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.공급가) HeaderText="공급가" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.SOV_AM) HeaderText="부가세단가" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.합계액) HeaderText="합계액" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.관리구분명) HeaderText="관리구분명" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.프로젝트명) HeaderText="프로젝트명" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.디테일비고) HeaderText="디테일비고" Width="200" />
+        <GridColumn Field=@nameof(주문서정보.마감여부) HeaderText="마감여부" Width="120" />
+        <GridColumn Field=@nameof(주문서정보.검사구분) HeaderText="검사구분" Width="120" />
+        <GridColumn Field=@nameof(주문서정보.환종) HeaderText="환종" Width="100" />
+
+        <GridColumn Field=@nameof(주문서정보.납품처코드) HeaderText="납품처코드" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.사업장코드) HeaderText="사업장코드" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.부서코드) HeaderText="부서코드" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.사원코드) HeaderText="사원코드" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.담당자코드) HeaderText="담당자코드" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.관리구분코드) HeaderText="관리구분코드" Width="150" />
+        <GridColumn Field=@nameof(주문서정보.프로젝트코드) HeaderText="프로젝트코드" Width="150" />
+    </GridColumns>
+</FGrid>
+
+
+
+@code {
+
+
+    private FGrid<주문서정보> grid;
+    private ObservableCollection<주문서정보> list;
+    private 주문서정보 selectedRow;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<주문서정보>> OnSelectedEvent { get; set; }
+
+    [Parameter]
+    public string 주문번호 { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<주문서정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private async Task RefreshAsync()
+    {
+
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.생산계획주문서정보_조회Dz(회사코드);
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<주문서정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

@@ -1,0 +1,301 @@
+﻿@page "/mdm/mtr/BOM관리"
+@inherits CustomComponent
+
+
+@*<SfTreeGrid @ref="grid" DataSource=@list IdMapping="BOM순번" ParentIdMapping="상위BOM순번" TreeColumnIndex="1" AllowPaging="true">
+        <TreeGridColumns>
+            <TreeGridColumn Field=@nameof(BOM정보.BOM순번) Width="80" HeaderText="순번" />
+            <TreeGridColumn Field=@nameof(BOM정보.품목코드) Width="160" HeaderText="품목코드" />
+            <TreeGridColumn Field="품목.품목명" Width="160" MaxWidth="200" HeaderText="품명">
+                <Template>
+                    @{ var info = context as BOM정보; }
+                    @info.품목?.품목명
+                </Template>
+            </TreeGridColumn>
+            <TreeGridColumn Field=@nameof(BOM정보.정미수량) Width="160" HeaderText="정미수량" />
+            <TreeGridColumn Field=@nameof(BOM정보.로스율) Width="160" HeaderText="로스율" />
+            <TreeGridColumn Field=@nameof(BOM정보.필요수량) Width="160" HeaderText="필요수량" />
+        </TreeGridColumns>
+
+        <TreeGridEvents TValue="BOM정보" />
+        <TreeGridSelectionSettings EnableToggle="false" />
+    </SfTreeGrid>*@
+
+<SfSplitter Width="100%" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="50%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+
+                <!-- <자재현황 /> -->
+                <FGrid @ref="grid" DataSource="@list" TValue="BOM품목정보현황" DefaultMode="true" EditMode="DGridEditMode.All"
+                       OnActionComplete="OnActionComplete" OnRowSelected="OnRowSelected" OnCreated="RefreshAsync" OnCheckAuth="CheckAuth">
+                    <GridColumns>
+                        @*<GridColumn Field=@nameof(BOM품목정보현황.BOM품목정보코드) HeaderText="품목코드" Width="100" AllowAdding="false" AllowEditing="false"/>*@
+                        <GridColumn Field=@nameof(BOM품목정보현황.BOM품목정보코드) Width="100" IsPrimaryKey="true">
+                            <Template>
+                                @((context as BOM품목정보현황).BOM품목정보코드)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as BOM품목정보현황; }
+                                <DInputSearch Placeholder="품목명" Target="#root" DialogHeader="BOM 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@((context as BOM품목정보현황).품목) CodeField="품목코드" @bind-Code=@(info.BOM품목정보코드)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.생산품Popup 반제품유무="true" />
+                                    </DialogContent>
+                                </DInputSearch>
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(BOM품목정보현황.품목구분코드) HeaderText="단위" Width="80" AllowAdding="false" AllowEditing="false" />
+                        <GridColumn Field=@nameof(BOM품목정보현황.품목구분명) HeaderText="품목구분" Width="80" AllowAdding="false" AllowEditing="false" />
+                        <GridColumn Field=@nameof(BOM품목정보현황.품목명) HeaderText="품목명" Width="120" AllowAdding="false" AllowEditing="false" />
+                        <GridColumn Field=@nameof(BOM품목정보현황.규격) HeaderText="규격" Width="80" AllowAdding="false" AllowEditing="false" />
+                        <GridColumn Field=@nameof(BOM품목정보현황.단위명) HeaderText="단위" Width="80" AllowAdding="false" AllowEditing="false" />
+
+                        @*<GridColumn Field=@nameof(품목정보.품목구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.품목구분코드)) HeaderText="품목구분" />
+                            <GridColumn Field="품목구분.코드명" Width="100" AllowEditing="false" AllowAdding="false" HeaderText="품목구분">
+                                <EditTemplate></EditTemplate>
+                            </GridColumn>*@
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+        <SplitterPane Size="50%" Collapsible="true">
+            <FGrid @ref="grid2" DataSource="@list2" PageSize="20" TValue="BOM품목정보상세" DefaultMode="true" EditMode="DGridEditMode.All"
+                   OnActionComplete="OnActionComplete">
+                <GridColumns>
+                    @*<GridColumn Field=@nameof(BOM품목정보상세.품목코드) HeaderText="품목코드" Width="100" IsPrimaryKey="true" AllowAdding="false" AllowEditing="false" />*@
+                    <GridColumn Field=@nameof(BOM품목정보상세.품목코드) Width="100" IsPrimaryKey="true">
+                        <Template>
+                            @((context as BOM품목정보상세).품목.품목코드)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as BOM품목정보상세; }
+                            <DInputSearch Placeholder="품목명" Target="#root" DialogHeader="BOM 상세조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@((context as BOM품목정보상세).품목) CodeField="품목코드" @bind-Code=@(info.품목코드)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.원자재부품Popup 반제품포함유무="true" />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field=@nameof(BOM품목정보상세.BOM품목정보코드) HeaderText="BOM품목정보코드" Visible="false" />
+                    <GridColumn Field=품목.품목명 HeaderText="품명" Width="200" AllowEditing="false" AllowAdding="false">
+                    </GridColumn>
+                    <GridColumn Field=품목.품목구분코드 HeaderText="품목구분코드" Width="0" Visible="false" />
+                    <GridColumn Field="품목.품목구분.코드명" Width="100" AllowEditing="false" AllowAdding="false" HeaderText="품목구분">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    @*<GridColumn Field=@nameof(품목정보.품목구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.품목구분코드)) HeaderText="품목구분" />*@
+                    @*<GridColumn Field="품목구분.코드명" Width="100" AllowEditing="false" AllowAdding="false" HeaderText="품목구분">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>*@
+                    @*<GridColumn Field=@nameof(BOM품목정보상세.정미수량) Format="G29" HeaderText="정미수량" Width="80" />*@
+                    <GridColumn Field=@nameof(BOM품목정보상세.필요수량) Format="G29" HeaderText="필요수량" Width="80" />
+                    @*<GridColumn Field=@nameof(BOM품목정보상세.로스율) HeaderText="로스율" Width="80" />*@
+
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    //private SfTreeGrid<BOM정보> grid;
+    private FGrid<BOM품목정보현황> grid;
+    private ObservableCollection<BOM품목정보현황> list;
+    private BOM품목정보현황 selectedRow;
+
+    private FGrid<BOM품목정보상세> grid2;
+    private ObservableCollection<BOM품목정보상세> list2 = new ObservableCollection<BOM품목정보상세>();
+
+
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.기준정보.BOM품목정보_조회();
+
+
+    
+        //ModifyList(result, (x, map) =>
+        //{
+        //    if (x.품목.품목구분코드 != null)
+        //        x.품목.품목구분 = map[x.품목.품목구분코드];
+        //});
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task RefreshAsync2()
+    {
+
+        //list2?.Clear();
+        //var result = await Remote.Command.기준정보.BOM품목정보상세_조회(selectedRow.BOM품목정보코드, "");
+        ////ModifyList(result, (x, map) =>
+        ////{
+        ////    if (x.품목.품목구분코드 != null)
+        ////        x.품목.품목구분 = map[x.품목.품목구분코드];
+        ////});
+
+        //list2 = result.ToObservableCollection();
+        //StateHasChanged();
+    }
+
+    async Task Refresh(string BOM품목정보코드)
+    {
+
+        var result = await Remote.Command.기준정보.BOM품목정보상세_조회(selectedRow.BOM품목정보코드, "");
+        ModifyList(result, (x, map) =>
+        {
+            if (x.품목.품목구분코드 != null)
+                x.품목.품목구분 = map[x.품목.품목구분코드];
+        });
+
+        list2 = result.ToObservableCollection();
+        StateHasChanged();
+    }
+
+
+
+    private async void OnRowSelected(RowSelectEventArgs<BOM품목정보현황> args)
+    {
+        selectedRow = args.Data;
+
+        //list2?.Clear();
+        string BOM품목정보코드 = selectedRow.BOM품목정보코드;
+
+        var result = await Remote.Command.기준정보.BOM품목정보상세_조회(BOM품목정보코드, "");
+
+
+
+
+        ModifyList(result, (x, map) =>
+        {
+            if (x.품목.품목구분코드 != null)
+                x.품목.품목구분 = map[x.품목.품목구분코드];
+        });
+
+        list2 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<BOM품목정보현황> args)
+    {
+        // 추가 시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+
+            var newRow = args.Data;
+            await Remote.Command.기준정보.BOM품목정보_삭제(newRow);
+
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+
+            await Remote.Command.기준정보.BOM품목정보_저장(newRow, args.Action == "Add" ? true : false);
+
+
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+
+    private async Task OnActionComplete(ActionEventArgs<BOM품목정보상세> args)
+    {
+        // 추가 시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            var newRow = args.Data;
+            await Remote.Command.기준정보.BOM품목정보상세_삭제(newRow);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+
+            if (selectedRow == null)
+            {
+                NotifyMessage(Message.BOM품목코드선택Message);
+                return;
+
+            }
+            newRow.BOM품목정보코드 = selectedRow.BOM품목정보코드;
+
+            await Remote.Command.기준정보.BOM품목정보상세_저장(newRow, args.Action == "Add" ? true : false);
+            await Task.Delay(500);
+            await Refresh(newRow.BOM품목정보코드);
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+
+    //private async Task OnActionComplete(ActionEventArgs<메뉴정보> e)
+    //{
+    //    // 버그로 보완
+    //    if (e.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+    //    {
+    //        addSelected = selected;
+    //    }
+    //    else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+    //    {
+    //        var row = e.Data;
+
+    //        // 선택한 경우 그 하위로 값을 설정한다.
+    //        if (e.Action == "Add")
+    //        {
+    //            if (addSelected != null)
+    //            {
+    //                row.상위메뉴순번 = addSelected.순번;
+    //                row.정렬순번 = list.Where(x => x.상위메뉴순번 == addSelected.순번).DefaultIfEmpty().Max(x => x?.정렬순번 ?? 0) + 1;
+    //                row.뎁스 = addSelected.뎁스 + 1;
+    //            }
+    //            // 선택하지 않은 경우 최상위로 값을 설정한다.
+    //            else
+    //            {
+    //                row.상위메뉴순번 = null;
+    //                row.정렬순번 = list.Where(x => x.상위메뉴순번 == null).DefaultIfEmpty().Max(x => x?.정렬순번 ?? 0) + 1;
+    //                row.뎁스 = 1;
+    //            }
+    //        }
+
+    //        await Remote.Command.시스템.메뉴_저장(row, e.Action == "Add" ? true : false);
+    //        await RefreshAsync();
+
+    //        NotifyMessage(e.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+
+    //    }
+    //    else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+    //    {
+    //        await Remote.Command.시스템.메뉴_삭제(e.Data, false);
+
+    //        NotifyMessage(Message.ModifiedDeleteData);
+    //    }
+    //}
+
+    protected override void OnDispose()
+    {
+    }
+}

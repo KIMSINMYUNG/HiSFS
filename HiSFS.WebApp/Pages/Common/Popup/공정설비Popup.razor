@@ -1,0 +1,64 @@
+﻿@page "/popup/공정설비"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="보유품목정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected">
+    <GridColumns>
+        <GridColumn Field=@nameof(보유품목정보.보유품목코드) Visible="false" />
+        <GridColumn Field=@nameof(보유품목정보.보유명) Width="220" HeaderText="설비" />
+        <GridColumn Field="품목.품목명" Width="160" HeaderText="모델" />
+        <GridColumn Field="장소.장소명" Width="120" HeaderText="장소" />
+        <GridColumn Field="장소위치.위치명" Width="120" HeaderText="위치" />
+    </GridColumns>
+</FGrid>
+
+@code {
+    private FGrid<보유품목정보> grid;
+    private ObservableCollection<보유품목정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<보유품목정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<보유품목정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private async Task RefreshAsync()
+    {
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.설비현황_조회(회사코드 , true);
+        ModifyList(result, (x, map) =>
+        {
+            //if (x.품목구분코드 != null)
+            //    x.품목구분 = map[x.품목구분코드];
+            //if (x.조달구분코드 != null)
+            //    x.조달구분 = map[x.조달구분코드];
+            //if (x.단위코드 != null)
+            //    x.단위 = map[x.단위코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<보유품목정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

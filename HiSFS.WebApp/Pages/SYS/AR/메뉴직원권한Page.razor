@@ -1,0 +1,286 @@
+﻿@inherits CustomComponent
+
+@page "/SYS/AR/메뉴직원권한"
+
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="40%" Collapsible="true">
+            <FGrid @ref=@(dgrid) DataSource=@(직원목록) TValue="직원정보" DefaultMode="true"
+                   OnCreated="직원갱신async" OnRowSelected="On직원선택">
+                <GridColumns>
+                    <GridColumn Field=@nameof(직원정보.사번) Width="120" />
+                    <GridColumn Field=@nameof(직원정보.사용자명) Width="120" HeaderText="직원명" />
+                    <GridColumn Field="부서.부서명" Width="120" HeaderText="부서명" />
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+        <SplitterPane Size="60%" Collapsible="true">
+            <div class="row mt-2 mx-2">
+                <div class="col section-header mr-auto">
+                    <span class="my-auto">메뉴권한</span>
+                </div>
+                <div class="col-auto">
+                    <SfButton IsPrimary="true" OnClick="On메뉴권한저장">저장</SfButton>
+                </div>
+            </div>
+            <div class="row">
+                <SfTreeGrid DataSource=@(메뉴목록) IdMapping="순번" ParentIdMapping="상위메뉴순번" TreeColumnIndex="1" AllowPaging="false" TValue="메뉴정보">
+                    <TreeGridColumns>
+                        <TreeGridColumn Field=@nameof(메뉴정보.순번) Visible="false" />
+                        <TreeGridColumn Field=@nameof(메뉴정보.메뉴명) Width="160" AllowEditing="false" />
+
+                        <TreeGridColumn Field="메뉴부서권한.읽기권한" Width="60" HeaderText="부서 읽기">
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox @bind-Checked=@(info.메뉴부서권한.읽기권한) Disabled="true" />
+                            </Template>
+                        </TreeGridColumn>
+
+                        <TreeGridColumn Field="메뉴직원권한.읽기권한" Width="60">
+                            <HeaderTemplate>
+                                <SfCheckBox Label="읽기" TChecked="bool?" @bind-Checked="읽기전체" EnableTriState="true" Indeterminate="false" />
+                            </HeaderTemplate>
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox TChecked="bool?" @bind-Checked=@(info.메뉴직원권한.읽기권한) EnableTriState="true" Indeterminate="false" />
+                            </Template>
+                        </TreeGridColumn>
+
+                        <TreeGridColumn Field="메뉴부서권한.등록권한" Width="60" HeaderText="부서 등록">
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox @bind-Checked=@(info.메뉴부서권한.등록권한) Disabled="true" />
+                            </Template>
+                        </TreeGridColumn>
+
+                        <TreeGridColumn Field="메뉴직원권한.등록권한" Width="60">
+                            <HeaderTemplate>
+                                <SfCheckBox Label="등록" TChecked="bool?" @bind-Checked="등록전체" EnableTriState="true" Indeterminate="false" />
+                            </HeaderTemplate>
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox TChecked="bool?" @bind-Checked=@(info.메뉴직원권한.등록권한) EnableTriState="true" Indeterminate="false" />
+                            </Template>
+                        </TreeGridColumn>
+
+                        <TreeGridColumn Field="메뉴부서권한.변경권한" Width="60" HeaderText="부서 변경">
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox @bind-Checked=@(info.메뉴부서권한.변경권한) Disabled="true" />
+                            </Template>
+                        </TreeGridColumn>
+
+                        <TreeGridColumn Field="메뉴직원권한.변경권한" Width="60">
+                            <HeaderTemplate>
+                                <SfCheckBox Label="변경" TChecked="bool?" @bind-Checked="변경전체" EnableTriState="true" Indeterminate="false" />
+                            </HeaderTemplate>
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox TChecked="bool?" @bind-Checked=@(info.메뉴직원권한.변경권한) EnableTriState="true" Indeterminate="false" />
+                            </Template>
+                        </TreeGridColumn>
+
+                        <TreeGridColumn Field="메뉴부서권한.삭제권한" Width="60" HeaderText="부서 삭제">
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox @bind-Checked=@(info.메뉴부서권한.삭제권한) Disabled="true" />
+                            </Template>
+                        </TreeGridColumn>
+
+                        <TreeGridColumn Field="메뉴직원권한.삭제권한" Width="60">
+                            <HeaderTemplate>
+                                <SfCheckBox Label="삭제" TChecked="bool?" @bind-Checked="삭제전체" EnableTriState="true" Indeterminate="false" />
+                            </HeaderTemplate>
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox TChecked="bool?" @bind-Checked=@(info.메뉴직원권한.삭제권한) EnableTriState="true" Indeterminate="false" />
+                            </Template>
+                        </TreeGridColumn>
+                    </TreeGridColumns>
+
+                    @*<TreeGridEditSettings AllowAdding="false" AllowEditing="true" AllowDeleting="false" Mode="Syncfusion.Blazor.TreeGrid.EditMode.Row" />*@
+                    <TreeGridSelectionSettings EnableToggle="false" />
+                </SfTreeGrid>
+            </div>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    /*
+        왼쪽에 직원 트리 표현, 오른쪽에 전 메뉴 표현, 읽기/등록/변경/삭제 체크박스 표시
+    */
+
+    private FGrid<직원정보> dgrid;
+    private ObservableCollection<직원정보> 직원목록;
+    private 직원정보 직원선택;
+
+
+    //private SfTreeGrid<메뉴정보> grid;
+    private ObservableCollection<메뉴정보> 메뉴목록;
+
+    private bool? _읽기전체;
+    private bool? 읽기전체
+    {
+        get => _읽기전체;
+        set
+        {
+            _읽기전체 = value;
+
+            if (메뉴목록 != null)
+            {
+                foreach (var item in 메뉴목록)
+                {
+                    var auth = item.메뉴직원권한;
+                    if (auth == null)
+                        continue;
+
+                    auth.읽기권한 = value;
+                }
+            }
+        }
+    }
+    private bool? _등록전체;
+    private bool? 등록전체
+    {
+        get => _등록전체;
+        set
+        {
+            _등록전체 = value;
+
+            if (메뉴목록 != null)
+            {
+                foreach (var item in 메뉴목록)
+                {
+                    var auth = item.메뉴직원권한;
+                    if (auth == null)
+                        continue;
+
+                    auth.등록권한 = value;
+                }
+            }
+        }
+    }
+    private bool? _변경전체;
+    private bool? 변경전체
+    {
+        get => _변경전체;
+        set
+        {
+            _변경전체 = value;
+
+            if (메뉴목록 != null)
+            {
+                foreach (var item in 메뉴목록)
+                {
+                    var auth = item.메뉴직원권한;
+                    if (auth == null)
+                        continue;
+
+                    auth.변경권한 = value;
+                }
+            }
+        }
+    }
+    private bool? _삭제전체;
+    private bool? 삭제전체
+    {
+        get => _삭제전체;
+        set
+        {
+            if (_삭제전체 == value)
+                return;
+            _삭제전체 = value;
+
+            if (메뉴목록 != null)
+            {
+                foreach (var item in 메뉴목록)
+                {
+                    var auth = item.메뉴직원권한;
+                    if (auth == null)
+                        continue;
+
+                    auth.삭제권한 = value;
+                }
+            }
+        }
+    }
+
+
+    private async Task OnCreatedTreeView(object e)
+    {
+        await 직원갱신async();
+    }
+
+    private async Task On직원선택(RowSelectEventArgs<직원정보> e)
+    {
+        직원선택 = e.Data;
+
+        _읽기전체 = false;
+        _등록전체 = false;
+        _변경전체 = false;
+        _삭제전체 = false;
+
+        await 메뉴권한async();
+    }
+
+    private string 회사코드 = "";
+    private async Task 직원갱신async()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.직원_조회(true , 회사코드);
+        직원목록 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task 메뉴권한async()
+    {
+        var result = await Remote.Command.시스템.메뉴직원권한_조회(직원선택.사번);
+        ModifyList(result, (info, map) =>
+        {
+            info.메뉴부서권한 ??= new 메뉴부서권한정보
+            {
+                메뉴순번 = info.순번,
+                부서코드 = 직원선택.부서코드
+            };
+
+            info.메뉴직원권한 ??= new 메뉴직원권한정보
+            {
+                메뉴순번 = info.순번,
+                직원사번 = 직원선택.사번
+            };
+        });
+
+        메뉴목록 = result.ToObservableCollection();
+        StateHasChanged();
+    }
+
+    private async Task On메뉴권한저장()
+    {
+        var list = 메뉴목록.Select(x => x.메뉴직원권한);
+        foreach (var item in list)
+        {
+            if (item.읽기권한 == false)
+                item.읽기권한 = null;
+            if (item.등록권한 == false)
+                item.등록권한 = null;
+            if (item.변경권한 == false)
+                item.변경권한 = null;
+            if (item.삭제권한 == false)
+                item.삭제권한 = null;
+        }
+
+        var bResult = await CheckAndModify(() => Remote.Command.시스템.메뉴직원권한_저장(list));
+        if (bResult == false)
+            return;
+
+        NotifyMessage(Message.ModifiedUpdateData);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

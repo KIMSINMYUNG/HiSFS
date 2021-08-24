@@ -1,0 +1,272 @@
+﻿@page "/mdm/mtr/발주관리"
+@inherits CustomComponent
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="40%" Collapsible="true">
+            <FGrid @ref="grid" DataSource="@list" TValue="발주정보" DefaultMode="true" EditMode="DGridEditMode.All"
+                   OnCreated="RefreshAsync" OnRowSelected="OnGrid1RowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                <GridColumns>
+                    <GridColumn Field=@nameof(발주정보.발주순번) HeaderText="순번" Width="80" IsPrimaryKey="true" />
+                    <GridColumn Field=@nameof(발주정보.발주서명) Width="260" HeaderText="발주서명칭" />
+                    <GridColumn Field=@nameof(발주정보.거래처코드) Visible="false" />
+                    <GridColumn Field="거래처코드" Width="0">
+                        <Template>
+                            @((context as 발주정보).거래처?.거래처명)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 발주정보; }
+                            <DInputSearch ID="거래처코드" Placeholder="거래처" Target="#root" DialogHeader="거래처 조회" TValue="거래처정보" TCode="string" TextField="거래처명" @bind-Value=@((context as 발주정보).거래처) CodeField="거래처코드" @bind-Code=@(info.거래처코드)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.거래처Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="거래처.거래처명" HeaderText="거래처명" Width="120">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field="발주상태코드" HeaderText="발주상태" Width="120" EditType="EditType.DropDownEdit">
+                        <EditTemplate>
+                            <SfDropDownList ID="ddl발주상태" Placeholder="발주상태" TItem="string" Enabled="@Enabled" TValue="string" @bind-Value="@((context as 발주정보).발주상태코드)" DataSource="@listState">
+                                <DropDownListFieldSettings Text="입고" Value="입고"></DropDownListFieldSettings>
+                                <DropDownListFieldSettings Text="지연" Value="지연"></DropDownListFieldSettings>
+                                <DropDownListFieldSettings Text="진행중" Value="진행중"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(발주정보.발주일시) Width="120" Format="yyyy/MM/dd" HeaderText="발주일" />
+                    <GridColumn Field=@nameof(발주정보.입고예정일시) Width="120" Format="yyyy/MM/dd" HeaderText="입고일" />
+                    <GridColumn Field=@nameof(발주정보.비고) Width="240" HeaderText="비고" />
+
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+        <SplitterPane Size="60%" Collapsible="true">
+            <div class="row section-header">
+                <span class="my-auto">발주상세</span>
+            </div>
+            <FGrid @ref="grid2" DataSource="@list2" TValue="발주정보상세" DefaultMode="true" EditMode="DGridEditMode.All"
+                  OnCreated="RefreshAsync2"  OnActionComplete="OnActionComplete" OnActionBegin="OnActionBegin" OnCheckAuth="CheckAuth" >
+                <GridColumns>
+                    <GridColumn Field=@nameof(발주정보상세.No) AllowEditing="false" AllowAdding="false" HeaderText="순번" Width="50" />
+                    <GridColumn Field=@nameof(발주정보상세.품목코드) Width="160" AllowEditing="false" IsPrimaryKey="true">
+                        <EditTemplate>
+                            @{ var info = context as 발주정보상세; }
+                            <DInputSearch Placeholder="품목코드" Target="#root" DialogHeader="품목 조회" TValue="품목정보" TCode="string" TextField="품목코드" @bind-Value=@((context as 발주정보상세).품목) CodeField="품목코드" @bind-Code=@(info.품목코드)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.품목Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=품목.품목명 AllowEditing="false" AllowAdding="false" HeaderText="품목명" Width="200" />
+
+                    @*<GridColumn Field=@nameof(발주정보상세.품목구분코드) Format="G29" HeaderText="변경수량" Width="100" />*@
+                    <GridColumn Field="품목.품목구분.코드명" Width="100" AllowEditing="false" AllowAdding="false" HeaderText="품목구분">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="품목.규격" Width="140" AllowEditing="false" AllowAdding="false" HeaderText="규격" />
+
+                    <GridColumn Field=@nameof(발주정보상세.발주수량) Format="G29" HeaderText="발주수량" Width="100" />
+                    <GridColumn Field=@nameof(발주정보상세.입고수량) Format="G29" HeaderText="입고수량" Width="100" />
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<발주정보> grid;
+    private ObservableCollection<발주정보> list;
+
+    private FGrid<발주정보상세> grid2;
+    private ObservableCollection<발주정보상세> list2 = new ObservableCollection<발주정보상세>();
+
+    private 발주정보 selectedRow;
+
+    private int 발주순번 { get; set; }
+
+    public bool Enabled = true;
+
+    public List<string> listState = new List<string>() { "입고", "입고지연", "진행중" };
+
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.기준정보.발주정보_조회();
+
+
+        ModifyList(result, (x, map) =>
+        {
+            //if (x.거래처코드 != null)
+            //    x.거래처. = map[x.거래처코드];
+        });
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task RefreshAsync2()
+    {
+        var result2 = await Remote.Command.기준정보.발주정보상세_조회(발주순번);
+
+        ModifyList(result2, (x, map) =>
+        {
+            if (x.품목.품목구분코드 != null)
+                x.품목.품목구분 = map[x.품목.품목구분코드];
+        });
+        list2.Clear();
+        if (result2 == null)
+            return;
+        list2 = result2.ToObservableCollection();
+
+
+        StateHasChanged();
+    }
+
+
+    //string state;
+
+    private async Task OnGrid1RowSelected(RowSelectEventArgs<발주정보> args)
+    {
+        selectedRow = args.Data;
+        if (selectedRow == null)
+            return;
+
+        //list2?.Clear();
+        발주순번 = selectedRow.발주순번;
+
+        var result2 = await Remote.Command.기준정보.발주정보상세_조회(발주순번);
+
+        ModifyList(result2, (x, map) =>
+        {
+            if (x.품목.품목구분코드 != null)
+                x.품목.품목구분 = map[x.품목.품목구분코드];
+        });
+        list2.Clear();
+        if (result2 == null)
+            return;
+        list2 = result2.ToObservableCollection();
+
+
+        StateHasChanged();
+    }
+
+    private void OnRowDataBound(RowDataBoundEventArgs<발주정보> args)
+    {
+        if (args.Data.사용유무 == true)
+            return;
+
+        args.Row.AddStyle(new[] { "background-color: #444422;" });
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<발주정보> args)
+    {
+        // 추가시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.사용유무 = false;    // 최초 확정 상태가 아님
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.기준정보.발주정보_삭제(args.Data, false);
+            await RefreshAsync();
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+
+
+            await Remote.Command.기준정보.발주정보_저장(newRow, args.Action == "Add" ? true : false);
+            if (args.Action == "Add")
+                await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private Task OnActionBegin(ActionEventArgs<발주정보상세> args)
+    {
+        // 추가시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            if (selectedRow == default)
+            {
+                args.Cancel = true;
+
+                return Task.CompletedTask;
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<발주정보상세> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+
+            //var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+
+            var newRow = args.Data;
+            newRow.발주순번 = selectedRow.발주순번;
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.기준정보.발주정보상세_삭제(args.Data, false);
+
+
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+
+            newRow.발주순번 = selectedRow.발주순번;
+            try
+            {
+                await Remote.Command.기준정보.발주정보상세_저장(newRow, args.Action == "Add" ? true : false);
+
+                NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+            }
+            catch(Exception ex)
+            {
+                NotifyMessage(Message.InputErrMesage);
+            }
+            finally
+            {
+                if (args.Action == "Add")
+                    await RefreshAsync2();
+
+            }
+
+
+
+        }
+    }
+
+
+    protected override void OnDispose()
+    {
+
+    }
+}

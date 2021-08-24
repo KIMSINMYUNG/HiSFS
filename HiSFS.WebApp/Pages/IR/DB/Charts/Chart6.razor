@@ -1,0 +1,35 @@
+﻿<SfBulletChart DataSource="@LocalChartData" ValueField="CompletedStories" TargetField="RequiredStories" CategoryField="Name" ValueFill="#304560" Height="400"
+               TargetColor="#304560" Minimum="5" Maximum="45" Interval="5" Title="공정별 생산수량" Subtitle="" TitlePosition="Syncfusion.Blazor.Charts.TextPosition.Top" Theme="ChartTheme.MaterialDark">
+    <BulletChartAnimation Enable="false"></BulletChartAnimation>
+    <BulletChartTooltip Enable="true"></BulletChartTooltip>
+    <BulletChartMinorTickLines Width="0"></BulletChartMinorTickLines>
+    <BulletChartRangeCollection>
+        <BulletChartRange End="25" Opacity="1" Color="#DBE7F3"> </BulletChartRange>
+        <BulletChartRange End="37" Opacity="1" Color="#BBCEE7"></BulletChartRange>
+        <BulletChartRange End="45" Opacity="1" Color="#96B2D7"></BulletChartRange>
+    </BulletChartRangeCollection>
+    <BulletChartEvents Load="BeforeRender" />
+</SfBulletChart>
+
+@code{
+    public class BulletChartData
+    {
+        public double CompletedStories { get; set; }
+        public double RequiredStories { get; set; }
+        public string Name { get; set; }
+    }
+    public List<BulletChartData> LocalChartData = new List<BulletChartData>
+{
+        new BulletChartData { CompletedStories = 25, RequiredStories = 20, Name = "공정8" },
+        new BulletChartData { CompletedStories = 20, RequiredStories = 25, Name = "공정7" },
+        new BulletChartData { CompletedStories = 10, RequiredStories = 15, Name = "공정6" },
+        new BulletChartData { CompletedStories = 39, RequiredStories = 40, Name = "공정5" },
+        new BulletChartData { CompletedStories = 40, RequiredStories = 40, Name = "공정4" },
+        new BulletChartData { CompletedStories = 25, RequiredStories = 28, Name = "공정3" },
+        new BulletChartData { CompletedStories = 18, RequiredStories = 10, Name = "공정2" },
+        new BulletChartData { CompletedStories = 28, RequiredStories = 30, Name = "공정1" },
+    };
+    void BeforeRender(IBulletLoadedEventArgs Args)
+    {
+    }
+}

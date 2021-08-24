@@ -1,0 +1,299 @@
+﻿@page "/pm/pp/생산계획상세"
+@page "/pm/pp/생산계획상세/{Code}"
+
+@inherits CustomComponent
+
+@if (생산계획 != null)
+{
+    <CascadingValue Name="생산계획" Value=@(생산계획) TValue="생산계획정보">
+        <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top" @bind-SelectedItem=@(tabIndex)>
+            <TabEvents Selecting="Select" />
+
+            <TabItems>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="전체보기" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="row my-2 ml-2">
+                            <div class="col mr-auto">
+                                <SfButton IsPrimary="true" OnClick="OnConfirm">
+                                    @if (생산계획.사용유무 == false)
+                                    {
+                                        <span>확정</span>
+                                    }
+                                    else
+                                    {
+                                        <span>확정 취소</span>
+                                    }
+                                </SfButton>
+                            </div>
+                            <div class="col mr-auto">
+                            </div>
+                            <div class="col col-auto my-auto mr-2">
+                                <SfButton OnClick="OnSave">저장</SfButton>
+                            </div>
+                        </div>
+                        <CascadingValue Name="보기모드" Value="true" TValue="bool">
+                            <div class="row my-2">
+                                <HiSFS.WebApp.Pages.PM.PP.공통.단락 제목="기본정보">
+                                    <HiSFS.WebApp.Pages.PM.PP.상세.기본정보 />
+                                </HiSFS.WebApp.Pages.PM.PP.공통.단락>
+                            </div>
+                            <div class="row my-2">
+                                <HiSFS.WebApp.Pages.PM.PP.공통.단락 제목="영업">
+                                    <HiSFS.WebApp.Pages.PM.PP.상세.영업 />
+                                </HiSFS.WebApp.Pages.PM.PP.공통.단락>
+                            </div>
+                            <div class="row my-2">
+                                <HiSFS.WebApp.Pages.PM.PP.공통.단락 제목="연구소">
+                                    <HiSFS.WebApp.Pages.PM.PP.상세.연구소 />
+                                </HiSFS.WebApp.Pages.PM.PP.공통.단락>
+                            </div>
+                            <div class="row my-2">
+                                <HiSFS.WebApp.Pages.PM.PP.공통.단락 제목="구매">
+                                    <HiSFS.WebApp.Pages.PM.PP.상세.구매 />
+                                </HiSFS.WebApp.Pages.PM.PP.공통.단락>
+                            </div>
+                            <div class="row my-2">
+                                <HiSFS.WebApp.Pages.PM.PP.공통.단락 제목="생산">
+                                    <HiSFS.WebApp.Pages.PM.PP.상세.생산 />
+                                </HiSFS.WebApp.Pages.PM.PP.공통.단락>
+                            </div>
+                            <div class="row my-2">
+                                <HiSFS.WebApp.Pages.PM.PP.공통.단락 제목="품질">
+                                    <HiSFS.WebApp.Pages.PM.PP.상세.품질 />
+                                </HiSFS.WebApp.Pages.PM.PP.공통.단락>
+                            </div>
+                            <div class="row my-2">
+                                <HiSFS.WebApp.Pages.PM.PP.공통.단락 제목="생산관리">
+                                    <HiSFS.WebApp.Pages.PM.PP.상세.생산관리 />
+                                </HiSFS.WebApp.Pages.PM.PP.공통.단락>
+                            </div>
+                        </CascadingValue>
+                    </ContentTemplate>
+                </TabItem>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="기본정보" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+                                <div class="col mr-auto"></div>
+                                <div class="col-auto my-auto mr-2">
+                                    <SfButton OnClick="OnSave">저장</SfButton>
+                                </div>
+                            </div>
+                            <CascadingValue Name="보기모드" Value=@(생산계획.사용유무) TValue="bool">
+                                <HiSFS.WebApp.Pages.PM.PP.상세.기본정보 />
+                            </CascadingValue>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="영업" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+                                <div class="col mr-auto"></div>
+                                <div class="col-auto my-auto mr-2">
+                                    <SfButton OnClick="OnSave">저장</SfButton>
+                                </div>
+                            </div>
+                            <CascadingValue Name="보기모드" Value=@(생산계획.사용유무) TValue="bool">
+                                <HiSFS.WebApp.Pages.PM.PP.상세.영업 />
+                            </CascadingValue>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="연구소" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+                                <div class="col mr-auto"></div>
+                                <div class="col-auto my-auto mr-2">
+                                    <SfButton OnClick="OnSave">저장</SfButton>
+                                </div>
+                            </div>
+                            <CascadingValue Name="보기모드" Value=@(생산계획.사용유무) TValue="bool">
+                                <HiSFS.WebApp.Pages.PM.PP.상세.연구소 />
+                            </CascadingValue>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="구매" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+                                <div class="col mr-auto"></div>
+                                <div class="col-auto my-auto mr-2">
+                                    <SfButton OnClick="OnSave">저장</SfButton>
+                                </div>
+                                <div class="col col-auto my-auto">
+                                </div>
+                            </div>
+                            <CascadingValue Name="보기모드" Value=@(생산계획.사용유무) TValue="bool">
+                                <HiSFS.WebApp.Pages.PM.PP.상세.구매 />
+                            </CascadingValue>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="생산" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+                                <div class="col mr-auto"></div>
+                                <div class="col-auto my-auto mr-2">
+                                    <SfButton OnClick="OnSave">저장</SfButton>
+                                </div>
+                            </div>
+                            <CascadingValue Name="보기모드" Value=@(생산계획.사용유무) TValue="bool">
+                                <HiSFS.WebApp.Pages.PM.PP.상세.생산 />
+                            </CascadingValue>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="품질" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+                                <div class="col mr-auto"></div>
+                                <div class="col-auto my-auto mr-2">
+                                    <SfButton OnClick="OnSave">저장</SfButton>
+                                </div>
+                            </div>
+                            <CascadingValue Name="보기모드" Value=@(생산계획.사용유무) TValue="bool">
+                                <HiSFS.WebApp.Pages.PM.PP.상세.품질 />
+                            </CascadingValue>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="생산관리" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+                                <div class="col mr-auto"></div>
+                                <div class="col-auto my-auto mr-2">
+                                    <SfButton OnClick="OnSave">저장</SfButton>
+                                </div>
+                            </div>
+                            <CascadingValue Name="보기모드" Value=@(생산계획.사용유무) TValue="bool">
+                                <HiSFS.WebApp.Pages.PM.PP.상세.생산관리 />
+                            </CascadingValue>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+            </TabItems>
+
+            <TabAnimationSettings>
+                <TabAnimationPrevious Effect="AnimationEffect.None" />
+                <TabAnimationNext Effect="AnimationEffect.None" />
+            </TabAnimationSettings>
+        </SfTab>
+    </CascadingValue>
+}
+
+
+@code
+{
+    [Parameter]
+    public string Code { get; set; }
+
+    private 생산계획정보 생산계획;
+    private int tabIndex = 0;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Remote.WaitForReadyRemoteService();
+        await RefreshAsync();
+    }
+
+    //protected override async Task OnReadyRemoteServiceAsync(bool isReady)
+    //{
+    //    if (isReady == false)
+    //        return;
+    //}
+
+    private string 회사코드 = "";
+    private async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        생산계획 = null;
+        StateHasChanged();
+
+        if (Code == null)
+            Code = (Params as 생산계획정보).생산계획코드;
+        생산계획 = await Remote.Command.생산관리.생산계획상세_조회(Code , 회사코드);
+        생산계획.생산계획기본 ??= new 생산계획기본정보();
+        생산계획.생산계획영업 ??= new 생산계획영업정보();
+        생산계획.생산계획연구소 ??= new 생산계획연구소정보();
+        생산계획.생산계획구매 ??= new 생산계획구매정보();
+        생산계획.생산계획생산 ??= new 생산계획생산정보();
+        생산계획.생산계획품질 ??= new 생산계획품질정보();
+        생산계획.생산계획생산관리 ??= new 생산계획생산관리정보();
+
+        StateHasChanged();
+    }
+
+    protected override void OnDispose()
+    {
+    }
+
+    private async Task OnSave()
+    {
+        var c = await CheckAndModify(() => Remote.Command.생산관리.생산계획상세_저장(생산계획));
+        if (c == false)
+            return;
+
+        var ti = tabIndex;
+
+        await RefreshAsync();
+
+        tabIndex = ti;
+
+        NotifyMessage(Message.ModifiedUpdateData);
+    }
+
+    private async Task OnConfirm()
+    {
+        생산계획.사용유무 = !생산계획.사용유무;
+
+        await Remote.Command.생산관리.생산계획상세_저장(생산계획);
+
+        var ti = tabIndex;
+
+        await RefreshAsync();
+
+        tabIndex = ti;
+
+        NotifyMessage(Message.ModifiedUpdateData);
+    }
+
+    public void Select(SelectingEventArgs args)
+    {
+        if (args.IsSwiped)
+        {
+            args.Cancel = true;
+        }
+    }
+}

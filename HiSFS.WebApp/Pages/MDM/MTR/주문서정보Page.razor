@@ -1,0 +1,222 @@
+﻿@page  "/mdm/mtr/주문서정보"
+@inherits CustomComponent
+@*주문서헤더정보*@
+<SfSplitter Width="100%" Height="50%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Collapsible="true">
+            <FGrid @ref="grid" DataSource="@list" TValue="주문서헤더정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="15"
+                   OnRowSelected="OnRowSelected" OnCreated="RefreshAsync">
+                <GridColumns>
+                    <GridColumn Field=@nameof(주문서헤더정보.회사코드) HeaderText="회사코드" Width="110" />
+                    <GridColumn Field=@nameof(주문서헤더정보.주문번호) HeaderText="주문번호" Width="200" />
+                    <GridColumn Field=@nameof(주문서정보.주문일자) HeaderText="주문일자" Width="120" />
+                    <GridColumn Field=@nameof(주문서정보.고객명) HeaderText="고객명" Width="150" />
+                    <GridColumn Field=@nameof(주문서정보.과세구분명) HeaderText="과세구분명" Width="150" />
+                    <GridColumn Field=@nameof(주문서정보.납품처명) HeaderText="납품처명" Width="150" />
+                    <GridColumn Field=@nameof(주문서정보.담당자명) HeaderText="담당자명" Width="110" />
+
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+
+<SfSplitter Width="100%" Height="50%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="80%" Collapsible="true">
+            <FGrid @ref="grid2" DataSource="@list2" TValue="주문서정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="15"
+                   OnRowSelected="OnRowSelected2" OnCreated="RefreshAsync2">
+                <GridColumns>
+                    <GridColumn Field=@nameof(주문서정보.회사코드) HeaderText="회사코드" Width="110" />
+                    <GridColumn Field=@nameof(주문서정보.주문번호) HeaderText="주문번호" Width="200" />
+                    <GridColumn Field=@nameof(주문서정보.주문일자) HeaderText="주문일자" Width="120" />
+                    <GridColumn Field=@nameof(주문서정보.납기일) HeaderText="납기일" Width="120" />
+                    <GridColumn Field=@nameof(주문서정보.출하예정일) HeaderText="출하예정일" Width="120" />
+                    <GridColumn Field=@nameof(주문서정보.고객코드) HeaderText="고객코드" Width="110" />
+                    <GridColumn Field=@nameof(주문서정보.고객명) HeaderText="고객명" Width="150" />
+                    @*<GridColumn Field=@nameof(주문서정보.주문구분) HeaderText="주문구분" Width="100" />
+                        <GridColumn Field=@nameof(주문서정보.과세구분) HeaderText="과세구분" Width="100" />
+                        <GridColumn Field=@nameof(주문서정보.과세구분명) HeaderText="과세구분명" Width="150" />*@
+                    @*<GridColumn Field=@nameof(주문서정보.단가구분) HeaderText="단가구분" Width="100" />
+                        <GridColumn Field=@nameof(주문서정보.단가구분명) HeaderText="단가구분명" Width="150" />*@
+                    <GridColumn Field=@nameof(주문서정보.납품처명) HeaderText="납품처명" Width="150" />
+                    <GridColumn Field=@nameof(주문서정보.담당자명) HeaderText="담당자명" Width="110" />
+                    <GridColumn Field=@nameof(주문서정보.품목코드) HeaderText="품목코드" Width="150" />
+                    <GridColumn Field=@nameof(주문서정보.품목명) HeaderText="품목명" Width="200" />
+                    <GridColumn Field=@nameof(주문서정보.규격) HeaderText="규격" Width="150" />
+                    <GridColumn Field=@nameof(주문서정보.수량) HeaderText="수량" Width="100" />
+
+                    @*<GridColumn Field=@nameof(주문서정보.관리번호) HeaderText="관리번호" Width="110" />
+                        <GridColumn Field=@nameof(주문서정보.헤더비고) HeaderText="헤더비고" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.순번) HeaderText="순번" Width="110" />
+                        <GridColumn Field=@nameof(주문서정보.관리단위) HeaderText="관리단위" Width="100" />
+                        <GridColumn Field=@nameof(주문서정보.단가) HeaderText="단가" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.부가세단가) HeaderText="부가세단가" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.공급가) HeaderText="공급가" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.SOV_AM) HeaderText="부가세단가" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.합계액) HeaderText="합계액" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.관리구분명) HeaderText="관리구분명" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.프로젝트명) HeaderText="프로젝트명" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.디테일비고) HeaderText="디테일비고" Width="200" />
+                        <GridColumn Field=@nameof(주문서정보.마감여부) HeaderText="마감여부" Width="120" />
+                        <GridColumn Field=@nameof(주문서정보.검사구분) HeaderText="검사구분" Width="120" />
+                        <GridColumn Field=@nameof(주문서정보.환종) HeaderText="환종" Width="100" />
+
+                        <GridColumn Field=@nameof(주문서정보.납품처코드) HeaderText="납품처코드" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.사업장코드) HeaderText="사업장코드" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.부서코드) HeaderText="부서코드" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.사원코드) HeaderText="사원코드" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.담당자코드) HeaderText="담당자코드" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.관리구분코드) HeaderText="관리구분코드" Width="150" />
+                        <GridColumn Field=@nameof(주문서정보.프로젝트코드) HeaderText="프로젝트코드" Width="150" />*@
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+
+        <!--<SplitterPane Size="20%" Min="60px">
+            <ContentTemplate>
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col section-header mr-auto mt-2">
+                            <span class="my-auto">주문서(QR)</span>
+                        </div>
+                    </div>
+                    <div class="row" style="overflow-x:hidden">
+                        <div class="col">
+                            if (barcodeValue != null)
+                            {
+                                <div class="form-row mt-2">
+                                    <div class="form-group col text-center">
+                                        <SfQRCodeGenerator Width="300px" Height="150px" Value=@(barcodeValue)>-->
+        @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+        <!--</SfQRCodeGenerator>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col text-center">-->
+        @*<SfButton Disabled="true">재출력</SfButton>*@
+        <!--<SfButton OnClick="() => OnQRPrinteSerial(2) ">중</SfButton>-->
+        @*<SfButton OnClick="() => OnQRPrinteSerial(1) ">대</SfButton>
+            <SfButton OnClick="() => OnQRPrinteSerial(2) ">중</SfButton>
+            <SfButton OnClick="() => OnQRPrinteSerial(3) ">소</SfButton>*@
+        <!--</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </ContentTemplate>
+        </SplitterPane>-->
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    private FGrid<주문서헤더정보> grid;
+    private ObservableCollection<주문서헤더정보> list;
+    주문서헤더정보 주문서헤더정보Selected { get; set; }
+
+    private FGrid<주문서정보> grid2;
+    private ObservableCollection<주문서정보> list2;
+    주문서정보 주문서정보Selected { get; set; }
+
+    private string barcodeValue;
+    string 회사코드 = "";
+
+    string s_주문번호 = "";
+
+    //2021.04.30
+    public 주문서View T_주문서 { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        T_주문서 = new 주문서View();
+
+        var result = await Remote.Command.기준정보.VL_MES_SO_View(회사코드);
+
+        T_주문서.주문서헤더정보 = result;
+    }
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+
+        StateHasChanged();
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        T_주문서 = new 주문서View();
+
+        var result = await Remote.Command.기준정보.VL_MES_SO_View(회사코드);
+
+        T_주문서.주문서헤더정보 = result;
+
+        //var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        //주문서VIEW
+        //var result = await Remote.Command.기준정보.주문서헤더정보_조회(회사코드);
+        //list = result.ToObservableCollection();
+
+        //2021.04.30
+        list = T_주문서.주문서헤더정보.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+    private async Task RefreshAsync2()
+    {
+        //list2?.Clear();
+
+        StateHasChanged();
+
+        //var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        ////부서VIEW
+        //var result = await Remote.Command.기준정보.주문서정보_조회(s_주문번호, 회사코드);
+
+        //list2 = result.ToObservableCollection();
+
+        //StateHasChanged();
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<주문서헤더정보> e)
+    {
+        주문서헤더정보Selected = e.Data;
+        s_주문번호 = 주문서헤더정보Selected.주문번호;
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        list2?.Clear();
+        grid2.Grid.ClearRowSelection();
+
+        barcodeValue = null;
+
+        var result = await Remote.Command.기준정보.주문서정보_조회Dz(주문서헤더정보Selected.주문번호, 회사코드);
+
+        list2 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task OnRowSelected2(RowSelectEventArgs<주문서정보> e)
+    {
+        주문서정보Selected = e.Data;
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        barcodeValue = 주문서정보Selected.주문번호 + ":" + 주문서정보Selected.순번 + ":" + 회사코드;
+
+        StateHasChanged();
+    }
+
+
+
+    private async Task OnQRPrinteSerial(int size)
+    {
+        await QRPrinte_Act(barcodeValue, size);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

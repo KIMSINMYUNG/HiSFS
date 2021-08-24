@@ -1,0 +1,104 @@
+﻿@page "/popup/위치상세별품목"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="보유품목위치정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected">
+    <GridColumns>
+        <GridColumn Field=@nameof(보유품목위치정보.No) HeaderText="순번" Width="80" />
+        <GridColumn Field=@nameof(보유품목위치정보.보유품목코드) />
+        <GridColumn Width="250" HeaderText="품명">
+            <Template>
+                @((context as 보유품목위치정보).보유품목?.품목?.품목명)
+            </Template>
+        </GridColumn>
+        <GridColumn Field=@nameof(보유품목위치정보.수량) Width="100" Format="G29" />
+        <GridColumn Field="장소위치.위치명" Width="140" HeaderText="장소" />
+        @*<GridColumn Field=@nameof(보유품목위치정보.장소위치코드) />
+        <GridColumn Field=@nameof(보유품목위치정보.위치상세코드) />*@
+        <GridColumn Field=@nameof(보유품목위치정보.LOT번호) />
+        <GridColumn Field=@nameof(보유품목위치정보.품목_LOT번호) />
+        <GridColumn HeaderText="위치상세명" Width="160">
+            <Template>
+                @{ var info = context as 보유품목위치정보; }
+                @if (info.위치상세코드 != "" && info.위치상세코드 != null)
+                {
+                    var result = 위치명조회(info.위치상세코드);
+                    <span>@result</span>
+                }
+                else
+                {
+                    <span>창고</span>
+                }
+            </Template>
+        </GridColumn>
+        @*<GridColumn Field="품목.원품목코드" Width="160" HeaderText="품번" />
+        <GridColumn Field=@nameof(품목정보.품목구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.품목구분코드)) HeaderText="품목구분" />
+        <GridColumn Field="품목구분.코드명" Width="100" AllowEditing="false" AllowAdding="false" HeaderText="품목구분" />
+        <GridColumn Field="보유일" Width="120" Format="yyyy/MM/dd" HeaderText="입고일" />*@
+    </GridColumns>
+</FGrid>
+
+@code {
+    private FGrid<보유품목위치정보> grid;
+    private ObservableCollection<보유품목위치정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<보유품목위치정보>> OnSelectedEvent { get; set; }
+
+    [Parameter]
+    public bool 반제품유무 { get; set; }
+
+    [Parameter]
+    public string 보유품목위치상세코드 { get; set; }
+
+    public List<위치상세정보> 위치상세코드List { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<보유품목위치정보, bool> ReturnSelectedItem { get; set; }
+
+
+    public string 위치명조회(string 위치상세코드)
+    {
+        var 위치상세 = 위치상세코드List.Where(x => x.위치상세코드 == 위치상세코드).FirstOrDefault();
+
+        return 위치상세?.위치명;
+    }
+
+    private async Task RefreshAsync()
+    {
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.보유품목위치정보Popup_조회(회사코드, 보유품목위치상세코드);
+        ModifyList(result, (x, map) =>
+        {
+            //if (x.품목구분코드 != null)
+            //    x.품목구분 = map[x.품목구분코드];
+
+        });
+        list = result.ToObservableCollection();
+
+        var result1 = await Remote.Command.기준정보.위치상세전체정보_조회(회사코드);
+        위치상세코드List = result1.ToList();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<보유품목위치정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

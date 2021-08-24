@@ -1,0 +1,148 @@
+﻿@page "/dz/외주품질검사"
+@using HiSFS.Api.Shared.Models.View_DZICUBE
+
+@inherits CustomComponent
+
+<div class="col-lg-12 control-section">
+    <div class="content-wrapper">
+        <div class="row">
+
+            <SfGrid DataSource="@GridData"  Width="auto"   AllowFiltering="true" AllowPaging="false"   EnableVirtualization="true" EnableColumnVirtualization="true" >
+                @*<GridPageSettings PageSize="15"></GridPageSettings>*@
+                <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
+                <GridEvents OnRecordDoubleClick="RecordDoubleClickHandler" TValue="외주작업지시서품검정보"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.회사코드) HeaderText="회사코드" Width="120" />
+                    @*<GridColumn Field=@nameof(외주작업지시서품검정보.품질검사완료여부) HeaderText="처리여부" Width="120">
+            <Template>
+                @{ var info = context as 외주작업지시서품검정보;
+                    //0.생산, 1.외주, 5.재고이동
+                    if (info.품질검사완료여부 != null)
+                    {
+                        if (info.품질검사완료여부.Equals("1"))
+                        {
+                            <span>완료</span>
+                            }
+                        }
+                    }
+            </Template>
+        </GridColumn>*@
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.실행상태코드) HeaderText="실행상태" Width="120">
+                        <Template>
+                            @{ var info = context as 외주작업지시서품검정보;
+                                if (info?.실행상태코드 == "B2004")
+                                {
+                                    <span>완료</span>
+                                }
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.상세) HeaderText="" Width="120" TextAlign="TextAlign.Right" AllowAdding="false" AllowEditing="false">
+                        <Template>
+                            @{ var info = context as 외주작업지시서품검정보; }
+                            <SfButton @onclick=@(() => OnShowDetail(info))>상세</SfButton>
+                        </Template>
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.지시번호) HeaderText="지시번호" Width="150" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.지시일) HeaderText="지시일" Width="130" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.완료일) HeaderText="완료일" Width="130" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.품번) HeaderText="품번" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.품명) HeaderText="품명" Width="200" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.규격) HeaderText="규격" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.관리단위) HeaderText="관리단위" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.수량) HeaderText="수량" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.전개순번) HeaderText="전개순번" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.공정) HeaderText="공정" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.공정명) HeaderText="공정명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.작업장) HeaderText="작업장" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.작업장명) HeaderText="작업장명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.외주단가) HeaderText="외주단가" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.외주금액) HeaderText="외주금액" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.설비코드) HeaderText="설비코드" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.설비명) HeaderText="설비명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.비고_DOC_DC) HeaderText="비고_DOC_DC" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.지시상태) HeaderText="지시상태" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.지시상태명) HeaderText="지시상태명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.지시구분) HeaderText="지시구분" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.지시구분명) HeaderText="지시구분명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.생산외주구분) HeaderText="생산외주구분" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.생산외주구분명) HeaderText="생산외주구분명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.처리구분) HeaderText="처리구분" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.처리구분명) HeaderText="처리구분명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.검사구분) HeaderText="검사구분" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.검사구분명) HeaderText="검사구분명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.LOT번호) HeaderText="LOT번호" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.거래처코드) HeaderText="거래처코드" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.거래처명) HeaderText="거래처명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.거래처약칭) HeaderText="거래처약칭" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.주문번호) HeaderText="주문번호" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.주문순번) HeaderText="주문순번" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.사업장코드) HeaderText="사업장코드" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.작업팀) HeaderText="작업팀" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.작업팀명) HeaderText="작업팀명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.작업조) HeaderText="작업조" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.작업조명) HeaderText="작업조명" Width="120" />
+                    <GridColumn Field=@nameof(외주작업지시서품검정보.비고) HeaderText="비고" Width="120" />
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+</div>
+<style>
+    .visible {
+        display: inline-block;
+        font-size: 18px;
+        color: rgba(0,0,0,1);
+    }
+
+    .loading {
+        position: absolute;
+        height: 92%;
+        width: 100%;
+        background-color: rgba(1,1,1,0.2);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        padding-left: 44%;
+    }
+
+    .topload {
+        font-size: 15px;
+    }
+</style>
+
+
+@code {
+    public List<외주작업지시서품검정보> GridData { get; set; } = new List<외주작업지시서품검정보>();
+    public string 회사코드 = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(100);
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+
+        var result = await Remote.Command.기준정보.외주작업지시서품검정보_조회Dz(회사코드);
+
+        GridData = result.ToList();
+
+        StateHasChanged();
+    }
+
+    public void RecordDoubleClickHandler(RecordDoubleClickEventArgs<외주작업지시서품검정보> args)
+    {
+        //{args.Data} returns the current selected records.And open your bootstrap dialog here
+        NotifyMessage(Message.SelectedMenu, null, null, "/qv/iv/외주품질검사상세", null, args.RowData.지시번호);
+    }
+    private void OnShowDetail(외주작업지시서품검정보 info)
+    {
+        // 작업지시 상세 페이지로 이동
+        NotifyMessage(Message.SelectedMenu, null, null, "/qv/iv/외주품질검사상세", null, info.지시번호);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

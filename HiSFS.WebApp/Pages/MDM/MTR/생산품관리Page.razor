@@ -1,0 +1,336 @@
+﻿@page "/mdm/mtr/생산품관리"
+@inherits CustomComponent
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="80%" Collapsible="true">
+
+            <div class="row section-header">
+                <span class="my-auto">품목</span>
+            </div>
+            <SfGrid @ref="grid" DataSource="@list" AllowPaging="true" Toolbar="@(new List<string>() {  "Edit" })" AllowExcelExport=@(allowExcelExport) AllowFiltering="true">
+                <GridEvents OnActionComplete="ActionCompleteHandler" TValue="품목정보" Created="RefreshAsync" RowSelected="OnRowSelected"
+                            CellSelected="CellSelectHandler"></GridEvents>
+                @*<GridEditSettings AllowAdding="false" AllowEditing="true" AllowDeleting="false" Mode="Syncfusion.Blazor.Grids.EditMode.Normal"></GridEditSettings>*@
+                <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
+                @*<GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single" CheckboxOnly="true" PersistSelection="true"></GridSelectionSettings>*@
+                <GridSelectionSettings Mode="Syncfusion.Blazor.Grids.SelectionMode.Both" CheckboxOnly="false" PersistSelection="true"></GridSelectionSettings>
+
+                @*<FGrid @ref="grid" DataSource="@list" TValue="품목정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="10"
+                       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                    <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single" CheckboxOnly="true" PersistSelection="true"></GridSelectionSettings>*@
+                <GridColumns>
+                    @*<GridColumn Type="ColumnType.CheckBox" AllowFiltering="false" AllowSorting="false" Width="60"></GridColumn>*@
+                    <GridColumn Field=@nameof(품목정보.품목코드) Width="200" HeaderText="품번" IsPrimaryKey="true" />
+                    <GridColumn Field=@nameof(품목정보.품목명) Width="250" HeaderText="품명" />
+                    <GridColumn Field=@nameof(품목정보.규격) Width="160" />
+                    <GridColumn Field=@nameof(품목정보.품목구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.품목구분코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.품목구분코드), "품목구분", "B12", true, null) HeaderText="품목구분" />
+                    <GridColumn Field="품목구분.코드명" Width="120" HeaderText="품목구분">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(품목정보.조달구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.조달구분코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.조달구분코드), "조달구분", "B16") HeaderText="조달구분" />
+                    <GridColumn Field="조달구분.코드명" Width="120" HeaderText="조달구분">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field=@nameof(품목정보.단위코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.단위코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.단위코드), "단위", "B11") HeaderText="단위" />
+                    <GridColumn Field="단위.코드명" Width="120" HeaderText="단위">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(직원정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+
+
+                    @*<GridColumn Field=@nameof(품목정보.LOT여부) EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" TextAlign="TextAlign.Center">
+                            <EditTemplate>
+                                @{ var info = context as 품목정보; }
+                                <SfCheckBox Label="LOT여부" @bind-Checked=@(info.LOT여부) />
+                            </EditTemplate>
+                        </GridColumn>*@
+
+                    <GridColumn Type="ColumnType.CheckBox" Field=@nameof(품목정보.LOT여부) HeaderText="LOT여부" EditType="EditType.BooleanEdit" AllowEditing="true" Width="60">
+                        <EditTemplate>
+                            @{ var info = context as 품목정보; }
+                            <SfCheckBox Label="LOT여부" @bind-Checked=@(info.LOT여부) />
+                        </EditTemplate>
+                    </GridColumn>
+
+                    @*<GridColumn Field=@nameof(품목정보.LOT기본수량) Width="100" />
+                        <GridColumn Field=@nameof(품목정보.거래처) Width="0">
+                            <Template>
+                                @((context as 품목정보).거래처?.거래처명)
+                            </Template>
+                            <EditTemplate>
+                                <DInputSearch Placeholder="거래처" Target="#main" DialogHeader="거래처 조회" TValue="거래처정보" TCode="string" TextField="거래처명" @bind-Value=@((context as 품목정보).거래처)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.거래처Popup />
+                                    </DialogContent>
+                                </DInputSearch>
+                            </EditTemplate>
+                        </GridColumn>*@
+                    @*<GridColumn Field="거래처.거래처명" Width="160" HeaderText="거래처">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>*@
+
+                    @*<GridColumn Field=@nameof(직원정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>*@
+                    @*<GridColumn Field=@nameof(품목정보.원품목코드) Width="160" HeaderText="품번" AllowEditing="false" />*@
+                    @*<GridColumn Field=@nameof(품목정보.관리차수) Width="80" HeaderText="차수" AllowAdding="false" AllowEditing="false" />*@
+                    @* <GridColumn Field=@nameof(품목정보.품목구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.품목구분코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.품목구분코드), "품목구분", "B12", true, "인자1=2") HeaderText="품목구분" />*@
+                </GridColumns>
+            </SfGrid>
+
+        </SplitterPane>
+
+        <SplitterPane Size="20%" Collapsible="true">
+            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                <SplitterPanes>
+                    <SplitterPane Size="50%" Collapsible="true">
+                        <div class="col section-header mr-auto mt-2">
+                            <span class="my-auto">바코드</span>
+                            <div class="form-row mt-2">
+                                <div class="form-group col-md-12">
+                                    @if (barcodeValue != null)
+                                    {
+                                        <div class="row mb-2">
+                                            <span class="col text-center">품목코드</span>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col text-center">
+                                                <SfQRCodeGenerator Width="200px" Height="150px" Value=@(barcodeValue)>
+                                                    <QRCodeGeneratorDisplayText Visibility="true" />
+                                                </SfQRCodeGenerator>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col text-center">
+                                                @*<SfButton Disabled="true">출력</SfButton>*@
+                                                <SfButton OnClick="() => OnQRPrinte(4) ">발급</SfButton>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </SplitterPane>
+
+                    <SplitterPane Size="50%" Collapsible="true">
+                        <div class="col section-header mr-auto mt-2">
+                            <span class="my-auto">바코드</span>
+                            <div class="form-row mt-2">
+                                <div class="form-group col-md-12">
+                                    @if (barcodeValueLOT != null)
+                                    {
+                                        <div class="row mb-2">
+                                            <span class="col text-center">품목-LOT</span>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col text-center">
+                                                <SfQRCodeGenerator Width="200px" Height="150px" Value=@(barcodeValueLOT)>
+                                                    <QRCodeGeneratorDisplayText Visibility="true" />
+                                                </SfQRCodeGenerator>
+                                            </div>
+                                        </div>
+                                        <!--<div class="row">
+                                            <div class="col text-center">-->
+                                        @*<SfButton Disabled="true">출력</SfButton>*@
+                                        <!--<SfButton OnClick="() => OnQRPrinte(4) ">발급</SfButton>
+                                            </div>
+                                        </div>-->
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </SplitterPane>
+                </SplitterPanes>
+            </SfSplitter>
+
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    [Parameter]
+    public PageMode Mode { get; set; }
+
+
+    private SfGrid<품목정보> grid;
+    private ObservableCollection<품목정보> list;
+
+    private string barcodeValue;
+    private 품목정보 selected품목;
+
+    private bool allowExcelExport = true;
+
+    private string barcodeValueLOT = null;
+
+    private async Task RefreshAsync()
+    {
+        //var result = await Remote.Command.기준정보.생산품_조회();
+        var result = await Remote.Command.기준정보.품목_조회();
+        ModifyList(result, (x, map) =>
+        {
+            if (x.품목구분코드 != null)
+                x.품목구분 = map[x.품목구분코드];
+            if (x.조달구분코드 != null)
+                x.조달구분 = map[x.조달구분코드];
+            if (x.소재코드 != null)
+                x.소재 = map[x.소재코드];
+            if (x.단위코드 != null)
+                x.단위 = map[x.단위코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<품목정보> args)
+    {
+        selected품목 = args.Data;
+        barcodeValue = args.Data.품목코드;
+
+    }
+
+    private async Task ActionCompleteHandler(ActionEventArgs<품목정보> args)
+    {
+
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<품목정보> args)
+    {
+        // 추가 시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.관리차수 = 1;
+            //newRow.품목구분코드 = "B1203";
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.기준정보.품목_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+            newRow.품목구분 = null;
+            newRow.품목유형 = null;
+            newRow.소재 = null;
+            newRow.규격종류 = null;
+            newRow.조달구분 = null;
+            newRow.단위 = null;
+            //newRow.거래처 = null;
+
+            await Remote.Command.기준정보.품목_저장(newRow, args.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    public async Task CellSelectHandler(CellSelectEventArgs<품목정보> args)
+    {
+        selected품목 = args.Data;
+        barcodeValue = args.Data.품목코드;
+
+        /*
+        //get selected cell index
+        var CellIndexes = await grid.GetSelectedRowCellIndexes();
+
+        //get the row and cell index
+        var CurrentEditRowIndex = CellIndexes[0].Item1;
+        var CurrentEditCellIndex = (int)CellIndexes[0].Item2;
+
+        //get the available fields
+        var fields = await grid.GetColumnFieldNames();
+        // edit the selected cell using the cell index and column name
+        await grid.EditCell(CurrentEditRowIndex, fields[CurrentEditCellIndex]);
+        */
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+
+
+    private void onChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        //onChange Event triggered
+    }
+
+    private async Task OnQRPrinte(int type)
+    {
+        //string barcodeValue = null;
+        // LOT 사용여부 를 판단하여 LOT번호를 받는다
+
+        //var selectedRow = grid.SelectedRecords.FirstOrDefault().LOT여부;
+        //if (selectedRow != default)
+        //{
+        //    //var newRow = selectedRow.LOT여부;
+        //    //newRow.장소코드 = selectedRow.장소코드;
+        //}
+
+
+
+        //bool lotflag = selected품목.LOT여부;
+        string 품목코드 = selected품목.품목코드;
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var sawon = await SessionStorage.GetAsync<string>("userId");
+        var 수량 = "";
+        string lotNo = "";
+
+
+        var name = await ShowPromptBox("수량", "숫자를 입력 하세요", "1", MessageBoxResultType.YesOrNo);
+        /*var name = await JS.InvokeAsync<string>(
+        "exampleJsFunctions.showPrompt",
+        "수량을 입력하세요"); */
+
+
+
+        if (name)
+        {
+            var qrCount = this.Context.promptBoxInfo.Count;
+            try
+            {
+                var prn_su = Convert.ToInt32(qrCount);
+            }
+            catch (Exception ex)
+            {
+                await ShowMessageBox(qrCount, "숫자를 입력 하세요", MessageBoxResultType.Okay);
+                Console.WriteLine("텍스트 문자 입력 : " + ex.Message);
+                return;
+            }
+            수량 = qrCount;
+        }
+
+        bool YesOrNo = true;
+        //YesOrNo = await ShowMessageBox("LOT반영", "LOT 번호를 반영하시겠습니까?", MessageBoxResultType.YesOrNo);
+        //bool result = false;
+
+        lotNo = await Remote.Command.자재관리.품목코드_바코드발급(품목코드, 회사코드, 수량, sawon, YesOrNo, "0");
+        //if (YesOrNo)
+        //{
+        //    lotNo = await Remote.Command.자재관리.품목코드_바코드발급(품목코드, 회사코드, 수량, sawon);
+        //}
+
+
+        barcodeValueLOT = barcodeValue + ':' + lotNo;
+
+        StateHasChanged();
+
+        await Task.Delay(1000);
+
+        await QRPrinte_바코드Act(barcodeValueLOT, 수량, 2);
+
+    }
+}

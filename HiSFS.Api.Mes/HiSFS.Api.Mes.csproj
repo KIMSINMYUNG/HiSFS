@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HiSFS.Api.Shared\HiSFS.Api.Shared.csproj" />
+    <ProjectReference Include="..\HiSFS.Shared\HiSFS.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

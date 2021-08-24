@@ -1,0 +1,309 @@
+﻿@page "/mdm/prd/도면관리"
+@inherits CustomComponent
+
+@using Syncfusion.Blazor.PdfViewerServer
+@using Syncfusion.Pdf;
+@using Microsoft.AspNetCore.Hosting
+@inject IWebHostEnvironment Environment
+
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="60%" Collapsible="true">
+            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                <SplitterPanes>
+                    <SplitterPane Size="50%" Collapsible="true">
+
+                        <FGrid @ref="grid" DataSource="@list" TValue="도면정보" DefaultMode="true" EditMode="DGridEditMode.Add | DGridEditMode.Delete"
+                               OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnDataBound="OnDataBound" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(도면정보.No) Width="60" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+                                    <EditTemplate></EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(도면정보.도면코드) Visible="false" />
+                                <GridColumn Field=@nameof(도면정보.도면번호) Width="120" HeaderText="도면번호" />
+                                <GridColumn Field=@nameof(도면정보.관리차수) Width="60" HeaderText="차수" AllowAdding="false" AllowEditing="false" />
+                                <GridColumn Field=@nameof(도면정보.도면명) Width="180" />
+                                <GridColumn Field=@nameof(도면정보.도면영문명) Width="180" HeaderText="영문명" />
+                                <GridColumn Field=@nameof(도면정보.도면종류코드) Width="0" HeaderText="도면종류">
+                                    <Template>
+                                        @{var info = context as 도면정보;}
+                                        <span>@(info.도면종류코드 != null ? 코드[info.도면종류코드].코드명 : "")</span>
+                                    </Template>
+                                    <EditTemplate>
+                                        <DCommonCodeDropList ID="도면종류코드" ParentCode="B06" Placeholder="도면종류" @bind-Value=@((context as 도면정보).도면종류코드) CssClass="e-info"/>
+                                    </EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field="도면종류.코드명" Width="80" HeaderText="도면종류">
+                                    <EditTemplate></EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(도면정보.CreateTime) Format="yyyy/MM/dd" Width="100" HeaderText="등록일">
+                                    <EditTemplate></EditTemplate>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(도면정보.UpdateTime) Format="yyyy/MM/dd" Width="100" HeaderText="변경일">
+                                    <EditTemplate></EditTemplate>
+                                </GridColumn>
+                            </GridColumns>
+                        </FGrid>
+                    </SplitterPane>
+                    <SplitterPane Size="50%" Collapsible="true">
+                        <SfPdfViewerServer DocumentPath="@DocumentPath" Height="640px" Width="1200px"></SfPdfViewerServer>
+                    </SplitterPane>
+                </SplitterPanes>
+
+            </SfSplitter>
+        </SplitterPane>
+
+
+        <SplitterPane Size="40%" Collapsible="true">
+            <div class="row mt-2 mr-3">
+                <div class="col section-header">
+                    <span class="my-auto">도면 상세</span>
+                </div>
+                @if (selected != null)
+                {
+                    <div class="col-auto">
+                        <SfButton IsPrimary="true" OnClick="OnSave">저장</SfButton>
+                    </div>
+                }
+            </div>
+            @if (selected != null)
+            {
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="기본">
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="도면번호" @bind-Value=@(selected.도면번호) />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="도면명" @bind-Value=@(selected.도면명) />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="도면영문" @bind-Value=@(selected.도면영문명) />
+                            </div>
+                        </div>
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="개요">
+                        <SfRichTextEditor Height="150" @bind-Value=@selected.개요 />
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="설명">
+                        <SfRichTextEditor Height="150" @bind-Value=@selected.설명 />
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="도면">
+                        <div class="row mx-2 my-2">
+                            <div class="col-9">
+                                <DFileList Files=@도면파일목록  OnClickFiles="OnClickFiles" />
+                            </div>
+                            <div class="col-3 my-auto">
+                                <DFileUpload IsDragAndDrop="true" IsMultiple="true" Text="드래깅 또는 클릭" OnChange="OnChangeFileUpload" />
+                            </div>
+                        </div>
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+            }
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+
+
+
+
+
+@code {
+    private FGrid<도면정보> grid;
+    private ObservableCollection<도면정보> list;
+    private 도면정보 selected = null;
+    private ObservableCollection<DFileList.FileInfo> 도면파일목록 = new ObservableCollection<DFileList.FileInfo>();
+
+
+
+    //public FileInfo SelectedFile { get; set; }
+
+    public async Task OnClickFiles(string value)
+    {
+        if(value == null)
+        {
+            NotifyMessage(Message.FileNotFoundMesage);
+            return;
+        }
+
+        DocumentPath = value;
+        StateHasChanged();
+        // DocumentPath = selected.파일폴더.
+    }
+
+
+    private string DocumentPath { get; set; }
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.기준정보.도면_조회();
+        ModifyList(result, (info, map) =>
+        {
+            if (info.도면종류코드 != null)
+                info.도면종류 = map[info.도면종류코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    //private void ClickHandler(string filename)
+    //{
+
+    //}
+
+    private void OnRowSelected(RowSelectEventArgs<도면정보> args)
+    {
+        selected = args.Data;
+
+        도면파일목록.Clear();
+        if (selected?.파일폴더?.파일목록 != null)
+        {
+            foreach (var file in selected.파일폴더.파일목록)
+            {
+                도면파일목록.Add(new DFileList.FileInfo
+                {
+                    Id = file.순번,
+                    FileName = file.파일이름,
+                    Size = file.크기,
+                    Url = $"/Uploads/{file.경로}"     // TODO: 업로드 경로는 나중에 설정으로 변경 필요
+                });
+            }
+        }
+    }
+
+    private void OnDataBound()
+    {
+        // TODO: 저장 후 Refresh시에도 호출되므로 선택된 항목이 계속 유지되는 방안을 찾아봐야 한다.
+        //selected = null;
+        //도면파일목록.Clear();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<도면정보> args)
+    {
+        // 추가
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.관리차수 = 1;
+        }
+        // 편집 시작
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.기준정보.도면_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            args.Data.도면종류 = null;
+
+            await Remote.Command.기준정보.도면_저장(args.Data, args.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private async Task OnChangeFileUpload((DFileUpload.FileUploadState State, DFileUpload.FileInfo FileInfo) args)
+    {
+        if (args.State == DFileUpload.FileUploadState.FileUploadFinished)
+        {
+
+            //var cancle = await ShowMessageBox("파일저장", "파일을 저장하십시요?", MessageBoxResultType.YesOrNo);
+            
+            도면파일목록.Add(new DFileList.FileInfo
+            {
+                FileName = args.FileInfo.Filename,
+                TempFilename = args.FileInfo.TempFilename,
+                Size = args.FileInfo.Size
+            });
+
+            NotifyMessage(Message.FileSaveMessage);
+        }
+
+        return;
+    }
+
+    private async Task OnSave()
+    {
+        // 파일목록 반영
+        selected.파일폴더 ??= new 파일폴더정보 { 폴더명 = "도면관리", 폴더경로 = $"도면/{selected.도면코드}".Replace(':', '_') };
+        selected.파일폴더.파일목록 ??= new List<파일정보>();
+
+        // 추가 감지
+        foreach (var file in 도면파일목록)
+        {
+            if (file.Id == 0)
+            {
+                selected.파일폴더.파일목록.Add(new 파일정보
+                {
+                    폴더순번 = selected.파일폴더.순번,
+                    파일이름 = file.FileName,
+                    //경로 = System.IO.Path.Combine(selected.파일폴더.폴더경로, file.FileName),
+                    임시경로 = file.TempFilename,
+                    크기 = file.Size,
+                    확장자 = file.FileExtension
+                });
+                continue;
+            }
+        }
+
+        // 삭제 감지 {{{
+        foreach (var file in selected.파일폴더.파일목록)
+        {
+            var bResult = 도면파일목록.Any(x => x.Id == 0 || x.Id == file.순번);
+            // 삭제됨
+            if (bResult == false)
+            {
+                file.삭제유무 = true;
+            }
+        }
+
+
+        var c = await CheckAndModify(() => Remote.Command.기준정보.도면_저장(selected, false));
+        if (c == false)
+            return;
+
+        //await RefreshAsync();
+
+
+        // 선택된 도면파일목록 갱신 {{{
+        도면파일목록.Clear();
+        var result = (await Remote.Command.기준정보.도면_조회()).ToList();
+        selected.파일폴더.파일목록 = result.FirstOrDefault(x => x.도면코드 == selected.도면코드).파일폴더.파일목록;
+        foreach (var file in selected.파일폴더.파일목록)
+        {
+            도면파일목록.Add(new DFileList.FileInfo
+            {
+                Id = file.순번,
+                FileName = file.파일이름,
+                Size = file.크기,
+                Url = $"/Uploads/{file.경로}"     // TODO: 업로드 경로는 나중에 설정으로 변경 필요
+            });
+        }
+        // }}}
+
+        NotifyMessage(Message.ModifiedUpdateData);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+
+
+}

@@ -1,0 +1,183 @@
+﻿@page "/mdm/org/직원관리"
+@inherits CustomComponent
+
+@using HiSFS.Web.App.JsInteropClasses
+@inject IJSRuntime JS
+
+
+@using EditMode = Syncfusion.Blazor.Grids.EditMode
+@using HiSFS.Agent.Service.Devices
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="70%" Collapsible="true">
+            <FGrid @ref="grid" DataSource="@list" TValue="직원정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="12"
+                   OnCreated="RefreshAsync" OnActionComplete="OnActionComplete" OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+                <GridColumns>
+                    <GridColumn Field=@nameof(직원정보.No) Width="60" AllowAdding="false" AllowEditing="false">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(직원정보.사번) Width="80" />
+                    <GridColumn Field=@nameof(직원정보.사용자명) Width="80" HeaderText="이름" />
+                    <GridColumn Field=@nameof(직원정보.부서코드) Width="0">
+                        <Template>
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 직원정보; }
+                            <DInputSearch ID="부서코드" Placeholder="부서" Target="#root" DialogHeader="부서 조회" TValue="부서정보" TCode="string" TextField="부서명" @bind-Value=@(info.부서) CodeField="부서코드" @bind-Code=@(info.부서코드)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.부서Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="부서.부서명" Width="120" HeaderText="부서">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    @*<GridColumn Field=@nameof(직원정보.권한코드) Width="80" />*@
+                    <GridColumn Field=@nameof(직원정보.입사일) Width="120" Format="yy/MM/dd" />
+                    <GridColumn Field=@nameof(직원정보.퇴사일) Width="120" Format="yy/MM/dd" />
+                    <GridColumn Field=@nameof(직원정보.직급코드) Width="0" Template=@CommonCodeTemplate(nameof(직원정보.직급코드)) EditTemplate=@CommonCodeEditTemplate(nameof(직원정보.직급코드), "직급", "B09") HeaderText="직급" />
+                    <GridColumn Field="직급.코드명" Width="100" HeaderText="직급">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    @*<GridColumn Field=@nameof(직원정보.직책코드) Width="100" />*@
+                    @*<GridColumn Field=@nameof(직원정보.주소) Width="80" />*@
+                    @*<GridColumn Field=@nameof(직원정보.상세주소) Width="80" />*@
+                    <GridColumn Field=@nameof(직원정보.이메일) Width="160" />
+                    <GridColumn Field=@nameof(직원정보.연락처1) Width="120" />
+                    @*<GridColumn Field=@nameof(직원정보.연락처2) Width="80" />*@
+                    <GridColumn Field=@nameof(직원정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(직원정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+        <SplitterPane Size="30%" Collapsible="true">
+            <div class="col section-header mr-auto mt-2">
+                <span class="my-auto">바코드</span>
+                @if (barcodeValue != null)
+                {
+                    <div class="form-row mt-2">
+                        <div class="form-group col-md-2">
+                            <SfQRCodeGenerator Width="200px" Height="150px" Value=@(barcodeValue)>
+                                <QRCodeGeneratorDisplayText Visibility="true" />
+                            </SfQRCodeGenerator>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-2 text-center">
+                            <SfButton OnClick="() => OnQRPrinte() ">출력</SfButton>
+                            @*<SfButton Disabled="true" OnClick="() => OnQRPrinte() ">출력</SfButton>*@
+                        </div>
+                    </div>
+                }
+            </div>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<직원정보> grid;
+
+    private ObservableCollection<직원정보> list;
+    private string barcodeValue;
+
+    private bool Visibility { get; set; } = false;
+
+
+    private async Task RefreshAsync()
+    {
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await this.Remote.Command.기준정보.직원_조회(true, 회사코드);
+        ModifyList(result, (info, map) =>
+        {
+            if (info.직급코드 != null)
+                info.직급 = map[info.직급코드];
+        });
+        list = result.ToObservableCollection();
+        StateHasChanged();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<직원정보> e)
+    {
+        // 추가 시
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+        }
+        // 편집 시
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 처리
+        else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.기준정보.직원_삭제(e.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = e.Data;
+            if (newRow.부서 != null)
+                newRow.부서코드 = newRow.부서.부서코드;
+
+            await Remote.Command.기준정보.직원_저장(newRow, e.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(e.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<직원정보> e)
+    {
+        barcodeValue = e.Data.식별번호;
+    }
+
+    protected override void OnDispose()
+    {
+    }
+
+    private async Task OnQRPrinte()
+    {
+        await QRPrinte_Act(barcodeValue,2);
+        /*
+        var zebraUri = await Remote.Command.공통.PrtUri();
+
+        //await ShowMessageBox("수량", "숫자를 입력 하세요", MessageBoxResultType.Okay);
+        var name = await ShowPromptBox("수량", "숫자를 입력 하세요", "1", MessageBoxResultType.YesOrNo);
+        @*var name = await JS.InvokeAsync<string>(
+            "exampleJsFunctions.showPrompt",
+            "수량을 입력하세요");*@
+
+        //Subscibe 구현 - Client <HongApp.WAMP.Subject_Rx> 참조
+        //HiSFS.Api.Host.Services
+        //await Remote.Command.공통.QR_메시지(5, barcodeValue, barcodeValue);
+
+        if (name)
+        {
+            var qrCount =  this.Context.promptBoxInfo.Count;
+            try
+            {
+                var prn_su = Convert.ToInt32(qrCount);
+            }
+            catch(Exception ex)
+            {
+                await ShowMessageBox(qrCount, "숫자를 입력 하세요", MessageBoxResultType.Okay);
+                Console.WriteLine("텍스트 문자 입력 : " + ex.Message);
+                return;
+            }
+            //CustomComponent
+            await QRcodePrinte(zebraUri, connectCtype, qrCount, barcodeValue, barcodeValue); // connectCtype, connectLtype
+            NotifyMessage(Message.PrintOutOk);
+            */
+    }
+    }
+}

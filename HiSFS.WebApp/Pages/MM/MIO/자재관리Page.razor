@@ -1,0 +1,556 @@
+﻿@inherits CustomComponent
+@page "/mm/mcs/자재관리"
+
+
+
+
+
+<SfSplitter Height="60%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="2">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Min="60px" Collapsible="true">
+            <ContentTemplate>
+                <FGrid @ref="grid" DataSource="@list" TValue="보유품목정보" DefaultMode="true" PageMode="PageMode.Small" EditMode="DGridEditMode.None"
+                       OnCreated="RefreshAsync" OnToolbarClick="OnToolbarClick" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(보유품목정보.보유품목코드) Width="160" AllowEditing="false" IsPrimaryKey="true">
+                            <EditTemplate>
+                                <DInputSearch Placeholder="품목코드" Target="#root" DialogHeader="품목 조회" TValue="품목정보" TCode="string" TextField="품목코드" @bind-Value=@((context as 보유품목정보).품목)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.품목Popup />
+                                    </DialogContent>
+                                </DInputSearch>
+                            </EditTemplate>
+                        </GridColumn>
+                        @*<GridColumn Field="품목.원품목코드" Width="120" AllowEditing="false" AllowAdding="false" HeaderText="원품번" />*@
+                        <GridColumn Field="품목.관리차수" Width="80" AllowEditing="false" AllowAdding="false" HeaderText="차수" />
+                        <GridColumn Field="품목.품목명" Width="260" AllowEditing="false" AllowAdding="false" HeaderText="품명" />
+                        <GridColumn Field=@nameof(품목정보.품목구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.품목구분코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.품목구분코드), "품목구분", "B12", true, null) HeaderText="품목구분" />
+                        <GridColumn Field="품목구분.코드명" Width="120" AllowEditing="false" AllowAdding="false" HeaderText="품목구분">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field="품목.규격" Width="140" AllowEditing="false" AllowAdding="false" HeaderText="규격" />
+                        <GridColumn Field="수량" Width="100" Format="G29" HeaderText="수량" />
+                        @*<GridColumn Field="품목.단위코드" Width="100" Template=@CommonCodeTemplate("품목.단위코드") EditTemplate=@CommonCodeEditTemplate("품목.단위코드","단위","B11") HeaderText="단위" />
+                        *@
+                        <GridColumn Field="보유일" Width="120" Format="yyyy/MM/dd" AllowEditing="false" AllowAdding="false" HeaderText="보유일" />
+                        <GridColumn Field="장소.장소명" Width="140" HeaderText="장소" />
+                        <GridColumn Field="장소위치.위치명" Width="140" HeaderText="위치" />
+                    </GridColumns>
+                </FGrid>
+                <SfDialog Target="#main" Width="250px" Height="550px" IsModal="true" @bind-Visible="isDialogVisible" CloseOnEscape="true">
+                    <DialogTemplates>
+                        <Header>
+                            <b>보유품목코드 발행</b>
+                        </Header>
+                        <Content>
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <DInputSearch Placeholder="입고자재" Target="#main" DialogHeader="자재 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@(selected) CodeField="품목코드" CodeChanged="CodeChanged">
+                                        <DialogContent>
+                                            <HiSFS.WebApp.Pages.Common.Popup.원자재부품설비Popup />
+                                        </DialogContent>
+                                    </DInputSearch>
+                                </div>
+                                @*<div class="form-group col-md-12">
+                                        <div class="control-label">
+                                            일련번호
+                                        </div>
+                                        <SfNumericTextBox TValue="int" Format="#####" Value=0 Max="99999" Min=1 Placeholder="일련번호"></SfNumericTextBox>
+                                    </div>*@
+
+                                <div class="form-group col-md-12">
+                                    <SfTextBox Placeholder="수량" FloatLabelType="FloatLabelType.Auto" @bind-Value="count" />
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <SfDatePicker FloatLabelType="FloatLabelType.Always" TValue="DateTime?" Placeholder="보유년월일" Value="@보유년월일selected" Enabled="true">
+                                        <DatePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler1"></DatePickerEvents>
+                                    </SfDatePicker>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <SfDatePicker FloatLabelType="FloatLabelType.Always" TValue="DateTime?" Placeholder="생산년월일" Value="@생산년월일selected" Enabled="true">
+                                        <DatePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler2"></DatePickerEvents>
+                                    </SfDatePicker>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <DInputSearch Placeholder="장소위치" Target="#main" DialogHeader="장소위치 조회" TValue="장소위치정보" TCode="string" TextField="위치명" @bind-Value=@(장소위치정보selected)>
+                                        <DialogContent>
+
+                                            <HiSFS.WebApp.Pages.Common.Popup.장소위치Popup />
+                                        </DialogContent>
+                                    </DInputSearch>
+                                </div>
+
+                                <div class="form-group col-md-12">
+
+                                    <SfTextBox @ref="@txtSerialNum" Placeholder="일련번호 5자리(00001)" FloatLabelType="FloatLabelType.Auto" @bind-Value="사용자일련번호" Input="OnInput" CssClass="@CssClass" HtmlAttributes="@htmlAttribute" />
+                                </div>
+
+                            </div>
+
+                        </Content>
+                    </DialogTemplates>
+                    <DialogButtons>
+                        <DialogButton Content="발행" OnClick=@(OnPublish) IsPrimary="true" />
+                        <DialogButton Content="취소" OnClick=@(() => { selected = null; isDialogVisible = false; }) />
+                    </DialogButtons>
+                </SfDialog>
+            </ContentTemplate>
+        </SplitterPane>
+        <SplitterPane Size="0%" Min="60px">
+            <ContentTemplate>
+
+
+            </ContentTemplate>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+<SfSplitter Height="40%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="2">
+    <SplitterPanes>
+        <SplitterPane Size="80%" Min="60px">
+            <ContentTemplate>
+                <HiSFS.WebApp.Pages.Common.단위 제목="바코드발급일지">
+
+                    <SfGrid @ref="grid4" DataSource="@list4" TValue="바코드발급정보">
+                        <GridEvents RowSelected="RowSelectHandler" TValue="바코드발급정보"></GridEvents>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(바코드발급정보.품목코드) HeaderText="품번" TextAlign="TextAlign.Left" Width="100"></GridColumn>
+                            <GridColumn Field=@nameof(바코드발급정보.LOT번호) Width="250" HeaderText="LOT"></GridColumn>
+                            <GridColumn Field=@nameof(바코드발급정보.수량) HeaderText="수량" Width="120" HeaderTextAlign="TextAlign.Left" Format="G29"></GridColumn>
+
+                            <GridColumn Field=@nameof(바코드발급정보.사원코드) Width="100" HeaderText="사원" />
+                            <GridColumn Field=@nameof(바코드발급정보.생성일자) Format="yyyy/MM/dd" Width="120" HeaderText="등록일" />
+
+                        </GridColumns>
+                    </SfGrid>
+                </HiSFS.WebApp.Pages.Common.단위>
+            </ContentTemplate>
+        </SplitterPane>
+        <SplitterPane Size="20%" Min="60px">
+            <ContentTemplate>
+
+                <div class="col section-header mr-auto mt-2">
+                    <span class="my-auto">바코드</span>
+                    <div class="form-row mt-2">
+                        <div class="form-group col-md-12">
+                            @if (barcodeValue != null)
+                            {
+                                <div class="row mb-2">
+                                    <span class="col text-center">품목코드</span>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col text-center">
+                                        <SfQRCodeGenerator Width="200px" Height="150px" Value=@(barcodeValue)>
+                                            @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                        </SfQRCodeGenerator>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col text-center">
+                                        @*<SfButton Disabled="true">출력</SfButton>*@
+                                        <SfButton OnClick="() => OnQRPrinte(4) ">출력</SfButton>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </ContentTemplate>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<보유품목정보> grid;
+    private ObservableCollection<보유품목정보> list;
+    private List<object> toolbar = new List<object>
+{
+        new Syncfusion.Blazor.Navigations.ItemModel { Text = "보유품목코드 발행", TooltipText = "보유품목코드 발행", PrefixIcon = "e-publish", Align = ItemAlign.Left, Id = "publish" }
+    };
+
+
+    private SfGrid<보유품목일련정보> grid3;
+    private List<보유품목일련정보> list3 = new List<보유품목일련정보>();
+
+    private SfGrid<보유품목일지> grid2;
+    public List<보유품목일지> list2 = new List<보유품목일지>();
+
+    private SfGrid<바코드발급정보> grid4;
+    public List<바코드발급정보> list4 = new List<바코드발급정보>();
+
+
+
+    private bool isDialogVisible;
+    private 품목정보 selected;
+    private 장소위치정보 장소위치정보selected { get; set; }
+    private DateTime 보유년월일selected { get; set; } = DateTime.Now;
+    private DateTime 생산년월일selected { get; set; } = DateTime.Now;
+    private string barcodeValue;
+    private string barcodeValueSerial;
+    private string count = "";
+    private string 사용자일련번호 = "";
+    public SfTextBox txtSerialNum;
+    private string 라스트순번 = "";
+    private string selectedList1품목코드;
+
+    public string CssClass { get; set; }
+    public bool isMatch = false;
+
+    private async Task 품목생산일지()
+    {
+        if (selectedList1품목코드 != null)
+        {
+
+            var result = await Remote.Command.자재관리.보유품목일지_조회(selectedList1품목코드);
+            list2?.Clear();
+            grid2.Refresh();
+            await grid2.ClearSelection();
+
+            StateHasChanged();
+
+            ModifyList(result, (x, map) =>
+            {
+
+            });
+            list2 = result.ToList();
+
+
+        }
+        StateHasChanged();
+
+    }
+
+    private async Task OnDelete(보유품목일지 info)
+    {
+
+        var YesOrNo = await ShowMessageBox("품목생산일지삭제", "생상일지를 삭제하시겠습니까?", MessageBoxResultType.YesOrNo);
+
+        if (YesOrNo)
+        {
+            var bResult = await CheckAndModify(() => Remote.Command.자재관리.보유품목일지_삭제(info));
+            if (bResult == false)
+                return;
+
+            NotifyMessage(Message.ModifiedDeleteData);
+            //grid2.Refresh();
+            RefreshAsync();
+            품목생산일지();
+        }
+
+    }
+
+    public void OnInput(InputEventArgs args)
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(args.Value, "^[0-9]*$") || args.Value.Length < 5)
+        {
+            isMatch = false;
+            CssClass = "e-error";
+        }
+        else
+        {
+            isMatch = true;
+            CssClass = "e-success";
+        }
+        this.StateHasChanged();
+    }
+
+    private Dictionary<string, object> htmlAttribute { get; set; } = new Dictionary<string, object>() {
+            {"maxlength", "5" }, {"minlength", "5" }
+            };
+
+
+    public async Task ValueChangeHandler1(ChangedEventArgs<DateTime?> args)
+    {
+        // Here you can customize your code
+        보유년월일selected = new(args.Value.Value.Year, args.Value.Value.Month, args.Value.Value.Day);
+
+        if (selected != null)
+        {
+            int 순번 = await Remote.Command.자재관리.보유품목일련정보_마지막순번조회(selected.품목코드, 보유년월일selected);
+            int 순번2 = 순번 + 1;
+            라스트순번 = $"{순번2:00000}";
+            사용자일련번호 = 라스트순번;
+            isMatch = true;
+            CssClass = "e-success";
+        }
+
+        StateHasChanged();
+    }
+
+    public void ValueChangeHandler2(ChangedEventArgs<DateTime?> args)
+    {
+        // Here you can customize your code
+        생산년월일selected = new(args.Value.Value.Year, args.Value.Value.Month, args.Value.Value.Day);
+    }
+
+    public async Task CodeChanged(string args)
+    {
+        // Here you can customize your code
+
+        int 순번 = await Remote.Command.자재관리.보유품목일련정보_마지막순번조회(args, 보유년월일selected);
+        int 순번2 = 순번 + 1;
+        라스트순번 = $"{순번2:00000}";
+        사용자일련번호 = 라스트순번;
+        isMatch = true;
+        CssClass = "e-success";
+
+        StateHasChanged();
+
+    }
+
+    private string 회사코드 = "";
+    private async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.자재관리.자재현황_조회(회사코드);
+
+        ModifyList(result, (x, map) =>
+        {
+        @* if (x.품목.단위코드 != null)
+            x.품목.단위 = map[x.품목.단위코드];*@
+            if (x.품목구분코드 != null)
+                x.품목구분 = map[x.품목구분코드];
+        });
+    list = result.ToObservableCollection();
+
+    //보유년월일selected = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
+    //생산년월일selected = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
+
+    StateHasChanged();
+}
+
+private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+{
+    await Task.Yield();
+
+    if (args.Item.Id == "publish")
+    {
+        isDialogVisible = true;
+    }
+}
+
+private async Task OnPublish()
+{
+    if (selected == null)
+        return;
+
+    if (isMatch == false)
+        return;
+
+    var info = new 보유품목정보
+    {
+
+        수량 = Convert.ToInt32(count),
+        장소코드 = 장소위치정보selected?.장소.장소코드,
+        장소위치코드 = 장소위치정보selected?.위치코드,
+        보유년월일 = 보유년월일selected.ToString("yyMMdd"),
+    };
+
+
+
+    var bResult = await CheckAndRegist(() => Remote.Command.자재관리.보유품목_발행(selected, info));
+
+    if (bResult == false)
+        return;
+
+
+    var info2 = new 보유품목정보
+    {
+
+        수량 = Convert.ToInt32(count),
+        장소코드 = 장소위치정보selected?.장소.장소코드,
+        장소위치코드 = 장소위치정보selected?.위치코드,
+        보유년월일 = 보유년월일selected.ToString("yyyyMMdd"),
+    };
+    await CheckAndRegist(() => Remote.Command.자재관리.보유품목일지_저장(selected, info2));
+    string 생산품코드 = "";
+    string 상품 = "";
+    try
+    {
+        생산품코드 = await Remote.Command.공통.공통코드명_조회("생산품");
+        상품 = await Remote.Command.공통.공통코드명_조회("상품");
+    }
+    catch (Exception)
+    {
+        return;
+    }
+
+    if (selected.품목구분코드 == 생산품코드 || selected.품목구분코드 == 상품)
+    {
+        await Remote.Command.자재관리.자재관리_보유품목일련번호생성_저장(selected, info, 보유년월일selected, 생산년월일selected, 사용자일련번호);
+    }
+
+    await Remote.Command.자재관리.자재관리_보유품목_입고(selected.품목코드, Convert.ToDecimal(info.수량), info.장소코드, null);
+
+
+    await RefreshAsync();
+
+    NotifyMessage(Message.ModifiedAddData);
+
+    selected = null;
+    isDialogVisible = false;
+}
+
+private async Task OnRowSelected(RowSelectEventArgs<보유품목정보> e)
+{
+
+    var result = await Remote.Command.기준정보.품목별바코드발급정보_조회(회사코드, e.Data.보유품목코드);
+
+    list4?.Clear();
+    grid4.Refresh();
+
+    await grid4.ClearSelection();
+
+    list4 =  result.ToList();
+
+    StateHasChanged();
+
+}
+
+private async Task OnActionComplete(ActionEventArgs<보유품목정보> args)
+{
+    // 추가 시
+    if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+    {
+        var newRow = args.Data;
+        //newRow.관리차수 = 1;
+        //newRow.품목구분코드 = "B1203";
+    }
+    if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+    {
+    }
+    // 저장 시
+    else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+    {
+        var newRow = args.Data;
+        //newRow.장소위치 = null;
+        newRow.장소위치코드 = null;
+        newRow.장소코드 = null;
+
+        await Remote.Command.자재관리.보유품목코드_저장(newRow, args.Action == "Add" ? true : false);
+
+        await RefreshAsync();
+
+        NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+    }
+}
+
+public string nowSelected { get; set; }
+public async Task RowSelectHandler(RowSelectEventArgs<보유품목일련정보> args)
+{
+    // Here you can customize your code
+    barcodeValueSerial = args.Data.일년번호;
+    nowSelected = "list3";
+}
+
+
+public async Task RowSelectHandler(RowSelectEventArgs<바코드발급정보> args)
+{
+
+    barcodeValue = args.Data.품목코드 + ':' + args.Data.LOT번호;
+
+}
+
+
+public class 보유품목일련정보수량 : INotifyPropertyChanged
+{
+    public int seq { get; set; }
+    public string _품목코드 { get; set; }
+    public string _보유년월일 { get; set; }
+    public int _수량 { get; set; }
+
+    public int Seq
+    {
+        get { return seq; }
+        set
+        {
+            this.seq = value;
+            INotifyPropertyChanged("Seq");
+        }
+    }
+    public string 품목코드
+    {
+        get { return _품목코드; }
+        set
+        {
+            this._품목코드 = value;
+            INotifyPropertyChanged("품목코드");
+        }
+    }
+    public string 보유년월일
+    {
+        get { return _보유년월일; }
+        set
+        {
+            this._보유년월일 = value;
+            INotifyPropertyChanged("보유년월일");
+        }
+    }
+    public int 수량
+    {
+        get { return _수량; }
+        set
+        {
+            this._수량 = value;
+            INotifyPropertyChanged("수량");
+        }
+    }
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    private void INotifyPropertyChanged(string propertyName)
+    {
+        var handler = PropertyChanged;
+        if (handler != null)
+        {
+            handler(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+}
+
+
+// 페이지가 소멸할 때 호출된다.
+protected override void OnDispose()
+{
+}
+
+protected override async void OnReceivedMessage(Message message, bool isGlobal, dynamic[] args)
+{
+    if (message != Message.ReceivedActionTag)
+        return;
+
+    var actionCode = args[0] as string;
+    if (actionCode == "S9103" // 입고
+        || actionCode == "S9104" // 입고 불량
+        || actionCode == "S9105" // 위치 배정
+        || actionCode == "S9106" //반출
+        || actionCode == "S9119") // 위치반출
+    {
+        await RefreshAsync();
+    }
+}
+
+private async Task OnQRPrinte(int size)
+{
+    await QRPrinte_Act(barcodeValue, 2);
+}
+
+private async Task OnQRPrinteSerial(int size)
+{
+    if (nowSelected == "list2")
+    {
+        foreach (var item in list3)
+            await QRPrinteSerial_Act(item.일년번호, size, "1");
+    }
+    else if (nowSelected == "list3")
+        await QRPrinte_Act(barcodeValueSerial, size);
+
+
+}
+
+private async Task OnQRPrinteSerial2(int size)
+{
+    await QRPrinte_Act(barcodeValue, size);
+}
+}

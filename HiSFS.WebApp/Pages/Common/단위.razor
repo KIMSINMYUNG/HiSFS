@@ -1,0 +1,26 @@
+﻿<SfCard>
+    <CardHeader>
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col mr-auto">
+                    <span class="card-header-text">@제목</span>
+                </div>
+                <div class="col-auto mr-3">
+                </div>
+                <div class="col-auto">
+                </div>
+            </div>
+        </div>
+    </CardHeader>
+    <CardContent>
+        @ChildContent
+    </CardContent>
+</SfCard>
+
+@code {
+    [Parameter]
+    public string 제목 { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}

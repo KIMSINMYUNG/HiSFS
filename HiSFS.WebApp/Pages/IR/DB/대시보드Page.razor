@@ -1,0 +1,53 @@
+﻿@page "/ir/db/대시보드"
+
+@inherits CustomComponent
+
+<div class="container-fluid h-100">
+    <div class="row h-auto mb-3">
+        <div class="col-8">
+            <HiSFS.WebApp.Pages.IR.DB.Charts.설비현황 />
+        </div>
+        <div class="col-6">
+            @*<HiSFS.WebApp.Pages.IR.DB.Charts.작업자별생산실적현황 />*@
+        </div>
+        <br>
+        <div class="col-12">
+            <HiSFS.WebApp.Pages.IR.DB.Charts.생산실적현황 />
+            @*<HiSFS.WebApp.Pages.IR.DB.Charts.작업지시별생산실적현황 />*@
+        </div>
+        <!--<div class="col-6">
+        <HiSFS.WebApp.Pages.IR.DB.Charts.설비현황 />
+    </div>-->
+        @*<div class="col-4">
+            <HiSFS.WebApp.Pages.IR.DB.Charts.Chart2 />
+        </div>
+        <div class="col-4">
+            <HiSFS.WebApp.Pages.IR.DB.Charts.Chart3 />
+        </div>*@
+        <!--</div>
+    <div class="row h-50 mb-3">
+        <div class="col-4">
+            <HiSFS.WebApp.Pages.IR.DB.Charts.작업지시별품질검사현황 />
+        </div>
+
+        <div class="col-4">
+            <HiSFS.WebApp.Pages.IR.DB.Charts.작업자별생산실적현황 />
+        </div>-->
+        @*월별생산율*@
+
+        <!--<div class="col-4">-->
+        @*<HiSFS.WebApp.Pages.IR.DB.Charts.Chart6_1 />*@
+        <!--<HiSFS.WebApp.Pages.IR.DB.Charts.생산실적현황 />
+    </div>-->
+
+
+
+    </div>
+</div>
+
+@code {
+    protected override void OnDispose()
+    {
+
+    }
+}

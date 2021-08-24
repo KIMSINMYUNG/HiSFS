@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Driver" Version="2.11.2" />
+    <PackageReference Include="System.IO.Ports" Version="5.0.0-rc.1.20451.14" />
+    <PackageReference Include="System.Management" Version="5.0.0-rc.1.20451.14" />
+    <PackageReference Include="Topshelf" Version="4.2.1.218-develop" />
+    <PackageReference Include="Zebra.Printer.SDK" Version="2.15.2634" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HiSFS.Api.Shared\HiSFS.Api.Shared.csproj" />
+    <ProjectReference Include="..\HiSFS.Shared\HiSFS.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="BouncyCastle.Crypto">
+      <HintPath>Lib\BouncyCastle.Crypto.dll</HintPath>
+    </Reference>
+    <Reference Include="Csv">
+      <HintPath>Lib\Csv.dll</HintPath>
+    </Reference>
+    <Reference Include="FluentFTP">
+      <HintPath>Lib\FluentFTP.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.DotNet.PlatformAbstractions">
+      <HintPath>Lib\Microsoft.DotNet.PlatformAbstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyModel">
+      <HintPath>Lib\Microsoft.Extensions.DependencyModel.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Lib\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="SdkApi.Core">
+      <HintPath>Lib\SdkApi.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="SdkApi.Desktop">
+      <HintPath>Lib\SdkApi.Desktop.dll</HintPath>
+    </Reference>
+    <Reference Include="SdkApi.Desktop.Usb">
+      <HintPath>Lib\SdkApi.Desktop.Usb.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpSnmpLib">
+      <HintPath>Lib\SharpSnmpLib.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.WindowsRuntime">
+      <HintPath>Lib\System.Runtime.WindowsRuntime.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

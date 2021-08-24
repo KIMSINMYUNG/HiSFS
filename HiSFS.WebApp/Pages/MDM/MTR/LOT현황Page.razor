@@ -1,0 +1,179 @@
+﻿@page "/mdm/mtr/LOT현황"
+@inherits CustomComponent
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="80%" Collapsible="true">
+
+            <div class="row section-header">
+                <span class="my-auto">바코드 발급 현황</span>
+            </div>
+            <FGrid @ref="grid" DataSource="@list" TValue="바코드발급정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="10" 
+                   OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+                <GridColumns>
+
+                    <GridColumn Field=@nameof(바코드발급정보.품목코드) Width="200" HeaderText="품번" />
+                    <GridColumn Field=@nameof(바코드발급정보.LOT번호) Width="250" HeaderText="LOT" />
+                    <GridColumn Field=@nameof(바코드발급정보.수량) Width="160" />
+                    <GridColumn Field=@nameof(바코드발급정보.사원코드) Width="100" HeaderText="사원" />
+                    <GridColumn Field=@nameof(바코드발급정보.구분) Width="100" HeaderText="구분">
+                        <Template>
+                            @{
+                                var info = (context as 바코드발급정보);
+                                <div>
+                                    <div class="empimg">
+                                        @if (info.구분 == "0")
+                                        {
+                                            <span>구매</span>
+                                        }
+                                        @if (info.구분 == "1")
+                                        {
+                                            <span>외주</span>
+                                        }
+                                        @if (info.구분 == "2")
+                                        {
+                                            <span>생산</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(바코드발급정보.입고유무) Width="100" HeaderText="입고" />
+                    <GridColumn Field=@nameof(바코드발급정보.생성일자) Format="yyyy/MM/dd" Width="120" HeaderText="등록일" />
+                    <GridColumn Field=@nameof(바코드발급정보.입고일자) Format="yyyy/MM/dd" Width="120" HeaderText="입고일" />
+
+                </GridColumns>
+            </FGrid>
+
+        </SplitterPane>
+        <SplitterPane Size="20%" Collapsible="true">
+            <div class="col section-header mr-auto mt-2">
+                <span class="my-auto">바코드</span>
+                <div class="form-row mt-2">
+                    <div class="form-group col-md-12">
+                        @if (barcodeValue != null)
+                        {
+                            <div class="row mb-2">
+                                <span class="col text-center">품목코드</span>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col text-center">
+                                    <SfQRCodeGenerator Width="200px" Height="150px" Value=@(barcodeValue)>
+                                        @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                    </SfQRCodeGenerator>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col text-center">
+                                    @*<SfButton Disabled="true">출력</SfButton>*@
+                                    <SfButton OnClick="() => OnQRPrinte(4) ">출력</SfButton>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    [Parameter]
+    public PageMode Mode { get; set; }
+
+
+    private FGrid<바코드발급정보> grid;
+    private IList<바코드발급정보> list;
+
+    private string barcodeValue;
+    private 바코드발급정보 selected품목;
+
+    private string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await Remote.Command.기준정보.바코드발급정보_조회(회사코드);
+        //ModifyList(result, (x, map) =>
+        //{
+        //    if (x.품목구분코드 != null)
+        //        x.품목구분 = map[x.품목구분코드];
+        //    if (x.조달구분코드 != null)
+        //        x.조달구분 = map[x.조달구분코드];
+        //    if (x.소재코드 != null)
+        //        x.소재 = map[x.소재코드];
+        //    if (x.단위코드 != null)
+        //        x.단위 = map[x.단위코드];
+        //});
+        list = result.ToList();  //    .ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<바코드발급정보> args)
+    {
+        selected품목 = args.Data;
+        barcodeValue = args.Data.품목코드 + ':' + args.Data.LOT번호;
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<품목정보> args)
+    {
+        // 추가 시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //var newRow = args.Data;
+            //newRow.관리차수 = 1;
+            //newRow.품목구분코드 = "B1203";
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //await Remote.Command.기준정보.품목_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //var newRow = args.Data;
+            //newRow.품목구분 = null;
+            //newRow.품목유형 = null;
+            //newRow.소재 = null;
+            //newRow.규격종류 = null;
+            //newRow.조달구분 = null;
+            //newRow.단위 = null;
+            ////newRow.거래처 = null;
+
+            //await Remote.Command.기준정보.품목_저장(newRow, args.Action == "Add" ? true : false);
+
+            //await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    protected override void OnDispose()
+    {
+    }
+
+    private async Task OnQRPrinte(int type)
+    {
+        //string barcodeValue = null;
+        // LOT 사용여부 를 판단하여 LOT번호를 받는다
+
+        //bool lotflag = selected품목;
+
+        //if (lotflag)
+        //{
+
+        //}
+
+        await QRPrinte_Act(barcodeValue, 2);
+
+    }
+}

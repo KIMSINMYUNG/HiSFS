@@ -1,0 +1,74 @@
+﻿@page "/popup/장소"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="장소정보"   @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+        OnCreated="RefreshAsync"  OnRowSelected="OnRowSelected"  OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(장소정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(장소정보.장소코드) Visible="false" />
+        <GridColumn Field=@nameof(장소정보.장소명) />
+        <GridColumn Field=@nameof(장소정보.장소유형코드) Width="0" Template=@CommonCodeTemplate(nameof(장소정보.장소유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(장소정보.장소유형코드), "장소유형", "B08") HeaderText="장소유형" />
+        <GridColumn Field="장소유형.코드명" HeaderText="장소유형">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(장소정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(장소정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="변경일" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+    </GridColumns>
+</FGrid>
+             
+
+
+@code {
+    private FGrid<장소정보> grid;
+    private ObservableCollection<장소정보> list;
+    private 장소정보 selectedRow;
+
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<장소정보>> OnSelectedEvent { get; set; }
+
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<장소정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.기준정보.장소_조회();
+        ModifyList(result, (x, map) =>
+        {
+            if (x.장소유형코드 != null)
+                x.장소유형 = map[x.장소유형코드];
+        }, false);
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<장소정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

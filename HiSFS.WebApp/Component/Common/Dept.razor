@@ -1,0 +1,91 @@
+﻿@inherits CustomComponent
+
+
+<SfComboBox TValue="string" TItem="부서정보" @bind-Value="@ListItem" PopupWidth="400px" DataSource="@부서정보List" PopupHeight="400px" CssClass="@Validate" Placeholder="부서코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+    <ComboBoxTemplates TItem="부서정보">
+        <HeaderTemplate>
+            <table>
+                <tr>
+                    <th width="100px">부서코드</th>
+                    <th width="100px">부서명</th>
+                    <th width="100px">부문코드</th>
+                    <th width="100px">부문명</th>
+                </tr>
+            </table>
+        </HeaderTemplate>
+        <ItemTemplate Context="anotherContext">
+            @{
+                var 부서 = (anotherContext as 부서정보);
+            }
+
+            <table>
+                <tbody>
+                    <tr>
+                        <td>@부서.부서코드</td>
+                        <td>@부서.부서명</td>
+                        <td>@부서.부문코드</td>
+                        <td>@부서.부문명</td>
+                    </tr>
+                </tbody>
+            </table>
+        </ItemTemplate>
+    </ComboBoxTemplates>
+    <ComboBoxFieldSettings Text="부서명" Value="부서코드"></ComboBoxFieldSettings>
+</SfComboBox>
+
+
+@code {
+
+
+    [Parameter]
+    public EventCallback<string> ListItemChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+
+    [Parameter]
+    public string Validate { get; set; }
+
+    private string listItem { get; set; }
+
+    private string Edit부서코드 { get; set; }
+
+    [Parameter]
+    public string ListItem
+    {
+        get { return Edit부서코드; }
+        set
+        {
+
+            if (Edit부서코드 != value)
+            {
+                Edit부서코드 = value;
+
+                if (ListItemChanged.HasDelegate)
+                {
+                    ListItemChanged.InvokeAsync(value);
+                    ValueChanged.InvokeAsync(value);
+                }
+            }
+
+        }
+    }
+
+
+    public List<부서정보> 부서정보List { get; set; }
+
+    public string 회사코드 = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result1 = await Remote.Command.기준정보.부서정보_조회(회사코드);
+        부서정보List = result1.ToList();
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

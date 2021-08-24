@@ -1,0 +1,134 @@
+﻿@inherits CustomComponent
+@page "/mm/mio/출고현황"
+
+
+
+<FGrid DataSource="@list" TValue="보유품목이력" DefaultMode="true" PageMode="PageMode.Default" AddToolbar="toolbar"
+       OnCreated="RefreshAsync" OnToolbarClick="OnToolbarClick" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete">
+    @*EditMode="DGridEditMode.AddEdit"*@
+    <GridColumns>
+        @*<GridColumn Width="90" HeaderText="순번" />*@
+        <GridColumn Field=@nameof(보유품목이력.이력순번) Width="80" HeaderText="출고순번" />
+        <GridColumn Field=@nameof(보유품목이력.보유품목코드) Width="100" HeaderText="보유품목코드" />
+        <GridColumn Field=연계보유품목.품목.품목명 Width="160" HeaderText="품목명" />
+        <GridColumn Field=연계보유품목.품목구분.코드명 Width="80" HeaderText="품목구분" />
+        <GridColumn Field=@nameof(보유품목이력.유형사유) Template=@CommonCodeTemplate(nameof(보유품목이력.유형사유)) HeaderText="유형" Width="80" />
+        <GridColumn Field=@nameof(보유품목이력.변경사유) Width="80" HeaderText="구분" />
+        <GridColumn Field=장소.장소명 Width="80" HeaderText="장소명" />
+        <GridColumn Field="위치.위치명" Width="140" HeaderText="위치" />
+        <GridColumn Field=@nameof(보유품목이력.변경수량) Width="80" HeaderText="출고수량" />
+        <GridColumn Field=@nameof(보유품목이력.변경일시) Format="yyyy/MM/dd HH:mm:ss" HeaderText="출고일" Width="160" />
+
+    </GridColumns>
+
+    @*<GridColumns>
+            <GridColumn Field=@nameof(공통코드.코드) Width="80" />
+            <GridColumn Field=@nameof(공통코드.상위코드) Width="80" />
+            <GridColumn Field=@nameof(공통코드.코드명) Width="80" />
+            <GridColumn Field=@nameof(공통코드.코드영문명) Width="80" />
+            <GridColumn Field=@nameof(공통코드.설명) Width="80" />
+            <GridColumn Field=@nameof(공통코드.코드유형코드) Width="80" EditType="EditType.DropDownEdit" Template="CommonCodeTemplate(nameof(공통코드.코드유형코드))" EditTemplate="CommonCodeEditTemplate(nameof(공통코드.코드유형코드))" />
+            <GridColumn Field=@nameof(공통코드.뎁스) Width="80" />
+            <GridColumn Field=@nameof(공통코드.정렬순번) Width="80" />
+        </GridColumns>*@
+</FGrid>
+
+@code {
+    private ObservableCollection<보유품목이력> list;
+
+    private string 회사코드 = "";
+
+    private List<object> toolbar = new List<object>
+{
+       new Syncfusion.Blazor.Navigations.ItemModel { Text = "1개월", TooltipText = "1개월", PrefixIcon = "e-custom-icons", Align = ItemAlign.Center, Id = "one" },
+        new Syncfusion.Blazor.Navigations.ItemModel { Text = "3개월", TooltipText = "3개월", PrefixIcon = "e-custom-icons", Align = ItemAlign.Center, Id = "three" },
+        new Syncfusion.Blazor.Navigations.ItemModel { Text = "6개월", TooltipText = "6개월", PrefixIcon = "e-custom-icons", Align = ItemAlign.Center, Id = "six" },
+        new Syncfusion.Blazor.Navigations.ItemModel { Text = "12개월", TooltipText = "12개월", PrefixIcon = "e-custom-icons", Align = ItemAlign.Center, Id = "twelve" },
+        new Syncfusion.Blazor.Navigations.ItemModel { Text = "전체", TooltipText = "전체", PrefixIcon = "e-custom-icons", Align = ItemAlign.Center, Id = "all" }
+    };
+
+    //protected override async Task OnReadyRemoteServiceAsync(bool isReady)
+    //{
+    //    if (isReady == false)
+    //        return;
+
+    //    //var sw = System.Diagnostics.Stopwatch.StartNew();
+    //    list = (await Remote.Command.기준정보.원자재부품_조회()).ToList();
+    //    //sw.Stop();
+    //    //result = sw.ElapsedMilliseconds.ToString();
+
+    //    StateHasChanged();
+    //}
+
+    private async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.자재관리.자재현황_입고_조회("B1702", 회사코드);
+        ModifyList(result, (info, map) =>
+        {
+
+            if (info.연계보유품목 != null)
+                info.연계보유품목.품목구분 = map[info.연계보유품목.품목구분코드];
+
+        });
+        list = result.ToObservableCollection();
+        StateHasChanged();
+    }
+    private async Task RefreshAsync(string datetime)
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.자재관리.자재현황_입고분기_조회("B1702", datetime, 회사코드);
+        ModifyList(result, (info, map) =>
+        {
+
+            if (info.연계보유품목 != null)
+                info.연계보유품목.품목구분 = map[info.연계보유품목.품목구분코드];
+
+
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+    private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "one" || args.Item.Id == "three" || args.Item.Id == "six" || args.Item.Id == "twelve" || args.Item.Id == "all")
+        {
+            RefreshAsync(args.Item.Id);
+        }
+        else
+            await Task.Yield();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<보유품목이력> args)
+    {
+        // 추가 시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            //newRow.관리차수 = 1;
+            //newRow.품목구분코드 = "B1203";
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    void OnRowSelected(RowSelectEventArgs<보유품목이력> args)
+    {
+
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

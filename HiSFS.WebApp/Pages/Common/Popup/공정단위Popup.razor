@@ -1,0 +1,159 @@
+﻿@page "/popup/공정단위"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="공정단위정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup" 
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete">
+    <GridColumns>
+        <GridColumn Field=@nameof(공정단위정보.No) HeaderText="순번" Width="80" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(공정단위정보.공정단위코드) Visible="false" />
+        <GridColumn Field=@nameof(공정단위정보.원공정단위코드) HeaderText="공정단위코드" Visible="false" />
+        <GridColumn Field=@nameof(공정단위정보.공정단위명) Width="200"/>
+        <GridColumn Field=@nameof(공정단위정보.관리차수) AllowAdding="false" AllowEditing="false" />
+        <GridColumn Field=@nameof(공정단위정보.완제품)>
+            <Template>
+                @((context as 공정단위정보).완제품?.품목명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="완제품" Target="#root" DialogHeader="완제품 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@((context as 공정단위정보).완제품)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.생산품Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(공정단위정보.공정품)>
+            <Template>
+                @((context as 공정단위정보).공정품?.품목명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="공정품" Target="#root" DialogHeader="공정품 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@((context as 공정단위정보).공정품)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.생산품Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="완제품.품목코드" Visible="false" />
+        <GridColumn Field="완제품.품목명" Visible="false" />
+        <GridColumn Field=@nameof(공정단위정보.공정)>
+            <Template>
+                @((context as 공정단위정보).공정?.공정명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="공정" Target="#root" DialogHeader="공정 조회" TValue="공정정보" TCode="string" TextField="공정명" @bind-Value=@((context as 공정단위정보).공정)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.공정Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="공정.공정명" Visible="false" />
+        <GridColumn Field="공정.공정코드" Visible="false" />
+        <GridColumn Field=@nameof(공정단위정보.공정품유형코드) Template=@CommonCodeTemplate(nameof(공정단위정보.공정품유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(공정단위정보.공정품유형코드), "공정품유형", "B04") HeaderText="공정품유형" />
+        <GridColumn Field="공정품.품목코드" Visible="false" />
+        <GridColumn Field="공정품.품목명" Visible="false" />
+        <GridColumn Field=@nameof(공정단위정보.도면)>
+            <Template>
+                @((context as 공정단위정보).도면?.도면명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="도면" Target="#root" DialogHeader="도면 조회" TValue="도면정보" TCode="string" TextField="도면명" @bind-Value=@((context as 공정단위정보).도면)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.도면Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="도면.도면코드" Visible="false" />
+        <GridColumn Field="도면.도면명" Visible="false" />
+        <GridColumn Field=@nameof(공정단위정보.공정예상시간) />
+        <GridColumn Field=@nameof(공정단위정보.사용유무) HeaderText="확정유무" EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field=@nameof(공정단위정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일" IsIdentity="true" />
+        <GridColumn Field=@nameof(공정단위정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="변경일" IsIdentity="true" />
+    </GridColumns>
+</FGrid>
+
+
+@code
+{
+    private FGrid<공정단위정보> grid;
+    private ObservableCollection<공정단위정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<공정단위정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<공정단위정보, bool> ReturnSelectedItem { get; set; }
+
+    public string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.공정단위_조회(회사코드);
+        ModifyList(result, (x, map) =>
+        {
+            if (x.공정?.공정유형코드 != null)
+                x.공정.공정유형 = map[x.공정.공정유형코드];
+            if (x.공정품유형코드 != null)
+                x.공정품유형 = map[x.공정품유형코드];
+        });
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<공정단위정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    private async Task OnActionComplete(ActionEventArgs<공정단위정보> args)
+    {
+        // 추가시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+        }
+        // 편집 시작시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //await Remote.Command.생산관리.생산품공정_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //await Remote.Command.생산관리.생산품공정_저장(args.Data, args.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

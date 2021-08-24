@@ -1,0 +1,18 @@
+﻿@page "/test/richtexteditor"
+
+<SfRichTextEditor Readonly="true" @bind-Value=@v>
+    <ChildContent>
+        <RichTextEditorInlineMode Enable="true" ShowOnSelection="true" />
+    </ChildContent>
+</SfRichTextEditor>
+
+@code {
+    private string v;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Yield();
+
+        v = "<p>aaaa</p>";
+    }
+}

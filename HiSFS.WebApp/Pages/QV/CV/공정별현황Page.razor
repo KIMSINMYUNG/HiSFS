@@ -1,0 +1,108 @@
+﻿@page "/qv/iv/공정별현황"
+@using HiSFS.Api.Shared.Models
+@using System.ComponentModel.DataAnnotations.Schema
+
+
+@inherits CustomComponent
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="30%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                <FGrid @ref="grid1" DataSource="@list1" TValue="생산실적헤더정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="5"
+                       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(생산실적헤더정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(생산실적헤더정보.생산지시코드) Visible="false" />
+
+                        <GridColumn Field=@nameof(생산실적헤더정보.생산지시명) HeaderText="작업지시명" Width="150" />
+                        <GridColumn Field=@nameof(생산실적헤더정보.생산품코드) HeaderText="실적품번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+
+                        <GridColumn Field=@nameof(생산실적헤더정보.실적수량) HeaderText="실적수량" Width="100" Format="G29" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                        <GridColumn Field=@nameof(생산실적헤더정보.불량수량) HeaderText="불량수량" Width="100" Format="G29" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+
+                        <GridColumn Field=@nameof(생산실적헤더정보.실적공정코드_창고코드) HeaderText="실적공정코드/창고코드" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                        <GridColumn Field=@nameof(생산실적헤더정보.실적작업장코드_장소코드) HeaderText="실적작업장코드/장소코드" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                        <GridColumn Field=@nameof(생산실적헤더정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="변경일" Width="150">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+        <SplitterPane Size="100%" Collapsible="true">
+            <div class="row mx-2 mb-3">
+                <HiSFS.WebApp.Pages.Common.단위 제목="실적현황">
+                    <FGrid DataSource=@list2 DefaultMode="true"  TValue="생산실적상세정보" OnRowSelected="OnRowSelected"  EditMode="DGridEditMode.None"PageSize="10"  >
+                        <GridColumns>
+                            <GridColumn Field=@nameof(생산실적상세정보.작업자사번) HeaderText="작업자사번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                            <GridColumn Field=@nameof(생산실적상세정보.사용품번) HeaderText="사용품번" Width="200" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                            <GridColumn Field=@nameof(생산실적상세정보.사용수량) HeaderText="사용수량" Width="120" Format="G29" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                            <GridColumn Field=@nameof(생산실적상세정보.비고) HeaderText="비고" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                            <GridColumn Field=@nameof(생산실적상세정보.실적등록일) HeaderText="실적등록일" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                        </GridColumns>
+
+                    </FGrid>
+                </HiSFS.WebApp.Pages.Common.단위>
+            </div>
+
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    // 순번  보유품번 품번 품명 규격 수량 단위 장소 위치 품질검사 검사기준값 오차값 측정값 검사단위 검사장비 검사결과
+    public SfButton btnExcel;
+
+    private FGrid<생산실적헤더정보> grid1;
+    private ObservableCollection<생산실적헤더정보> list1;
+
+    private FGrid<생산실적상세정보> grid2;
+    private List<생산실적상세정보> list2 = new List<생산실적상세정보>();
+
+    private string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await Remote.Command.기준정보.MES생산관리_생산실적헤더정보_조회(회사코드);
+
+        ModifyList(result, (x, map) =>
+        {
+        });
+
+        list1 = result.ToObservableCollection();
+
+        StateHasChanged();
+
+
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<생산실적헤더정보> args)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<생산실적헤더정보> args)
+    {
+
+        var result = await Remote.Command.기준정보.MES생산관리_생산실적상세정보_조회(args.Data.생산지시코드,회사코드);
+        list2 = result.ToList();
+
+        StateHasChanged();
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<생산실적상세정보> args)
+    {
+
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

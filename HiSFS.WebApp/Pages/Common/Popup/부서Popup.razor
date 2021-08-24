@@ -1,0 +1,80 @@
+﻿@page "/popup/부서"
+
+@inherits CustomComponent
+
+<div @ondblclick="OnDbClick">
+    @if (list != null)
+    {
+    <SfTreeView @ref="treeView" TValue="부서정보" AllowEditing="false" AllowDragAndDrop="false" SelectedNodes=@(selectedNodes)>
+        <TreeViewFieldsSettings DataSource="list" Id="부서코드" ParentID="상위부서코드" Text="부서명" Child="하위부서목록" TValue="부서정보" />
+        <TreeViewEvents Created="OnCreatedTreeView" NodeSelected="OnNodeSelected" DataBound="OnDataBound" TValue="부서정보" />
+    </SfTreeView>
+    }
+</div>
+
+
+@code {
+    private SfTreeView<부서정보> treeView;
+    private List<부서정보> list;
+    private string[] selectedNodes;
+    private 부서정보 selected;
+
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<부서정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<부서정보, bool> ReturnSelectedItem { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Remote.WaitForReadyRemoteService();
+        await RefreshAsync();
+    }
+
+    private async Task OnCreatedTreeView(object e)
+    {
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.기준정보.부서_조회(new 검색정보 { [검색대상.사용] = "" });
+        //list = result.ToObservableCollection();
+        list = result.ToList();
+
+        StateHasChanged();
+    }
+
+    private void OnNodeSelected(NodeSelectEventArgs e)
+    {
+        selected = treeView.GetTreeData(e.NodeData.Id)[0];
+        selectedNodes = new string[] { selected.부서코드 };
+
+        if (selected.선택가능유무 == false)
+            return;
+
+        ReturnSelectedItem(selected, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        if (selected == null)
+            return;
+
+        if (selected.선택가능유무 == false)
+            return;
+
+        ReturnSelectedItem(selected, true);
+    }
+
+    private async Task OnDataBound(DataBoundEventArgs<부서정보> e)
+    {
+        await treeView.ExpandAll();
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

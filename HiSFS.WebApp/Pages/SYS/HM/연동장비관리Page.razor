@@ -1,0 +1,170 @@
+﻿@page "/sys/hm/연동장비관리"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="연동장비정보" DefaultMode="true"
+       OnCreated="RefreshAsync" OnRowDataBound="OnRowDataBound">
+    <GridColumns>
+        <GridColumn Field=@nameof(연동장비정보.식별번호) HeaderText="식별번호" />
+        <GridColumn Field=@nameof(연동장비정보.장비명) HeaderText="장비명" />
+        <GridColumn Field=@nameof(연동장비정보.식별코드) HeaderText="식별코드" />
+        <GridColumn Field="연동장비유형.코드명" HeaderText="연동장비유형" />
+        <GridColumn Field=@nameof(연동장비정보.연동장비유형코드) Visible="false" />
+        <GridColumn Field=@nameof(연동장비정보.테스트) Width="200" HeaderText="테스트" />
+        <GridColumn Field=@nameof(연동장비정보.등록시각) HeaderText="등록시각" />
+        <GridColumn Field=@nameof(연동장비정보.사용유무) HeaderText="승인유무" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field=@nameof(연동장비정보.승인시각) HeaderText="승인시각" />
+        <GridColumn HeaderText="" Width="120" TextAlign="TextAlign.Right">
+            <Template>
+                @{ var info = context as 연동장비정보; }
+                @if (info.사용유무 == false)
+                {
+                    <SfButton @onclick=@(() => OnAapproval(info, true))>승인</SfButton>
+                }
+                else
+                {
+                    <SfButton @onclick=@(() => OnAapproval(info, false))>해제</SfButton>
+                }
+            </Template>
+        </GridColumn>
+    </GridColumns>
+</FGrid>
+
+@*@result*@
+
+@code {
+    private FGrid<연동장비정보> grid;
+    private ObservableCollection<연동장비정보> list;
+
+
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    await Task.Yield();
+
+    //    grid.SetDefault(PageMode.Default, "장비명", "연동장비유형.코드명", "등록시각", "승인시각");
+    //    //grid.SetEditMode();
+    //}
+
+
+    //protected override async Task OnReadyRemoteServiceAsync(bool isReady)
+    //{
+    //    if (isReady == false)
+    //        return;
+
+    //    await RefreshAsync();
+    //}
+
+    async Task RefreshAsync()
+    {
+        //list = (await Remote.Command.공통.공통코드_조회()).ToObservableCollection();
+        var result = await Remote.Command.시스템.연동장비_조회();
+        ModifyList(result, (x, map) =>
+        {
+            if (x.연동장비유형코드 != null)
+                x.연동장비유형 = map[x.연동장비유형코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    //string state;
+
+    void OnRowSelected(RowSelectEventArgs<연동장비정보> args)
+    {
+
+    }
+
+    void OnRowDataBound(RowDataBoundEventArgs<연동장비정보> args)
+    {
+        if (args.Data.사용유무 == true)
+            return;
+
+        args.Row.AddStyle(new[] { "background-color: #444422;" });
+    }
+
+@*    async Task OnActionBegin(ActionEventArgs<연동장비정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            await Task.Yield();
+
+        }
+    }
+
+    async Task OnActionComplete(ActionEventArgs<연동장비정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+
+            var rc = await grid.GetSelectedRowCellIndexes();
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //state = "delete";
+
+            //await Remote.Command.공통.공통코드_삭제(args.Data, false);
+
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            //await Remote.Command.공통.공통코드_저장(args.Data, args.Action == "Add" ? true : false);
+
+            if (args.Action == "Add")
+            {
+                await RefreshAsync();
+            }
+
+        }
+    }
+
+    private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "Reload")
+        {
+            await RefreshAsync();
+        }
+    }
+
+    protected override void OnReceivedMessage(Services.Message message, bool isGlobal, dynamic[] args)
+    {
+        base.OnReceivedMessage(message, isGlobal, args);
+
+        if (isGlobal == true && message == Services.Message.ChangedCommonCode)
+        {
+
+        }
+    }*@
+
+    private async Task OnAapproval(연동장비정보 info, bool isApproval)
+    {
+        var bResult = await CheckAndModify(() => Remote.Command.시스템.연동장비_승인(info, isApproval));
+        if (bResult == false)
+            return;
+
+        await RefreshAsync();
+    }
+
+    protected override void OnReceivedMessage(Message message, bool isGlobal, dynamic[] args)
+    {
+        if (message == Message.ReceivedTest)
+        {
+            _ = RefreshAsync();
+        }
+    }
+
+    protected override void OnDispose()
+    {
+
+    }
+}

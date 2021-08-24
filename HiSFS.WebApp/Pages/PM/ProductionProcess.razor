@@ -1,0 +1,27 @@
+﻿<SfGrid DataSource="@list" AllowPaging="false" Height="100%">
+</SfGrid>
+
+@code {
+    List<MockInfo> list = new List<MockInfo>
+    {
+        new MockInfo { 차수 = 1, 제목 = "공정1차", 원자재 = "원자재1", 생산품 = "중간생산품1", 유형 = "설비공정", 설비 = "설비1", 예상시간 = TimeSpan.FromHours(1.5d), 비고 = "비고" },
+        new MockInfo { 차수 = 2, 제목 = "공정2차", 원자재 = "원자재1", 생산품 = "중간생산품1", 유형 = "설비공정", 설비 = "설비1", 예상시간 = TimeSpan.FromHours(1.5d), 비고 = "비고" },
+        new MockInfo { 차수 = 3, 제목 = "공정3차", 원자재 = "원자재1", 생산품 = "중간생산품1", 유형 = "설비공정", 설비 = "설비1", 예상시간 = TimeSpan.FromHours(1.5d), 비고 = "비고" },
+        new MockInfo { 차수 = 4, 제목 = "공정4차", 원자재 = "원자재1", 생산품 = "중간생산품1", 유형 = "설비공정", 설비 = "설비1", 예상시간 = TimeSpan.FromHours(1.5d), 비고 = "비고" },
+        new MockInfo { 차수 = 5, 제목 = "공정5차", 원자재 = "원자재1", 생산품 = "중간생산품1", 유형 = "설비공정", 설비 = "설비1", 예상시간 = TimeSpan.FromHours(1.5d), 비고 = "비고" },
+        new MockInfo { 차수 = 6, 제목 = "공정6차", 원자재 = "원자재1", 생산품 = "중간생산품1", 유형 = "조립공정", 설비 = "", 예상시간 = TimeSpan.FromHours(1.5d), 비고 = "비고" },
+        new MockInfo { 차수 = 7, 제목 = "공정7차", 원자재 = "원자재1", 생산품 = "중간생산품1", 유형 = "조립공정", 설비 = "", 예상시간 = TimeSpan.FromHours(1.5d), 비고 = "비고" },
+    };
+
+    public class MockInfo
+    {
+        public int 차수 { get; set; }
+        public string 제목 { get; set; }
+        public string 원자재 { get; set; }
+        public string 생산품 { get; set; }
+        public string 유형 { get; set; }
+        public string 설비 { get; set; }
+        public TimeSpan 예상시간 { get; set; }
+        public string 비고 { get; set; }
+    }
+}

@@ -1,0 +1,141 @@
+﻿@page "/popup/생산품공정"
+
+@inherits CustomComponent
+
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="1">
+    <SplitterPanes>
+        <SplitterPane Size="50%">
+            <FGrid @ref="grid" DataSource="@list" TValue="생산품공정정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+                   OnCreated="RefreshAsync" OnRowSelected="OnGrid1RowSelected">
+                <GridColumns>
+                    <GridColumn Field=@nameof(생산품공정정보.생산품공정코드) />
+                    <GridColumn Field=@nameof(생산품공정정보.관리차수) AllowEditing="false" />
+                    <GridColumn Field=@nameof(생산품공정정보.생산품공정명) />
+                    <GridColumn HeaderText="공정차수" AllowEditing="false">
+                        <Template>
+                            @{ var info = context as 생산품공정정보; }
+                            @info.생산품공정차수목록.Count()
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산품공정정보; }
+                            @info.생산품공정차수목록.Count()
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="생산품.품목명" HeaderText="생산품명" />
+                    <GridColumn Field=@nameof(생산품공정정보.사용유무) HeaderText="확정유무" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+                    <GridColumn Field=@nameof(생산품공정정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일" AllowEditing="false" />
+                    <GridColumn Field=@nameof(생산품공정정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="수정일" AllowEditing="false" />
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+        <SplitterPane Size="50%">
+            <div class="row section-header">
+                <span class="my-auto">공정차수</span>
+            </div>
+            <FGrid @ref="grid2" DataSource="@list2" TValue="생산품공정차수정보" DefaultMode="true" PageMode="PageMode.Popup">
+                <GridColumns>
+                    <GridColumn Field=@nameof(생산품공정차수정보.공정차수) />
+                    <GridColumn Field="공정단위.공정단위명" HeaderText="공정명" />
+                    <GridColumn Field="공정단위.공정.공정유형.코드명" HeaderText="공정유형" />
+                    <GridColumn Field="공정단위.공정.공정명" HeaderText="공정" />
+                    <GridColumn Field="공정단위.공정예상시간" HeaderText="공정예상시간" />
+                    <GridColumn Field="공정단위.공정품유형.코드명" HeaderText="공정품유형" />
+                    <GridColumn Field="공정단위.도면" HeaderText="도면" />
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    FGrid<생산품공정정보> grid;
+    ObservableCollection<생산품공정정보> list;
+
+    FGrid<생산품공정차수정보> grid2;
+    ObservableCollection<생산품공정차수정보> list2;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<생산품공정정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<생산품공정정보, bool> ReturnSelectedItem { get; set; }
+
+
+
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    await Task.Yield();
+
+    //    grid.SetDefault(PageMode.Popup);
+
+    //    grid2.SetDefault(PageMode.Popup);
+    //}
+
+    //protected override async Task OnReadyRemoteServiceAsync(bool isReady)
+    //{
+    //    if (isReady == false)
+    //        return;
+
+    //    await RefreshAsync();
+    //}
+    private string 회사코드 = "";
+
+    async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var 검색 = new 검색정보 { [검색대상.사용] = "" };
+        var result = await Remote.Command.생산관리.생산품공정_조회(회사코드 , 검색);
+        ModifyList(result, (x, map) =>
+        {
+        @*            if (x.공정단위.공정유형코드 != null)
+            x.공정단위.공정유형 = map[x.공정단위.공정유형코드];
+        *@          });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    //string state;
+
+    void OnGrid1RowSelected(RowSelectEventArgs<생산품공정정보> args)
+    {
+        var info = args.Data;
+        var result = info.생산품공정차수목록;
+        ModifyList(result, (x, map) =>
+        {
+            if (x.공정단위.공정.공정유형코드 != null)
+                x.공정단위.공정.공정유형 = map[x.공정단위.공정.공정유형코드];
+            if (x.공정단위.공정품유형코드 != null)
+                x.공정단위.공정품유형 = map[x.공정단위.공정품유형코드];
+        });
+        list2 = result.ToObservableCollection();
+
+        StateHasChanged();
+
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    void OnRowDataBound(RowDataBoundEventArgs<생산품공정정보> args)
+    {
+        if (args.Data.사용유무 == true)
+            return;
+
+        args.Row.AddStyle(new[] { "background-color: #444422;" });
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

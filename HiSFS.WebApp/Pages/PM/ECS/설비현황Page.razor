@@ -1,0 +1,87 @@
+﻿@page "/pm/ecs/설비현황"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="보유품목정보" DefaultMode="true"
+       OnCreated="RefreshAsync">
+    <GridColumns>
+        <GridColumn Field="보유명" Width="160" HeaderText="설비명" />
+        <GridColumn Field="품목.품목명" Width="160" HeaderText="기종" />
+        <GridColumn Field="설비가동현황.상태" Width="160" HeaderText="가동상태" />
+        <GridColumn Width="80">
+            <Template>
+                @{ var info = context as 보유품목정보; }
+                <span class="e-input-group-icon e-icons e-icon-work" style="color: @(info.설비가동현황?.상태 switch
+                                      {
+                                          "OPERATE" => "rgb(0, 180, 0)",
+                                          "DISCONNECT" => "rgb(169, 169, 169)",
+                                          "ALARM" => "rgb(255, 0, 0)",
+                                          "EMERGENCY" => "rgb(255, 0, 255)",
+                                          "SUSPEND" => "rgb(255, 155, 50)",
+                                          "STOP" => "rgb(255, 255, 0)",
+                                          "MANUAL" => "rgb(2, 205, 252)",
+                                          "WARMUP" => "rgb(178, 34, 34)",
+                                          _ => "rgba(0, 0, 0, 0)"
+                                      });"></span>
+            </Template>
+        </GridColumn>
+        <GridColumn Field="설비가동현황.상태변경시각" Format="yyyy/MM/dd HH:mm:ss" Width="200" HeaderText="상태변경시각" />
+        <GridColumn Field="설비가동현황.상태유지시간" Width="160" HeaderText="상태유지시간">
+            <Template>
+                @{ var info = context as 보유품목정보; }
+                @(info.설비가동현황?.상태유지시간?.ToString(@"hh\:mm\:ss"))
+            </Template>
+        </GridColumn>
+        <GridColumn Field="설비가동현황.이전상태" Width="160" HeaderText="이전상태" />
+        <GridColumn Field="장소.장소명" Width="160" HeaderText="장소" />
+        <GridColumn Field="장소위치.위치명" Width="160" HeaderText="위치" />
+        <GridColumn Field="보유일" Format="yyyy/MM/dd" Width="160" HeaderText="보유일" />
+    </GridColumns>
+</FGrid>
+
+
+@code {
+    private FGrid<보유품목정보> grid;
+    private ObservableCollection<보유품목정보> list;
+
+
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    await base.OnAfterRenderAsync(firstRender);
+
+    //    if (firstRender == true)
+    //    {
+    //        grid.SetDefault(PageMode.Default, "품목.원품목코드", "품목.품목명", "품목.단위.코드명");
+    //        //grid.SetEditMode();
+    //    }
+    //}
+
+    // 원격 명령어를 사용할 수 있을 때 호출된다.
+    //protected override async Task OnReadyRemoteServiceAsync(bool isReady)
+    //{
+    //    if (isReady == false)
+    //        return;
+
+    //    await RefreshAsync();
+    //}
+
+    private async Task RefreshAsync()
+    {
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.설비현황_조회(회사코드, true);
+        ModifyList(result, (x, map) =>
+        {
+            if (x.품목.단위코드 != null)
+                x.품목.단위 = map[x.품목.단위코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    // 페이지가 소멸할 때 호출된다.
+    protected override void OnDispose()
+    {
+    }
+}

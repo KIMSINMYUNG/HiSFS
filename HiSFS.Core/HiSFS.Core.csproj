@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Syncfusion.Blazor" Version="18.3.0.35" />
+    <PackageReference Include="Syncfusion.Blazor.PdfViewerServer.Windows" Version="18.3.0.35" />
+    <PackageReference Include="Syncfusion.Blazor.WordProcessor" Version="18.3.0.35" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.0-rc.1.20451.13" />
+    <PackageReference Include="Syncfusion.XlsIO.Net.Core" Version="18.3.0.35" />
+    <PackageReference Include="Syncfusion.XlsIORenderer.Net.Core" Version="18.3.0.35" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HiSFS.Api.Shared\HiSFS.Api.Shared.csproj" />
+    <ProjectReference Include="..\HiSFS.Shared\HiSFS.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

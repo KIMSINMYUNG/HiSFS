@@ -1,0 +1,87 @@
+﻿@page "/popup/발주서헤더"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="발주서헤더정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(발주서헤더정보.회사코드) HeaderText="회사코드" Width="110" />
+        <GridColumn Field=@nameof(발주서헤더정보.발주일) HeaderText="발주일" Width="120" />
+        <GridColumn Field=@nameof(발주서헤더정보.발주번호) HeaderText="발주번호" Width="200" />
+        <GridColumn Field=@nameof(발주서헤더정보.발주일) HeaderText="발주일" Width="200" />
+        <GridColumn Field=@nameof(발주서헤더정보.거래처명) HeaderText="거래처명" Width="120" />
+        <GridColumn Field=@nameof(발주서헤더정보.과세구분명) HeaderText="과세구분명" Width="120" />
+        <GridColumn Field=@nameof(발주서헤더정보.담당자명) HeaderText="담당자명" Width="100" />
+
+    </GridColumns>
+</FGrid>
+
+
+
+@code {
+
+
+
+    private FGrid<발주서헤더정보> grid;
+    private ObservableCollection<발주서헤더정보> list;
+    private 발주서헤더정보 selectedRow;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<발주서헤더정보>> OnSelectedEvent { get; set; }
+
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<발주서헤더정보, bool> ReturnSelectedItem { get; set; }
+
+    //2021.04.30
+    string 회사코드 = "";
+    public 발주서View T_발주서 { get; set; }
+    // public IEnumerable<발주서헤더정보> 발주List = new List<발주서헤더정보>();
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+    //    T_발주서 = new 발주서View();
+
+    //    //T_발주서.빌주서헤더정보 = Remote.Command.기준정보.VL_MES_PO_View();
+    //    var result = await Remote.Command.기준정보.VL_MES_PO_View(회사코드);
+
+    //    T_발주서.빌주서헤더정보 = result;
+    //    //await RefreshAsync();
+    //}
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+        //var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        //var result = await Remote.Command.기준정보.발주서헤더정보_조회(회사코드);
+        //list = result.ToObservableCollection();
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.VL_MES_PO_View(회사코드);
+
+        //T_발주서.빌주서헤더정보 = result;
+
+        list = result.ToObservableCollection();
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<발주서헤더정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

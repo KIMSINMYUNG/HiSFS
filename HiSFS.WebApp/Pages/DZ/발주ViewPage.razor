@@ -1,0 +1,103 @@
+﻿
+@page "/dz/발주view"
+@using HiSFS.Api.Shared.Models.View_DZICUBE
+@inherits CustomComponent
+
+<SfSplitter Width="6000px" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                <FGrid @ref="grid" DataSource="@list" TValue="VL_MES_PO" DefaultMode="true" EditMode="DGridEditMode.EditDelete" PageSize="15"
+                       OnCreated="RefreshAsync" OnToolbarClick="OnToolbarClick">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(VL_MES_PO.CO_CD) HeaderText="회사코드" Width="110"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.PO_DT) HeaderText="발주일"  Width="120"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.DUE_DT) HeaderText="납기일" Width="120"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.SHIPREQ_DT) HeaderText="출하예정일" Width="120"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.TR_NM) HeaderText="거래처명" Width="120"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.PO_FG) HeaderText="거래구분" Width="120"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.PO_NB) HeaderText="발주번호" Width="200"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.EXCH_CD) HeaderText="환종" Width="100"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.PO_SQ) HeaderText="발주순번" Width="120"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.ITEM_CD) HeaderText="품번" Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.ITEM_NM) HeaderText="품명" Width="200"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.ITEM_DC) HeaderText="규격" Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.UNITMANG_DC) HeaderText="단위" Width="100"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.PO_QT) HeaderText="발주수량"  Width="120"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.PO_UM) HeaderText="발주단가"  Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.POG_AM) HeaderText="공급가" Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.POGV_AM1) HeaderText="부가세" Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.POGH_AM1) HeaderText="합계액" Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.MGM_NM) HeaderText="관리구분명" Width="180"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.PJT_NM) HeaderText="프록젝트명" Width="180"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.REMARK_DC_D) HeaderText="비고(내역)"Width="200" />
+                        <GridColumn Field=@nameof(VL_MES_PO.PLN_NM) HeaderText="담당자명" Width="100"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.UMVAT_FG) HeaderText="부가세구분" Width="100"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.VAT_NM) HeaderText="과세구분명" Width="120"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.QC_FG) HeaderText="검사구분" Width="100"/>
+
+
+                        <GridColumn Field=@nameof(VL_MES_PO.REMARK_DC) HeaderText="비고"  Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.VAT_FG) HeaderText="과세구분" Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.PLN_CD) HeaderText="담당자코드"  Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.DIV_CD) HeaderText="사업장코드"  Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.DEPT_CD) HeaderText="부서코드" Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.EMP_CD) HeaderText="사원코드"  Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.TR_CD) HeaderText="거래처코드"  Width="150"/>
+                        <GridColumn Field=@nameof(VL_MES_PO.MGMT_CD) HeaderText="관리구분코드" Width="150" />
+                        <GridColumn Field=@nameof(VL_MES_PO.PJT_CD) HeaderText="프로젝트" Width="150"/>
+
+
+
+
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    private FGrid<VL_MES_PO> grid;
+    private List<VL_MES_PO> list;
+    private VL_MES_PO selectedRow;
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+
+        StateHasChanged();
+
+        //부서VIEW
+        var result = await Remote.Command.기준정보.VL_MES_PO();
+
+        list = result.ToList();
+
+        StateHasChanged();
+    }
+
+
+    private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "btnCheckSave")
+        {
+            var YesOrNo = await ShowMessageBox("발주서정보반영", "발주서정보를 반영하시겠습니까?", MessageBoxResultType.YesOrNo);
+            bool result = false;
+            if (YesOrNo)
+            {
+                result = await Remote.Command.기준정보.VL_MES_PO_반영(list);
+
+                if (result)
+                    NotifyMessage(Message.반영성공);
+                else
+                    NotifyMessage(Message.반영실패);
+            }
+
+        }
+
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

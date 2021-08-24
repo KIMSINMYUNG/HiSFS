@@ -1,0 +1,83 @@
+﻿@inherits CustomComponent
+
+@using Syncfusion.Blazor.Data
+
+<SfComboBox TValue="string" TItem="장소정보" @bind-Value="@ListItem" PopupWidth="300px" DataSource="@장소List" PopupHeight="400px" CssClass="@Validate" Placeholder="장소" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+    <ComboBoxTemplates TItem="장소정보">
+        <HeaderTemplate>
+            <table><tr><th class="e-text-center">장소코드</th><th width="100px">장소명</th></tr></table>
+        </HeaderTemplate>
+        <ItemTemplate Context="anotherContext">
+            @{
+                var 장소정보 = (anotherContext as 장소정보);
+            }
+            <table>
+                <tbody>
+                    <tr>
+                        <td>@장소정보.장소코드</td>
+                        <td>@장소정보.장소명</td>
+                    </tr>
+                </tbody>
+            </table>
+        </ItemTemplate>
+    </ComboBoxTemplates>
+    <ComboBoxFieldSettings Text="장소명" Value="장소코드"></ComboBoxFieldSettings>
+</SfComboBox>
+
+
+@code {
+
+
+    [Parameter]
+    public EventCallback<string> ListItemChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter]
+    public string Validate { get; set; }
+
+    private string listItem { get; set; }
+
+    private string Edit장소코드 { get; set; }
+
+
+
+    [Parameter]
+    public string ListItem
+    {
+        get { return Edit장소코드; }
+        set
+        {
+
+            if (Edit장소코드 != value)
+            {
+                Edit장소코드 = value;
+
+                if (ListItemChanged.HasDelegate)
+                {
+                    ListItemChanged.InvokeAsync(value);
+                    ValueChanged.InvokeAsync(value);
+                }
+            }
+
+        }
+    }
+
+    public List<장소정보> 장소List { get; set; }
+
+    public string 회사코드 = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result1 = await Remote.Command.기준정보.장소_조회(회사코드);
+        장소List = result1.ToList();
+    }
+
+
+
+    protected override void OnDispose()
+    {
+    }
+}

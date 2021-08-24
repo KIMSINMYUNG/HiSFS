@@ -1,0 +1,83 @@
+﻿<SfCard>
+    <CardHeader>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col mr-auto">
+                    <span class="card-header-text">생산계획</span>
+                </div>
+                <div class="col-auto">
+                </div>
+            </div>
+        </div>
+    </CardHeader>
+    <CardContent>
+        <div class="container-fluid">
+            <div class="row align-items-center mb-2">
+                <div class="col-2">
+                    <b>생산품</b>
+                </div>
+                <div class="col-4">
+                    생산품1
+                    @*<SfButton CssClass="e-outline ml-2">...</SfButton>*@
+                </div>
+                <div class="col-2">
+                    <b>생산품공정</b>
+                </div>
+                <div class="col-4">
+                    생산품공정1 3차
+                    @*<SfButton CssClass="e-outline ml-2">...</SfButton>*@
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col">
+                    <ProductionProcess />
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-2">
+                    <b>개별 예상생산 시간</b>
+                </div>
+                <div class="col-4">
+                    7H
+                </div>
+                <div class="col-2">
+                    <b>총 예상생산 시간</b>
+                </div>
+                <div class="col-4">
+                    300H
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col mr-2">
+                    <DPanel Header="도면" Height="160px">
+                        <ContentTemplate>
+                            <DFileList />
+                        </ContentTemplate>
+                    </DPanel>
+                </div>
+                <div class="col mr-2">
+                    <DPanel Header="작업메뉴얼" Height="160px">
+                        <ContentTemplate>
+                            <DFileList />
+                        </ContentTemplate>
+                    </DPanel>
+                </div>
+                <div class="col">
+                    <DPanel Header="비고" Height="160px">
+                        <ContentTemplate>
+                            <div class="px-2 py-2">
+                                <p>계획 -- 계획단계 기록</p>
+                                <p>진행 -- 진행단계 기록</p>
+                                <p>완료 -- 완료단계 기록</p>
+                            </div>
+                        </ContentTemplate>
+                    </DPanel>
+                </div>
+            </div>
+        </div>
+    </CardContent>
+</SfCard>
+
+@code {
+
+}

@@ -1,0 +1,84 @@
+﻿
+@page "/dz/BOMview"
+@using HiSFS.Api.Shared.Models.View_DZICUBE
+@inherits CustomComponent
+
+<SfSplitter Width="3200px" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top" >
+                <FGrid @ref="grid" DataSource="@list" TValue="VL_MES_BOM" DefaultMode="true" EditMode="DGridEditMode.EditDelete" PageSize="15"
+                       OnCreated="RefreshAsync" OnToolbarClick="OnToolbarClick">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(VL_MES_BOM.CO_CD) HeaderText="회사코드" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ITEMPARENT_CD) HeaderText="모품번" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ITEMPARENT_NM) HeaderText="모품명" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ITEMPARENT_DC) HeaderText="모규격" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ITEMPARENT_UNIT_DC) HeaderText="모품목재고단위" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.BOM_SQ) HeaderText="순번" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ITEMCHILD_CD) HeaderText="자품번" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ITEMCHILD_NM) HeaderText="자품명" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ITEMCHILD_DC) HeaderText="자규격" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ITEMCHILD_UNIT_DC) HeaderText="자품목재고단위" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.JUST_QT) HeaderText="정미수량" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.LOSS_RT) HeaderText="LOSS율(%)" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.REAL_QT) HeaderText="필요수량" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.OUT_FG) HeaderText="외주구분" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ODR_FG) HeaderText="임가공구분" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.TRMAIN_CD) HeaderText="주거래처코드" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.ATTR_NM) HeaderText="주거래처명" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.START_DT) HeaderText="시작일자" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.END_DT) HeaderText="종료일자" />
+                        <GridColumn Field=@nameof(VL_MES_BOM.USE_YN) HeaderText="사용여부" />
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<VL_MES_BOM> grid;
+    private List<VL_MES_BOM> list;
+    private VL_MES_BOM selectedRow;
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+
+        StateHasChanged();
+
+        //부서VIEW
+        var result = await Remote.Command.기준정보.VL_MES_BOM();
+
+        list = result.ToList();
+
+        StateHasChanged();
+    }
+
+
+    private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "btnCheckSave")
+        {
+            var YesOrNo = await ShowMessageBox("BOM반영", "BOM정보를 반영하시겠습니까?", MessageBoxResultType.YesOrNo);
+            bool result = false;
+            if (YesOrNo)
+            {
+                result = await Remote.Command.기준정보.VL_MES_BOM_반영(list);
+
+                if (result)
+                    NotifyMessage(Message.반영성공);
+                else
+                    NotifyMessage(Message.반영실패);
+            }
+
+        }
+
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

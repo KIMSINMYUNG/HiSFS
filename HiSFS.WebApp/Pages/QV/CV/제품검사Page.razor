@@ -1,0 +1,85 @@
+﻿@page "/qv/iv/제품검사"
+
+@inherits CustomComponent
+
+
+<DGrid DataSource="list" TValue="보유품목검사정보" DefaultMode="true" OnCheckAuth="CheckAuth"
+       OnCreated="RefreshAsync" OnActionComplete="OnActionComplete">
+    <GridColumns>
+        <GridColumn Field=@nameof(보유품목검사정보.No) HeaderText="순번" Width="60">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        @*순번  보유품번 품번 품명 규격 수량 단위 장소 위치 품질검사 검사기준값 오차값 측정값 검사단위 검사장비 검사결과*@
+        <GridColumn Field="보유품목.보유품목코드" Width="140" HeaderText="보유품번" />
+        <GridColumn Field="보유품목.품목.품목코드" Width="140" HeaderText="품번" />
+        <GridColumn Field="보유품목.품목.품목명" Width="200" HeaderText="품명" />
+        <GridColumn Field="보유품목.품목.규격" Width="120" HeaderText="규격" />
+        <GridColumn Field="보유품목.수량" Width="80" HeaderText="수량" />
+        <GridColumn Field="보유품목.품목.단위.코드명" Width="80" HeaderText="단위" />
+        <GridColumn Field="보유품목.장소.장소명" Width="100" HeaderText="장소" />
+        <GridColumn Field="보유품목.장소위치.위치명" Width="100" HeaderText="위치" />
+        <GridColumn Field="품질검사.품질검사명" Width="120" HeaderText="검사명" />
+        <GridColumn Field="검사정보.검사기준값" Width="120" HeaderText="기준값" />
+        <GridColumn Field="검사정보.오차범위" Width="120" HeaderText="오차" />
+        <GridColumn Field=@nameof(보유품목검사정보.측정값) Width="120" HeaderText="측정값" />
+        <GridColumn Field="검사정보.검사단위.코드명" Width="120" HeaderText="단위" />
+        <GridColumn Field=@nameof(보유품목검사정보.측정유무) Width="120" HeaderText="측정유무" DisplayAsCheckBox="true"/>
+        <GridColumn Field="검사결과.코드명" Width="120" HeaderText="검사결과" />
+        <GridColumn Field="불량유형.코드명" Width="120" HeaderText="불량유형" />
+    </GridColumns>
+</DGrid>
+
+
+@code {
+    // 순번  보유품번 품번 품명 규격 수량 단위 장소 위치 품질검사 검사기준값 오차값 측정값 검사단위 검사장비 검사결과
+
+
+    private ObservableCollection<보유품목검사정보> list;
+
+
+    private async Task RefreshAsync()
+    {
+        //- 보유품목 푼번 품명 규격 수량 단위 - 장소 위치 불량유형 불량수량 불량일시등록 불량일시변경
+
+        var result = await Remote.Command.품질관리.제품검사_조회();
+        ModifyList(result, (info, map) =>
+        {
+            if (info.보유품목.품목.단위코드 != null)
+                info.보유품목.품목.단위 = map[info.보유품목.품목.단위코드];
+            if (info.불량유형코드 != null)
+                info.불량유형 = map[info.불량유형코드];
+        });
+
+        list = result.ToObservableCollection();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<보유품목검사정보> e)
+    {
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+
+        }
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            var row = e.Data;
+            //await Remote.Command.품질관리.품질검사_삭제(row, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = e.Data;
+
+            //await Remote.Command.품질관리.품질검사_저장(newRow, e.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(e.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

@@ -1,0 +1,36 @@
+﻿@inherits GridColumn
+
+@inject CacheService Cache
+@*<GridColumn Field=@Field Width=@Width EditType="EditType.DropDownEdit" Template=@CommonCodeTemplate(Field) EditTemplate=@CommonCodeEditTemplate(Field, ParentCode) ValidationRules="@(new { required = true })" HeaderText=@HeaderText />*@
+
+@code {
+    RenderFragment<object> CommonCodeTemplate(string field) =>
+        (context) =>
+        {
+            var item = context.GetType().GetProperty(field).GetValue(context)?.ToString();
+            var itemName = item == null ? "" : Cache.코드[item].코드명;
+            return@<span>@itemName</span>;
+        };
+    RenderFragment<object> CommonCodeEditTemplate(string field, string parentCode) =>
+        (context) =>
+        {
+            var item = context.GetType().GetProperty(field).GetValue(context)?.ToString();
+            var codeList = item == null ? Cache.코드목록[parentCode] : Cache.코드형제목록[item];
+
+            return @<SfDropDownList ID=@field Placeholder="항목 선택" TItem="공통코드" Enabled="true" TValue="string" Value="item" DataSource="@(codeList)">
+                        <DropDownListFieldSettings Text="코드명" Value="코드"></DropDownListFieldSettings>
+                    </SfDropDownList>;
+        };
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        EditType = EditType.DropDownEdit;
+        Template = CommonCodeTemplate(Field);
+        EditTemplate = CommonCodeEditTemplate(Field, ParentCode);
+    }
+
+    [Parameter]
+    public string ParentCode { get; set; }
+}

@@ -1,0 +1,66 @@
+﻿@page "/popup/검사"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="list" TValue="품질검사정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected">
+    <GridColumns>
+        <GridColumn Field=@nameof(품질검사정보.No) HeaderText="순번" Width="60">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(품질검사정보.품질검사코드) IsPrimaryKey="true" Width="120" HeaderText="품질검사코드">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+
+        <GridColumn Field=@nameof(품질검사정보.품질검사명) Width="160" HeaderText="품질검사명" />
+        <GridColumn Field=@nameof(품질검사정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(품질검사정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+    </GridColumns>
+</FGrid>
+
+@code {
+    private FGrid<품질검사정보> grid;
+    private ObservableCollection<품질검사정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<품질검사정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<품질검사정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.품질관리.품질검사_조회();
+        ModifyList(result, (x, map) =>
+        {
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<품질검사정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

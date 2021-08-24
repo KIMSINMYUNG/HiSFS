@@ -1,0 +1,159 @@
+﻿@typeparam TValue
+@typeparam TCode
+@*<SfTextBox @ref="input"
+               Placeholder=@(Placeholder)
+               Readonly="true"
+               FloatLabelType="FloatLabelType.Always"
+               Created="OnCreatedInput"
+               Value=@(InputText)
+               HtmlAttributes=@(new Dictionary<string, object> { [""] = "<span>aaa</span>" } )
+               >
+    </SfTextBox>*@
+
+<div class="e-control-wrapper e-control-container e-input-group e-control-wrapper e-float-input @(Enabled == false ? "e-disabled" : "")">
+    <input id=@(ID) class="e-control e-textbox e-lib" name=@TextField role="textbox" labelledby="label_@(TextField)" value=@InputText >
+    <span class="e-float-line"></span>
+    <label class="e-float-text e-label-top" id="label_@(TextField)" for=@(TextField)>@Placeholder</label>
+    <span class="e-input-group-icon e-icons e-search" @onclick=@(OnClickInput) style="visibility:@(Readonly == true ? "collapse" : "visible")"></span>
+</div>
+
+@if (visibilityDialog == true)
+{
+    <SfDialog Target="#target" IsModal="true" Width="85%" ShowCloseIcon="true" @bind-Visible="@visibilityDialog">
+        <DialogTemplates>
+            <Header>@DialogHeader</Header>
+            <Content>
+                <CascadingValue Name="ReturnSelectedItem" Value=@(returnSelectedItem)>
+                    @DialogContent
+                </CascadingValue>
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="선택" IsPrimary="true" OnClick=@(() => OnClick(true)) Disabled=@(!isSelected) />
+            <DialogButton Content="취소" OnClick=@(() => OnClick(false)) />
+        </DialogButtons>
+        <DialogAnimationSettings Effect="@DialogEffect.None"></DialogAnimationSettings>
+    </SfDialog>
+
+    
+}
+<style>
+    #target {
+        min-height: 400px;
+        height: 100%;
+        position: relative;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public string Placeholder { get; set; }
+
+    [Parameter]
+    public string DialogHeader { get; set; }
+
+    [Parameter]
+    public RenderFragment DialogContent { get; set; }
+
+    [Parameter]
+    public string Target { get; set; }
+
+    [Parameter]
+    public TValue Value { get; set; }
+
+    [Parameter]
+    public EventCallback<TValue> ValueChanged { get; set; }
+
+    [Parameter]
+    public string CodeField { get; set; }
+
+    [Parameter]
+    public TCode Code { get; set; }
+
+    [Parameter]
+    public EventCallback<TCode> CodeChanged { get; set; }
+
+    [Parameter]
+    public string TextField { get; set; }
+
+    [Parameter]
+    public bool Readonly { get; set; }
+
+    [Parameter]
+    public string ID { get; set; }
+
+    [Parameter]
+    public bool Enabled { get; set; } = true;
+
+
+    private string InputText
+    {
+        get
+        {
+            var displayProperty = Value?.GetType().GetProperty(TextField);
+            if (displayProperty == null)
+                return "";
+            return displayProperty.GetValue(Value)?.ToString() ?? "";
+        }
+    }
+
+
+    public bool visibilityDialog;
+    public Action<TValue, bool> returnSelectedItem;
+    public bool isSelected;
+    public TValue selectedValue;
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        returnSelectedItem = async (value, flag) =>
+        {
+            selectedValue = value;
+            isSelected = value != null ? true : false;
+
+            StateHasChanged();
+
+            if (flag == true)
+                await OnClick(true);
+        };
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+
+        if (firstRender == true)
+        {
+            ;
+        }
+    }
+
+    private void OnClickInput(MouseEventArgs args)
+    {
+        if (Enabled == false)
+            return;
+
+        visibilityDialog = true;
+
+        StateHasChanged();
+    }
+
+    private async Task OnClick(bool isSelected)
+    {
+        if (isSelected == true)
+        {
+            Value = selectedValue;
+            await ValueChanged.InvokeAsync(selectedValue);
+
+            if (CodeField != null)
+            {
+                Code = (TCode)Value.GetType().GetProperty(CodeField).GetValue(Value);
+                await CodeChanged.InvokeAsync(Code);
+            }
+        }
+
+        visibilityDialog = false;
+    }
+}

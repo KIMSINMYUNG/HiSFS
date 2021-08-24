@@ -1,0 +1,179 @@
+﻿@inherits CustomComponent
+
+
+    <div class="container-fluid" >
+        <div class="row" style="color: black; background-color: white">
+            <div class="col text-center py-2">
+                @*<span style="font-size: 15px; color: white; font-weight: bold">설비가동현황</span>*@
+                <span style="font-size: 15px; color: black; background-color:white;font-weight: bold">설비가동현황</span>
+            </div>
+        </div>
+        <div class="row" style="color: black; background-color: white">
+            <div class="col">
+                <div class="table-responsive">
+                    <table class="table machine" style="color: black; background-color: gainsboro">
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td>@(MC("MCT_8"))</td>
+                            <td>@(MC("MCT_7"))</td>
+                            <td>@(MC("MCT_6"))</td>
+                            <td>@(MC("MCT_5"))</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>@(MC("CNC_6"))</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>@(MC("ROBO_DR_4"))</td>
+                            <td>@(MC("ROBO_DR_3"))</td>
+                            <td>@(MC("ROBO_DR_2"))</td>
+                            <td>@(MC("ROBO_DR_1"))</td>
+                            <td>@(MC("MCT_4"))</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>@(MC("CNC_8"))</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>@(MC("CNC_5"))</td>
+                            <td>@(MC("MCT_2"))</td>
+                            <td>@(MC("MCT_1"))</td>
+                            <td></td>
+                            <td>@(MC("CNC_4"))</td>
+                            <td>@(MC("CNC_3"))</td>
+                            <td>@(MC("CNC_2"))</td>
+                            <td>@(MC("CNC_7"))</td>
+                            <td></td>
+                            <td>@(MC("CNC_1"))</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="table-responsive">
+                <table class="table machine-state" border="1">
+                    @foreach (var item in machineStateList)
+                            {
+                    <tr>
+                        <td style="background-color: @(item.TextColorStyle);" width="50%">@(item.Text)</td>
+                        <td width="20%">@(item.Count)</td>
+                        <td width="30%">@(item.PercentText)</td>
+                    </tr>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+@code {
+    private ObservableCollection<MachineState> machineStateList = new()
+    {
+        new() { Text = "ALL", TextColorStyle = "rgba(0, 0, 0, 1)", Count = 0, Percent = 0m},
+        new() { Text = "OPERATE", TextColorStyle = "rgba(0, 180, 0, 0.4)", Count = 0, Percent = 0m },
+        new() { Text = "DISCONNECT", TextColorStyle = "rgba(169, 169, 169, 0.4)", Count = 0, Percent = 0m },
+        new() { Text = "ALARM", TextColorStyle = "rgba(255, 0, 0, 0.4)", Count = 0, Percent = 0m },
+        new() { Text = "EMERGENCY", TextColorStyle = "rgba(255, 0, 255, 0.4)", Count = 0, Percent = 0m },
+        new() { Text = "SUSPEND", TextColorStyle = "rgba(255, 155, 50, 0.4)", Count = 0, Percent = 0m },
+        new() { Text = "STOP", TextColorStyle = "rgba(255, 255, 0, 0.4)", Count = 0, Percent = 0m },
+        new() { Text = "MANUAL", TextColorStyle = "rgba(2, 205, 252, 0.4)", Count = 0, Percent = 0m },
+        new() { Text = "WARMUP", TextColorStyle = "rgba(178, 34, 34, 0.4)", Count = 0, Percent = 0m },
+    };
+    private Dictionary<string, 설비가동현황정보> machineMap = new Dictionary<string, 설비가동현황정보>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        var list = await Remote.Command.에이전트.설비가동현황_조회();
+
+        machineMap.Clear();
+        var count = 0;
+        foreach (var item in list)
+        {
+            machineMap[item.코드] = item;
+            count++;
+        }
+
+        machineStateList[0] = machineStateList[0] with { Count = count, Percent = 100m };
+        var c = list.Count(x => x.상태 == "OPERATE");
+        machineStateList[1] = machineStateList[1] with { Count = c, Percent = c == 0 ? 0m : 100m * c / count };
+        c = list.Count(x => x.상태 == "DISCONNECT");
+        machineStateList[2] = machineStateList[2] with { Count = c, Percent = c == 0 ? 0m : 100m * c / count };
+        c = list.Count(x => x.상태 == "ALARM");
+        machineStateList[3] = machineStateList[3] with { Count = c, Percent = c == 0 ? 0m : 100m * c / count };
+        c = list.Count(x => x.상태 == "EMERGENCY");
+        machineStateList[4] = machineStateList[4] with { Count = c, Percent = c == 0 ? 0m : 100m * c / count };
+        c = list.Count(x => x.상태 == "SUSPEND");
+        machineStateList[5] = machineStateList[5] with { Count = c, Percent = c == 0 ? 0m : 100m * c / count };
+        c = list.Count(x => x.상태 == "STOP");
+        machineStateList[6] = machineStateList[6] with { Count = c, Percent = c == 0 ? 0m : 100m * c / count };
+        c = list.Count(x => x.상태 == "MANUAL");
+        machineStateList[7] = machineStateList[7] with { Count = c, Percent = c == 0 ? 0m : 100m * c / count };
+        c = list.Count(x => x.상태 == "WARMUP");
+        machineStateList[8] = machineStateList[8] with { Count = c, Percent = c == 0 ? 0m : 100m * c / count };
+
+        StateHasChanged();
+    }
+
+    private 설비가동현황정보 GM(string code) => machineMap.ContainsKey(code) == false ? null : machineMap[code];
+    private RenderFragment MC(string code) => @<span class="e-icon-group e-icons e-icon-machine" style="color: @(GetMachineColor(GM(code)?.상태))" title=@($"{GM(code)?.설비?.보유명}\n({GM(code)?.상태})")></span>;
+
+    private string GetMachineColor(string state)
+    {
+        return state switch
+        {
+            "OPERATE" => "rgb(0, 180, 0)",
+            "DISCONNECT" => "rgb(169, 169, 169)",
+            "ALARM" => "rgb(255, 0, 0)",
+            "EMERGENCY" => "rgb(255, 0, 255)",
+            "SUSPEND" => "rgb(255, 155, 50)",
+            "STOP" => "rgb(255, 255, 0)",
+            "MANUAL" => "rgb(2, 205, 252)",
+            "WARMUP" => "rgb(178, 34, 34)",
+            _ => "rgba(0, 0, 0, 0)"
+        };
+    }
+
+    protected override void OnDispose()
+    {
+    }
+
+    public record MachineState
+    {
+        public string Text { get; init; }
+        public string TextColorStyle { get; init; }
+        public int Count { get; init; }
+        public decimal Percent { get; init; }
+        public string PercentText => $"{Percent:0.00}%";
+    }
+
+    protected override async void OnReceivedMessage(Message message, bool isGlobal, dynamic[] args)
+    {
+        if (message != Message.ChangedMachineState)
+            return;
+
+        await RefreshAsync();
+    }
+}

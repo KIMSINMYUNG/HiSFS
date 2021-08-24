@@ -1,0 +1,19 @@
+﻿@page "/test/checkbox"
+
+<SfCheckBox TChecked="bool?" @bind-Checked="checkedBox" EnableTriState="true" Indeterminate="false" />
+<SfButton OnClick="OnClickButton">CLICK</SfButton>
+@checkedBox;
+
+@code {
+    private bool? checkedBox;
+
+    private void OnClickButton()
+    {
+        if (checkedBox == false)
+            checkedBox = true;
+        else if (checkedBox == true)
+            checkedBox = null;
+        else if (checkedBox == null)
+            checkedBox = false;
+    }
+}

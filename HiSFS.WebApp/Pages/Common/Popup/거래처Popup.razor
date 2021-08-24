@@ -1,0 +1,83 @@
+﻿@page "/popup/거래처"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="거래처정보" DefaultMode="true" PageMode="PageMode.Popup" @ondblclick="OnDbClick"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected">
+    <GridColumns>
+        <GridColumn Field=@nameof(거래처정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(거래처정보.거래처코드) Visible="false" />
+        <GridColumn Field=@nameof(거래처정보.거래처명) Width="160" />
+        <GridColumn Field=@nameof(거래처정보.거래처구분코드) HeaderText="구분" Width="120">
+            <Template>
+                @{var info = context as 거래처정보;}
+                <span>@(info.거래처구분코드 != null ? 코드[info.거래처구분코드].코드명 : "")</span>
+            </Template>
+            <EditTemplate>
+                @{var info = context as 거래처정보;}
+                <DCommonCodeDropList ParentCode="B03" Placeholder="구분" @bind-Value=@(info.거래처구분코드) />
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="거래처구분.코드명" Visible="false" />
+        <GridColumn Field=@nameof(거래처정보.등록번호) Width="120" />
+        <GridColumn Field=@nameof(거래처정보.공급가격) Width="80" />
+        <GridColumn Field=@nameof(거래처정보.담당자) Width="120" />
+        <GridColumn Field=@nameof(거래처정보.주소) Width="250" />
+        <GridColumn Field=@nameof(거래처정보.업태) Width="100" />
+        <GridColumn Field=@nameof(거래처정보.종목) Width="100" />
+        <GridColumn Field=@nameof(거래처정보.대표연락처) Width="120" />
+        <GridColumn Field=@nameof(거래처정보.팩스및비고) Width="100" />
+        <GridColumn Field=@nameof(거래처정보.담당자연락처) Width="120" />
+        <GridColumn Field=@nameof(거래처정보.이메일) Width="120" />
+        <GridColumn Field=@nameof(거래처정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일" AllowAdding="false" AllowEditing="false" />
+        <GridColumn Field=@nameof(거래처정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일" AllowAdding="false" AllowEditing="false" />
+    </GridColumns>
+</FGrid>
+
+
+@code {
+    private FGrid<거래처정보> grid;
+    private ObservableCollection<거래처정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<거래처정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<거래처정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private async Task RefreshAsync()
+    {
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.거래처_조회(회사코드);
+        ModifyList(result, (info, map) =>
+        {
+            if (info.거래처구분코드 != null)
+                info.거래처구분 = map[info.거래처구분코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<거래처정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

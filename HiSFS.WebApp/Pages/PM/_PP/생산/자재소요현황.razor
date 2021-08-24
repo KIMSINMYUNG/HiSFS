@@ -1,0 +1,68 @@
+﻿<SfCard>
+    <CardHeader>
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col mr-auto">
+                    <span class="card-header-text">자재소요현황</span>
+                </div>
+                <div class="col-auto">
+                    <SfChipList>
+                        <ChipCollection>
+                            <ChipListChip Text="입고 진행중" CssClass="e-info" />
+                            <ChipListChip Text="자재 부족" CssClass="e-warning" />
+                        </ChipCollection>
+                    </SfChipList>
+                </div>
+            </div>
+        </div>
+    </CardHeader>
+    <CardContent>
+        <SfGrid DataSource="@list2" AllowPaging="true" Width="100%" Height="100%">
+            @*<GridEvents RowSelected="RowSelectedHandler" TValue="MockInfo" />*@
+            <GridColumns>
+                <GridColumn Field=@nameof(MockInfo2.순번) Width="80" />
+                <GridColumn Field=@nameof(MockInfo2.자재번호) Width="120" />
+                <GridColumn Field=@nameof(MockInfo2.자재명) Width="160" />
+                <GridColumn Field=@nameof(MockInfo2.상태) Width="100" />
+                <GridColumn Field=@nameof(MockInfo2.규격) Width="80" />
+                <GridColumn Field=@nameof(MockInfo2.단위) Width="80" />
+                <GridColumn Field=@nameof(MockInfo2.적정재고) Width="100" />
+                <GridColumn Field=@nameof(MockInfo2.보유재고) Width="160">
+                    <Template>
+                    @{
+                        var info = context as MockInfo2;
+                        <DBarLabel Current="info.보유재고" Min="0" Max="info.적정재고 * 2" />
+                    }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field=@nameof(MockInfo2.발주상태) Width="100" />
+            </GridColumns>
+        </SfGrid>
+    </CardContent>
+</SfCard>
+
+@code {
+    List<MockInfo2> list2 = new List<MockInfo2>
+{
+        new MockInfo2 { 순번 = 1, 자재번호 = "20001", 자재명 = "자재명1", 상태 = "충분", 규격 = "규격", 단위 = "단위", 적정재고 = 500, 보유재고 = 600, 발주상태 = "" },
+        new MockInfo2 { 순번 = 2, 자재번호 = "20001", 자재명 = "자재명1", 상태 = "과보유", 규격 = "규격", 단위 = "단위", 적정재고 = 500, 보유재고 = 700, 발주상태 = "" },
+        new MockInfo2 { 순번 = 3, 자재번호 = "20001", 자재명 = "자재명1", 상태 = "충분", 규격 = "규격", 단위 = "단위", 적정재고 = 500, 보유재고 = 600, 발주상태 = "" },
+        new MockInfo2 { 순번 = 4, 자재번호 = "20001", 자재명 = "자재명1", 상태 = "부족", 규격 = "규격", 단위 = "단위", 적정재고 = 500, 보유재고 = 300, 발주상태 = "발주중" },
+        new MockInfo2 { 순번 = 5, 자재번호 = "20001", 자재명 = "자재명1", 상태 = "충분", 규격 = "규격", 단위 = "단위", 적정재고 = 500, 보유재고 = 600, 발주상태 = "" },
+        new MockInfo2 { 순번 = 6, 자재번호 = "20001", 자재명 = "자재명1", 상태 = "충분", 규격 = "규격", 단위 = "단위", 적정재고 = 500, 보유재고 = 600, 발주상태 = "" },
+        new MockInfo2 { 순번 = 7, 자재번호 = "20001", 자재명 = "자재명1", 상태 = "심각", 규격 = "규격", 단위 = "단위", 적정재고 = 500, 보유재고 = 50, 발주상태 = "발주중" },
+    };
+
+    public class MockInfo2
+    {
+        public int 순번 { get; set; }
+        public string 자재번호 { get; set; }
+        public string 자재명 { get; set; }
+        public string 상태 { get; set; }
+        public string 규격 { get; set; }
+        public string 단위 { get; set; }
+        public int 적정재고 { get; set; }
+        public int 보유재고 { get; set; }
+        public string 발주상태 { get; set; }
+    }
+}

@@ -1,0 +1,101 @@
+﻿
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Charts
+@inject NavigationManager NavigationManager
+@inherits CustomComponent
+
+<SfChart Title="작업자 실적현황">
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category">
+    </ChartPrimaryXAxis>
+    <ChartCrosshairSettings Enable="true" LineType="LineType.Vertical"></ChartCrosshairSettings>
+    <ChartSeriesCollection>
+        <ChartSeries DataSource="@작업자생산실적목록" Name="실적수량" XName="작업자사번" YName="실적수량" Type="ChartSeriesType.Line">
+            <ChartMarker Visible="true" Height="10" Width="10" />
+        </ChartSeries>
+
+        <ChartSeries DataSource="@작업자생산실적목록" Name="불량수량" XName="작업자사번" YName="불량수량" Type="ChartSeriesType.Line">
+            <ChartMarker Visible="true" Height="10" Width="10" />
+        </ChartSeries>
+
+    </ChartSeriesCollection>
+
+    <ChartLegendSettings Visible="true" ToggleVisibility="true" />
+    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+</SfChart>
+
+
+@*<SfChart Title="작업자 실적현황" Theme="@Theme">
+    <ChartArea><ChartAreaBorder Width="0"></ChartAreaBorder></ChartArea>
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Interval="1">
+        <ChartAxisMajorGridLines Width="1"></ChartAxisMajorGridLines>
+        <ChartAxisMinorGridLines Width="1"></ChartAxisMinorGridLines>
+       
+    </ChartPrimaryXAxis>
+    <ChartPrimaryYAxis  Interval="10">
+        <ChartAxisMajorGridLines Width="1"></ChartAxisMajorGridLines>
+        <ChartAxisMinorGridLines Width="1"></ChartAxisMinorGridLines>
+    </ChartPrimaryYAxis>
+    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+    <ChartSeriesCollection>
+
+        <ChartSeries DataSource="@작업자생산실적목록" Name="불량수량" XName="작업자사번" Width="2" DashArray="1,1"
+                     Opacity="1" YName="불량수량" Type="ChartSeriesType.StackingLine100">
+            <ChartMarker Visible="true">
+            </ChartMarker>
+        </ChartSeries>
+        <ChartSeries DataSource="@작업자생산실적목록" Name="실적수량" XName="작업자사번" Width="2" DashArray="1,1"
+                     Opacity="1" YName="실적수량" Type="ChartSeriesType.StackingLine100">
+            <ChartMarker Visible="true">
+            </ChartMarker>
+        </ChartSeries>
+
+
+    </ChartSeriesCollection>
+</SfChart>*@
+
+@code{
+    private Syncfusion.Blazor.Charts.ChartTheme Theme { get; set; }
+    public List<StackedChartData> ChartPoints { get; set; } = new List<StackedChartData>
+{
+        new StackedChartData { ExpensesCategory = "Food" , JohnExpenses = 90, PeterExpenses = 40 , SteveExpenses = 70, CharleExpenses = 120},
+        new StackedChartData { ExpensesCategory = "Transport", JohnExpenses = 80, PeterExpenses = 90, SteveExpenses = 110, CharleExpenses = 70 },
+        new StackedChartData { ExpensesCategory = "Medical",JohnExpenses = 50, PeterExpenses = 80, SteveExpenses = 120, CharleExpenses = 50 },
+        new StackedChartData { ExpensesCategory = "Clothes",JohnExpenses= 70, PeterExpenses = 30, SteveExpenses = 60, CharleExpenses = 180 },
+        new StackedChartData { ExpensesCategory = "Personal Care", JohnExpenses = 30, PeterExpenses = 80, SteveExpenses = 80, CharleExpenses = 30 },
+        new StackedChartData { ExpensesCategory = "Books", JohnExpenses = 10, PeterExpenses = 40, SteveExpenses = 30, CharleExpenses = 270},
+        new StackedChartData { ExpensesCategory = "Fitness",JohnExpenses = 100, PeterExpenses = 30, SteveExpenses = 70, CharleExpenses = 40 },
+        new StackedChartData { ExpensesCategory = "Electricity", JohnExpenses = 55, PeterExpenses = 95, SteveExpenses = 55, CharleExpenses = 75},
+        new StackedChartData { ExpensesCategory = "Tax", JohnExpenses = 20, PeterExpenses = 50, SteveExpenses = 40, CharleExpenses = 65 },
+        new StackedChartData { ExpensesCategory = "Pet Care", JohnExpenses = 40, PeterExpenses = 20, SteveExpenses = 80, CharleExpenses = 95 },
+        new StackedChartData { ExpensesCategory = "Education", JohnExpenses = 45, PeterExpenses = 15, SteveExpenses = 45, CharleExpenses = 195 },
+        new StackedChartData { ExpensesCategory = "Entertainment", JohnExpenses = 75, PeterExpenses = 45, SteveExpenses = 65, CharleExpenses = 115 }
+    };
+    public class StackedChartData
+    {
+        public string ExpensesCategory { get; set; }
+        public double JohnExpenses { get; set; }
+        public double PeterExpenses { get; set; }
+        public double SteveExpenses { get; set; }
+        public double CharleExpenses { get; set; }
+    }
+
+    private string 회사코드 = "";
+
+    private List<작업자생산실적정보> 작업자생산실적목록;
+
+    protected override async Task OnInitializedAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        //var result = await Remote.Command.생산관리.작업지시기준_조회(회사코드);
+
+        작업자생산실적목록 = await Remote.Command.기준정보.MES생산관리_작업자생산실적정보_조회(회사코드);
+
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

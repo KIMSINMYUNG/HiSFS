@@ -1,0 +1,131 @@
+﻿@page "/mdm/prd/공정관리"
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="공정정보" DefaultMode="true" EditMode="DGridEditMode.All" PageMode="PageMode.Default"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnRowDataBound="OnRowDataBound" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(공정정보.No) Width="80" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(공정정보.공정코드) Visible="false" />
+        <GridColumn Field=@nameof(공정정보.공정명) ValidationRules="@(new ValidationRules { Required = true })" />
+        <GridColumn Field=@nameof(공정정보.공정유형코드) Width="0" Template=@CommonCodeTemplate(nameof(공정정보.공정유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(공정정보.공정유형코드), "공정유형", "B02") HeaderText="공정유형" ValidationRules="@(new ValidationRules { Required = true })" />
+        <GridColumn Field="공정유형.코드명" HeaderText="공정유형">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(공정정보.설비사용유무) EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" TextAlign="TextAlign.Center">
+            <EditTemplate>
+                @{ var info = context as 공정정보; }
+                <SfCheckBox Label="설비사용유무" @bind-Checked=@(info.설비사용유무)/>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(공정정보.설비유형코드) Width="0" Template=@CommonCodeTemplate(nameof(공정정보.설비유형코드)) HeaderText="설비유형">
+            <EditTemplate>
+                @{ var info = context as 공정정보; }
+                <DCommonCodeDropList ID="설비유형코드" Placeholder="설비유형" ParentCode="B15" @bind-Value=@(info.설비유형코드) Enabled=@(info.설비사용유무) />
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="설비유형.코드명" HeaderText="설비유형">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(공정정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(공정정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+    </GridColumns>
+</FGrid>
+
+
+@code {
+    private FGrid<공정정보> grid;
+    private ObservableCollection<공정정보> list;
+
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    grid.SetDefault(PageMode.Default, "공정코드", "공정명", "공정유형.코드명");
+    //    grid.SetEditMode();
+    //}
+
+    //protected override async Task OnReadyRemoteServiceAsync(bool isReady)
+    //{
+    //    if (isReady == false)
+    //        return;
+
+    //    await RefreshAsync();
+
+    //}
+
+    async Task RefreshAsync()
+    {
+        var result = await Remote.Command.기준정보.공정_조회();
+        ModifyList(result, (x, map) =>
+        {
+            if (x.공정유형코드 != null)
+                x.공정유형 = map[x.공정유형코드];
+            if (x.설비유형코드 != null)
+                x.설비유형 = map[x.설비유형코드];
+        });
+        list = result.ToObservableCollection();
+
+        //await Task.Delay(5000);
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<공정정보> args)
+    {
+
+    }
+
+    void OnRowDataBound(RowDataBoundEventArgs<공정정보> args)
+    {
+        //if (string.IsNullOrEmpty(args.Data.상위코드) == false)
+        //    return;
+
+        //args.Row.AddStyle(new[] { "background-color: lightyellow;" });
+    }
+
+    async Task OnActionComplete(ActionEventArgs<공정정보> e)
+    {
+        // 추가 시
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+            //e.Data.공정명 = "123";
+        }
+        // 편집 시
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+
+            //var rc = await grid.GetSelectedRowCellIndexes();
+        }
+        // 삭제 처리
+        else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.기준정보.공정_삭제(e.Data, false);
+            await RefreshAsync();
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = e.Data;
+            newRow.공정유형 = null;
+            newRow.설비유형 = null;
+
+            await Remote.Command.기준정보.공정_저장(newRow, e.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(e.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

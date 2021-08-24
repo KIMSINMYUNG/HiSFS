@@ -1,0 +1,208 @@
+﻿@inherits CustomComponent
+@page "/SYS/SM/메뉴관리"
+
+@*<DGrid @ref="grid" DataSource="@list" TValue="메뉴정보" DefaultMode="true" EditMode="DGridEditMode.All"
+           OnCreated="RefreshAsync" OnActionComplete="OnActionComplete" OnRowDataBound="OnRowDataBound" OnRowSelected="OnRowSelected"
+           >
+    <GridColumns>
+        <GridColumn Field=@nameof(메뉴정보.순번) HeaderText="순번" Visible="false" />
+        <GridColumn Field="상위메뉴.메뉴명" HeaderText="상위메뉴명" Width="145" AllowAdding="false" AllowEditing="false" />
+        <GridColumn Field=@nameof(메뉴정보.메뉴명) HeaderText="메뉴명" Width="145" />
+        <GridColumn Field=@nameof(메뉴정보.경로명) HeaderText="경로" Width="145" />
+        <GridColumn Field=@nameof(메뉴정보.클래스명) HeaderText="클래스" Width="145" />
+        <GridColumn Field=@nameof(메뉴정보.뎁스) HeaderText="뎁스" Width="80" />
+        <GridColumn Field=@nameof(메뉴정보.정렬순번) HeaderText="정렬" Width="80" />
+        <GridColumn Field=@nameof(메뉴정보.사용유무) HeaderText="사용유무" Width="80" DisplayAsCheckBox="true" TextAlign="TextAlign.Center"/>
+    </GridColumns>
+</DGrid>*@
+
+@if (list != null)
+{
+<SfTreeGrid @ref="grid" DataSource=@list IdMapping="순번" ParentIdMapping="상위메뉴순번" TreeColumnIndex="1" AllowPaging="false" Toolbar="@(new List<string>() { "Add", "Edit", "Delete" })">
+    <TreeGridColumns>
+        <TreeGridColumn Field=@nameof(메뉴정보.순번) HeaderText="순번" Visible="false" />
+        <TreeGridColumn Field=@nameof(메뉴정보.메뉴명) HeaderText="메뉴명" Width="145" />
+        <TreeGridColumn Field=@nameof(메뉴정보.경로명) HeaderText="경로" Width="145" />
+        <TreeGridColumn Field=@nameof(메뉴정보.클래스명) HeaderText="클래스" Width="145" />
+        <TreeGridColumn Field=@nameof(메뉴정보.뎁스) HeaderText="뎁스" Width="80" />
+        <TreeGridColumn Field=@nameof(메뉴정보.정렬순번) HeaderText="정렬" Width="80" />
+        <TreeGridColumn Field=@nameof(메뉴정보.사용유무) HeaderText="사용유무" Width="80" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+    </TreeGridColumns>
+
+    <TreeGridEvents TValue="메뉴정보" RowSelected="OnRowSelected" RowDeselected="OnRowDeselected" OnActionBegin="OnActionBegin" OnActionComplete="OnActionComplete"/>
+    <TreeGridSelectionSettings EnableToggle="false"/>
+    <TreeGridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" AllowEditOnDblClick="true" ShowDeleteConfirmDialog="true" Mode="Syncfusion.Blazor.TreeGrid.EditMode.Dialog" NewRowPosition="Syncfusion.Blazor.TreeGrid.RowPosition.Below" />
+</SfTreeGrid>
+}
+
+@code {
+    private SfTreeGrid<메뉴정보> grid;
+    private ObservableCollection<메뉴정보> list;
+    private 메뉴정보 selected;
+    private 메뉴정보 addSelected; // Syncfusion의 버그로 항목이 추가될 때 선택이 변경되는 것을 막기 위함.
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Remote.WaitForReadyRemoteService();
+        await RefreshAsync();
+    }
+
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    if (firstRender == true)
+    //    {
+
+    //    }
+    //}
+
+    private async Task OnActionBegin(Syncfusion.Blazor.Grids.ActionEventArgs<메뉴정보> e)
+    {
+        var args = new CheckAuthEventArgs(e.RequestType.ToString());
+        await CheckAuth(args);
+        if (args.Cancel == true)
+            return;
+
+        // TreeGrid의 버그로 기본 값을 설정할 수 없다. 기본 값을 저장 시점에서 넣도록 한다.
+        //if (e.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        //{
+        //    if (selected != null)
+        //    {
+        //        var row = e.Data as 메뉴정보;
+
+        //        row.순번 = list.DefaultIfEmpty().Max(x => x?.순번 ?? 0) + 1;
+        //        row.메뉴명 = "1234";
+        //        row.상위메뉴순번 = selected.순번;
+        //        row.정렬순번 = list.Where(x => x.상위메뉴순번 == selected.순번).DefaultIfEmpty().Max(x => x?.정렬순번 ?? 0) + 1;
+        //        row.뎁스 = selected.뎁스 + 1;
+        //    }
+        //    // 최상위 등록으로 처리
+        //    else
+        //    {
+        //    }
+        //}
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<메뉴정보> e)
+    {
+        // 버그로 보완
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            addSelected = selected;
+        }
+        else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var row = e.Data;
+
+            // 선택한 경우 그 하위로 값을 설정한다.
+            if (e.Action == "Add")
+            {
+                if (addSelected != null)
+                {
+                    row.상위메뉴순번 = addSelected.순번;
+                    row.정렬순번 = list.Where(x => x.상위메뉴순번 == addSelected.순번).DefaultIfEmpty().Max(x => x?.정렬순번 ?? 0) + 1;
+                    row.뎁스 = addSelected.뎁스 + 1;
+                }
+                // 선택하지 않은 경우 최상위로 값을 설정한다.
+                else
+                {
+                    row.상위메뉴순번 = null;
+                    row.정렬순번 = list.Where(x => x.상위메뉴순번 == null).DefaultIfEmpty().Max(x => x?.정렬순번 ?? 0) + 1;
+                    row.뎁스 = 1;
+                }
+            }
+
+            await Remote.Command.시스템.메뉴_저장(row, e.Action == "Add" ? true : false);
+            await RefreshAsync();
+
+            NotifyMessage(e.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+
+        }
+        else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.시스템.메뉴_삭제(e.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.시스템.메뉴_조회();
+        ModifyList(result, (x, map) =>
+        {
+            x.상위메뉴 = null;
+            x.하위메뉴목록 = null;
+
+        });
+
+        list = result.ToObservableCollection();
+        StateHasChanged();
+    }
+
+    private void OnRowDataBound(RowDataBoundEventArgs<메뉴정보> args)
+    {
+        if (args.Data.뎁스 == 0)
+        {
+            args.Row.AddStyle(new[] { "background-color: #444444;" });
+        }
+    }
+
+    //private async Task OnActionComplete(ActionEventArgs<메뉴정보> args)
+    //{
+    //    if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+    //    {
+    //        var selectedRow = grid.SelectedRecords.FirstOrDefault();
+    //        if (selectedRow != default)
+    //        {
+    //            var newRow = args.Data;
+    //            newRow.상위메뉴순번 = selectedRow.상위메뉴순번;
+    //            newRow.뎁스 = selectedRow.뎁스;
+    //            newRow.정렬순번 = selectedRow.정렬순번 + 1;
+    //        }
+    //    }
+    //    if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+    //    {
+    //        //state = "BeginEdit";
+
+    //        //var rc = await grid.GetSelectedRowCellIndexes();
+
+    //    }
+    //    // 삭제 처리
+    //    else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+    //    {
+    //        //state = "delete";
+
+    //        //await Remote.Command.공통.공통코드_삭제(args.Data, false);
+    //        await Remote.Command.시스템.메뉴_삭제(args.Data, false);
+
+    //        NotifyMessage(Message.ModifiedDeleteData);
+    //    }
+    //    // 저장 관련 처리
+    //    else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+    //    {
+    //        //state = "save";
+
+    //        await Remote.Command.시스템.메뉴_저장(args.Data, args.Action == "Add" ? true : false);
+    //        if (args.Action == "Add")
+    //            await RefreshAsync();
+
+    //        NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+    //    }
+    //}
+
+    private void OnRowSelected(RowSelectEventArgs<메뉴정보> args)
+    {
+        selected = args.Data as 메뉴정보;
+    }
+
+    private void OnRowDeselected(RowDeselectEventArgs<메뉴정보> args)
+    {
+        selected = null;
+        addSelected = null;
+    }
+
+    // 페이지가 소멸할 때 호출된다.
+    protected override void OnDispose()
+    {
+    }
+}

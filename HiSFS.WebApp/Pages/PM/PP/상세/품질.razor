@@ -1,0 +1,68 @@
+﻿@inherits CustomComponent
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <HiSFS.WebApp.Pages.PM.PP.공통.기록 제목="계획"
+                                            @bind-내용=@(계획기록)
+                                            작성일=@(정보?.계획기록일)
+                                            작성자=@(정보?.계획자?.사용자명)
+                                            보기모드=@보기모드 />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <HiSFS.WebApp.Pages.PM.PP.공통.기록 제목="검토"
+                                            @bind-내용=@(검토기록)
+                                            작성일=@(정보?.검토기록일)
+                                            작성자=@(정보?.검토자?.사용자명)
+                                            />
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [CascadingParameter(Name = "생산계획")]
+    public 생산계획정보 생산계획 { get; set; }
+
+    [CascadingParameter(Name = "보기모드")]
+    public bool 보기모드 { get; set; }
+
+    public string 계획기록
+    {
+        get => 정보?.계획기록;
+        set
+        {
+            if (정보 == null)
+                return;
+
+            정보.계획기록 = value;
+
+            정보.계획기록일 = DateTime.Now;
+            정보.계획자사번 = Context.직원.사번;
+        }
+    }
+
+    public string 검토기록
+    {
+        get => 정보?.검토기록;
+        set
+        {
+            if (정보 == null)
+                return;
+
+            정보.검토기록 = value;
+
+            정보.검토기록일 = DateTime.Now;
+            정보.검토자사번 = Context.직원.사번;
+        }
+    }
+
+    private 생산계획품질정보 정보 => 생산계획?.생산계획품질;
+
+    protected override void OnDispose()
+    {
+
+    }
+}

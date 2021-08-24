@@ -1,0 +1,760 @@
+﻿@inherits CustomLayoutComponent
+
+@inject NavigationManager NavigationManager;
+
+<header>
+    <NavMenu />
+</header>
+
+<!-- Begin page content -->
+<main role="main" id="main">
+    <div class="h-100" style="position: relative;">
+        <SfTab CssClass="e-fill h-100" @ref="tab" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" ShowCloseButton="true" SelectedItem="@selectedTabIndex">
+            <TabEvents Added="OnTabAdded" Selecting="Select" Removed="OnTabRemoved" />
+            <TabAnimationSettings>
+                <TabAnimationPrevious Effect="AnimationEffect.None" />
+                <TabAnimationNext Effect="AnimationEffect.None" />
+            </TabAnimationSettings>
+        </SfTab>
+        <div class="text-right" style="position: absolute; right:2px; top: 2px; float:right;" @onclick:preventDefault="true">
+            @if (showCloseAllButton == true)
+            {
+                <SfButton IconCss="e-icons e-clearall" OnClick="() => CloseAllTabs()" />
+            }
+        </div>
+    </div>
+    @if (isLoginPage == true)
+    {
+        @Body
+    }
+    <SfToast @ref="modifyMessageToast">
+        <ToastPosition X="right"></ToastPosition>
+    </SfToast>
+
+    @if (promptBoxInfo != null)
+    {
+        <SfDialog Target="#target" IsModal="true" Height="30%" Width="400px" ShowCloseIcon="true" @bind-Visible="promptBoxInfo.IsVisible">
+            <DialogTemplates>
+                <Header>
+                    @*<span class="e-avatar  e-avatar-xsmall e-avatar-circle"></span>
+                        <div id="template" title="promptTitle" >@promptBoxInfo.Title</div>*@
+                    <!--<div id="template" title="promptTitle" class="e-icon-settings">@promptBoxInfo.Title</div>-->
+                    @promptBoxInfo.Title
+                </Header>
+                <Content>
+                    @*<div>"수량을 입력하세요"</div>*@
+                    <div>@promptBoxInfo.Contents</div>
+                    <p></p>
+                    <div id='input-container'>
+                        <div class="e-float-input e-input-group">
+                            <input id="counte" type="text" @bind="@promptBoxInfo.Count" required />
+                            <span class="e-float-line"></span>
+                            <label class="e-float-text">수량</label>
+                        </div>
+                    </div>
+                    @*@promptBoxInfo.Contents*@
+                </Content>
+            </DialogTemplates>
+            <DialogButtons>
+                @if (promptBoxInfo.ResultType == MessageBoxResultType.YesOrNo)
+                {
+                    <DialogButton Content="예" IsPrimary="true" OnClick=@(() => { promptBoxInfo.Result = true; promptBoxInfo.IsVisible = false; }) />
+                    <DialogButton Content="아니오" OnClick=@(() => promptBoxInfo.IsVisible = false) />
+                }
+                else if (promptBoxInfo.ResultType == MessageBoxResultType.Okay)
+                {
+                    <DialogButton Content="확인" IsPrimary="true" OnClick=@(() => { promptBoxInfo.IsVisible = false; }) />
+                }
+            </DialogButtons>
+            <DialogAnimationSettings Effect="@DialogEffect.None"></DialogAnimationSettings>
+        </SfDialog>
+    }
+
+    @if (messageBoxInfo != null)
+    {
+        <SfDialog Target="#main" IsModal="true" Width="200px" ShowCloseIcon="true" @bind-Visible="messageBoxInfo.IsVisible">
+            <DialogTemplates>
+                <Header>@messageBoxInfo.Title</Header>
+                <Content>
+                    @messageBoxInfo.Contents
+                </Content>
+            </DialogTemplates>
+            <DialogButtons>
+                @if (messageBoxInfo.ResultType == MessageBoxResultType.YesOrNo)
+                {
+                    <DialogButton Content="예" IsPrimary="true" OnClick=@(() => { messageBoxInfo.Result = true; messageBoxInfo.IsVisible = false; }) />
+                    <DialogButton Content="아니오" OnClick=@(() => messageBoxInfo.IsVisible = false) />
+                }
+                else if (messageBoxInfo.ResultType == MessageBoxResultType.Okay)
+                {
+                    <DialogButton Content="확인" IsPrimary="true" OnClick=@(() => { messageBoxInfo.IsVisible = false; }) />
+                }
+            </DialogButtons>
+            <DialogAnimationSettings Effect="@DialogEffect.None"></DialogAnimationSettings>
+        </SfDialog>
+    }
+</main>
+@* 바코드 출력 관련 버그로 추가함 *@
+@*<div class="row" style="display: none;">
+        <SfQRCodeGenerator Width="200px" Height="150px" Value="1234">
+            <QRCodeGeneratorDisplayText Visibility="true" />
+        </SfQRCodeGenerator>
+    </div>*@
+
+@*<footer class="footer fixed-bottom py-3">*@
+@*<footer>
+        <div class="container-fluid">
+            <span></span>
+        </div>
+    </footer>*@
+
+@code
+{
+#pragma warning disable BL0005
+
+    private SfTab tab;
+    private int selectedTabIndex;
+    private bool isLoginPage;
+    private SfToast modifyMessageToast;
+    private MessageBoxInfo messageBoxInfo;
+    private PromptBoxInfo promptBoxInfo;
+    private bool showCloseAllButton;
+
+    SfTextBox TextboxObj;
+
+    //protected override async Task OnReadyRemoteServiceAsync(bool isReady)
+    //{
+    //    if (isReady == false)
+    //        return;
+    //}
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        //var path = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).LocalPath.ToLower();
+        //if (path != "/login" && Context.로그인유무 == false)
+        //{
+        //    NavigationManager.NavigateTo("/login");
+        //    return;
+        //}
+        //else if (path == "/login")
+        //{
+        //    isHideTab = true;
+        //}
+        //else
+        //{
+        //    isHideTab = false;
+        //}
+
+        messageBoxInfo = (Context as IMessageBoxContainer).MessageBox;
+        promptBoxInfo = (Context as IPromptBoxContainer).PromptBox;
+    }
+
+    public void Select(SelectingEventArgs args)
+    {
+        if (args.IsSwiped)
+        {
+            args.Cancel = true;
+        }
+    }
+
+    protected override void OnDispose()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //StateHasChanged();
+
+
+        if (firstRender == true)
+        {
+            var isLogin = await SessionStorage.GetAsync<bool>("isLogin");
+            var path = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).LocalPath.ToLower();
+            // 로그인은 했으나 Context에 로그인 정보가 없으므로 생성해준다.
+            if (isLogin == true && Context.로그인유무 == false)
+            {
+                var userId = await SessionStorage.GetAsync<string>("userId");
+                await Remote.WaitForReadyRemoteService();
+
+                Context.직원 = await Remote.Command.공통.직원상세_조회(userId);
+                NotifyMessage(Message.Login);
+            }
+            // 로그인을 안했을 경우 로그인 페이지로 이동한다.
+            else if (isLogin == false)
+            {
+                isLoginPage = true;
+                StateHasChanged();
+
+                NavigationManager.NavigateTo("/Login");
+
+                return;
+            }
+
+            // URI 직접 접근의 경우 로그인된 경우만 탭에 표시하도록 한다.
+            if (path.ToLower() != "/login" && path.ToLower() != "/" && Context.로그인유무 == true)
+            {
+                var index = tab.Items?.Count ?? 0;
+                await tab.AddTab(new List<TabItem>
+{
+                    new TabItem
+                    {
+                        Header = new TabHeader { Text = "페이지 확인" },
+                        ContentTemplate = Body,
+                        CssClass = "h-100"
+                    }
+                }, index);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnReceivedMessage(Services.Message message, bool isGlobal, dynamic[] args)
+    {
+        //promptBoxInfo.IsVisible = true;
+
+        // 메뉴가 선택되었으므로 해당 메뉴의 페이지를 탭으로 표시한다.
+        if (message == Services.Message.SelectedMenu)
+        {
+            var id = args[0] as string;
+            var text = args[1] as string;
+            var uri = args[2] as string;
+            var className = args[3] as string;
+            object @params = null;
+            object @params2 = null;
+
+            if (args.Length > 4)
+                @params = args[4];
+
+            if (args.Length > 5)
+                @params2 = args[5];
+
+            if (uri == null && className == null)
+                return;
+
+            // 메뉴목록 정보를 이용해 해당 url의 페이지를 탭에 추가한다.
+            if (string.IsNullOrWhiteSpace(uri) == false)
+            {
+                var menu = Cache.메뉴목록.FirstOrDefault(x => x.경로명 == uri);
+                if (menu == default)
+                    return;
+
+                id = menu.순번.ToString();
+                text = menu.메뉴명;
+                className = menu.클래스명;
+
+            }
+            var type = Type.GetType(className);
+            if (type == null)
+                return;
+
+            var index = tab.Items?.Count ?? 0;
+            tab.AddTab(new List<TabItem>
+    {
+                new TabItem
+                {
+                    Header = new TabHeader { Text = text },
+                    ContentTemplate = builder =>
+                    {
+                        builder.OpenComponent(0, type);
+                        builder.AddAttribute(1, "Params", @params);
+                        builder.AddAttribute(2, "MenuId", id);
+                        builder.AddAttribute(3, "Params2", @params2);
+                        builder.CloseComponent();
+                    },
+                    CssClass = "h-100"
+                }
+            }, index);
+
+            StateHasChanged();
+        }
+
+        if (message == Message.Login)
+        {
+            isLoginPage = false;
+
+            StateHasChanged();
+        }
+
+        if (message == Message.Logout)
+        {
+            isLoginPage = true;
+
+            tab?.Items?.Clear();
+
+            StateHasChanged();
+        }
+
+        if (message == Message.ModifiedAddData)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "항목 추가됨",
+                Content = "항목이 추가되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        if (message == Message.ModifiedUpdateData)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "항목 변경됨",
+                Content = "항목이 변경되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        if (message == Message.ModifiedDeleteData)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "항목 삭제됨",
+                Content = "항목이 삭제되었습니다.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+            });
+        }
+
+        if (message == Message.SendMessage)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "메시지 전송함",
+                Content = "메시지가 전송되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        if (message == Message.NotConnected)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "외부통신연결",
+                Content = "시리얼 또는 랜 연결이 않되었습니다.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+            });
+        }
+
+        if (message == Message.PrintOutOk)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "QR코드 프린트",
+                Content = "QR 코드 출력이 완료 되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        //추가 2020.02.04
+
+        if (message == Message.SelectItemAlert)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "검사품목 선택",
+                Content = "검사품목을 선택하세요.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+        if (message == Message.SelectAlert)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "검사항목 선택",
+                Content = "검사항목을 선택하세요.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+
+        if (message == Message.ConnectionAlert)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "장비 연결",
+                Content = "연결되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+        //추가 2020.02.04
+        if (message == Message.DisconnectAlert)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "장비 연결",
+                Content = "연결이 해제되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        if (message == Message.CheckDataSave)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "저장",
+                Content = "측정데이터가 저장되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        if (message == Message.CheckDataReset)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "리셋",
+                Content = "측정데이터가 리셋되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+        ////////////////////////////////////////////////////
+
+        ///////////////// 2021.02.16   //////////////////////////////
+        if (message == Message.ChangeCheckState)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "측정상태",
+                Content = "측정데이터가 변경되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        if (message == Message.CheckDataSaveErorr)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "측정저장오류",
+                Content = "이미처리되었습니다.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+        ///////////////End 2021.02.16  ///////////////////////////////
+
+
+        ///////////////// 2021.02.18   //////////////////////////////
+        if (message == Message.CheckDataAddReq)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "검사항목",
+                Content = "검사항목을 추가해 주세요.",
+                CssClass = "e-toast-success",
+                Icon = "e-success toast-icons"
+            });
+        }
+        ///////////////// 2021.02.18   //////////////////////////////
+
+        ///////////////// 2021.02.19   //////////////////////////////
+        if (message == Message.CheckStart)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "품질검사 시작",
+                Content = "품질검사가 시작되었습니다.",
+                CssClass = "e-toast-info",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        if (message == Message.CheckEnd)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "품질검사 종료",
+                Content = "품질검사가 종료되었습니다.",
+                CssClass = "e-toast-info",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        //추가 2021-03-17
+        if (message == Message.CheckProcStart)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "공정 시작",
+                Content = "공정이 시작되었습니다.",
+                CssClass = "e-toast-info",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        if (message == Message.CheckProcEnd)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "공정 종료",
+                Content = "공정이 종료되었습니다.",
+                CssClass = "e-toast-info",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+
+
+
+        //추가 2021-03-17
+
+        if (message == Message.InputErrMesage)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "입력 오류",
+                Content = "입력이 잘못되었습니다.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+            });
+        }
+
+        //추가 2021-03-25
+
+        if (message == Message.DeleteErrMesage)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "삭제오류",
+                Content = "삭제되지 않았습니다..",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+            });
+        }
+
+        if (message == Message.FileNotFoundMesage)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "파일오류",
+                Content = "파일이 존재하지 않았습니다..",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+            });
+        }
+
+        if (message == Message.FileSaveMessage)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "파일저장",
+                Content = "파일을 저장하세요.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+            });
+        }
+
+        if (message == Message.ItemSelectMessage)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "기종선택",
+                Content = "기종을 선택해주세요.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+            });
+        }
+
+        if (message == Message.PlaceSelectMessage)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "장소선택",
+                Content = "장소를 선택해주세요.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+            });
+        }
+        if (message == Message.BOM품목코드선택Message)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "BOM선택",
+                Content = "BOM품목을 선택해주세요.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+            });
+        }
+
+        if (message == Message.반영성공)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "반영성공",
+                Content = "반영되었습니다.",
+                CssClass = "e-toast-info",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+
+        if (message == Message.반영실패)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "반영실패",
+                Content = "반영되지않았습니다.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+
+            });
+        }
+
+        if (message == Message.반영실패)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "반영실패",
+                Content = "반영되지않았습니다.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+
+            });
+        }
+
+        if (message == Message.재고부족메세지)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "재고이동실패",
+                Content = "재고수량이 부족합니다.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+
+            });
+        }
+        if (message == Message.재고이동메세지)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "재고이동성공",
+                Content = "이동처리 되었습니다.",
+                CssClass = "e-toast-info",
+                Icon = "e-success toast-icons"
+            });
+        }
+
+        if (message == Message.공정추가오류)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "공정단위오류",
+                Content = "공정단위를 확인해주세요.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+
+            });
+        }
+
+        if (message == Message.작업지시작업자지정메세지)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "작업자지정",
+                Content = "작업자를 확인해주세요.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+
+            });
+        }
+        if (message == Message.품질검사종료메세지)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "품질검사종료유무",
+                Content = "품질검사 종료를 확인해주세요.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+
+            });
+        }
+
+        if (message == Message.품질검사시작해주세요)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "품질검사시작",
+                Content = "품질검사 시작해주세요.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+
+            });
+        }
+
+
+        if (message == Message.장비를연결해주세요)
+        {
+            modifyMessageToast.Show(new ToastModel
+            {
+                Title = "장비연결확인",
+                Content = "장비를연결해주세요.",
+                CssClass = "e-toast-warning",
+                Icon = "e-warning toast-icons"
+
+            });
+        }
+
+
+
+
+
+
+
+
+
+        if (message == Message.ShowMessage)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private void OnTabAdded(AddEventArgs args)
+    {
+        selectedTabIndex = tab.Items?.Count ?? 0;
+
+        if (tab?.Items?.Count > 0)
+            showCloseAllButton = true;
+    }
+
+    private void OnTabRemoved(Syncfusion.Blazor.Navigations.RemoveEventArgs args)
+    {
+        if ((tab?.Items?.Count ?? 0) == 0)
+            showCloseAllButton = false;
+    }
+
+    private async Task CloseAllTabs()
+    {
+        var result = await ShowMessageBox("확인", "전체 탭을 모두 닫으시겠습니까?", MessageBoxResultType.YesOrNo);
+
+        if (result == false)
+            return;
+
+        tab?.Items?.Clear();
+    }
+
+    private void SendBtnclicked()
+    {
+        if (this.TextboxObj.Value != "")
+        {
+            //DialogText = this.TextboxObj.Value;
+            //TextBoxValue = "";
+            this.StateHasChanged();
+        }
+    }
+
+
+}
+

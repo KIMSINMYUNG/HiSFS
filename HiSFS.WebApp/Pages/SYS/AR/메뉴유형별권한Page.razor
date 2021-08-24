@@ -1,0 +1,127 @@
+﻿@inherits CustomComponent
+
+@page "/SYS/AR/메뉴유형별권한"
+
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="1">
+    <SplitterPanes>
+        <SplitterPane Size="40%">
+            <DGrid @ref=@(dgrid) DataSource=@(유형별목록) TValue="공통코드" DefaultMode="true"
+                   OnCreated="유형별갱신async" OnRowSelected="On유형별선택">
+                <GridColumns>
+                    <GridColumn Field=@nameof(공통코드.코드명) Width="160" />
+                </GridColumns>
+            </DGrid>
+        </SplitterPane>
+        <SplitterPane Size="60%">
+            <div class="row mt-2 mx-2">
+                <div class="col section-header mr-auto">
+                    <span class="my-auto">메뉴권한</span>
+                </div>
+                <div class="col-auto">
+                    <SfButton IsPrimary="true" OnClick="On메뉴권한저장">저장</SfButton>
+                </div>
+            </div>
+            <div class="row">
+                <SfTreeGrid DataSource=@(메뉴목록) IdMapping="순번" ParentIdMapping="상위메뉴순번" TreeColumnIndex="1" AllowPaging="false" TValue="메뉴정보">
+                    <TreeGridColumns>
+                        <TreeGridColumn Field=@nameof(메뉴정보.순번) Visible="false" />
+                        <TreeGridColumn Field=@nameof(메뉴정보.메뉴명) Width="160" AllowEditing="false" />
+                        <TreeGridColumn Field="메뉴유형별권한.읽기권한" Width="60" HeaderText="읽기">
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox @bind-Checked=@(info.메뉴유형별권한.읽기권한) />
+                            </Template>
+                        </TreeGridColumn>
+                        <TreeGridColumn Field="메뉴유형별권한.등록권한" Width="60" HeaderText="등록">
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox @bind-Checked=@(info.메뉴유형별권한.등록권한) />
+                            </Template>
+                        </TreeGridColumn>
+                        <TreeGridColumn Field="메뉴유형별권한.변경권한" Width="60" HeaderText="변경">
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox @bind-Checked=@(info.메뉴유형별권한.변경권한) />
+                            </Template>
+                        </TreeGridColumn>
+                        <TreeGridColumn Field="메뉴유형별권한.삭제권한" Width="60" HeaderText="삭제">
+                            <Template>
+                                @{ var info = context as 메뉴정보; }
+                                <SfCheckBox @bind-Checked=@(info.메뉴유형별권한.삭제권한) />
+                            </Template>
+                        </TreeGridColumn>
+                    </TreeGridColumns>
+
+                    @*<TreeGridEditSettings AllowAdding="false" AllowEditing="true" AllowDeleting="false" Mode="Syncfusion.Blazor.TreeGrid.EditMode.Row" />*@
+                    <TreeGridSelectionSettings EnableToggle="false" />
+                </SfTreeGrid>
+            </div>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    /*
+        왼쪽에 유형별 트리 표현, 오른쪽에 전 메뉴 표현, 읽기/등록/변경/삭제 체크박스 표시
+    */
+
+    private DGrid<공통코드> dgrid;
+    private ObservableCollection<공통코드> 유형별목록;
+    private 공통코드 유형별선택;
+
+
+    //private SfTreeGrid<메뉴정보> grid;
+    private ObservableCollection<메뉴정보> 메뉴목록;
+
+
+    private async Task OnCreatedTreeView(object e)
+    {
+        await 유형별갱신async();
+    }
+
+    private async Task On유형별선택(RowSelectEventArgs<공통코드> e)
+    {
+        유형별선택 = e.Data;
+
+        await 메뉴권한async();
+    }
+
+    private async Task 유형별갱신async()
+    {
+        var result = await Remote.Command.시스템.공통코드_조회("B23");
+        유형별목록 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task 메뉴권한async()
+    {
+        var result = await Remote.Command.시스템.메뉴유형별권한_조회(유형별선택.코드);
+        ModifyList(result, (info, map) =>
+        {
+            info.메뉴유형별권한 ??= new 메뉴유형별권한정보
+            {
+                메뉴순번 = info.순번,
+                권한유형코드 = 유형별선택.코드
+            };
+        });
+        메뉴목록 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task On메뉴권한저장()
+    {
+        var list = 메뉴목록.Select(x => x.메뉴유형별권한);
+
+        await Remote.Command.시스템.메뉴유형별권한_저장(list);
+
+        NotifyMessage(Message.ModifiedUpdateData);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

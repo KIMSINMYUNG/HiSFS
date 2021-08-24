@@ -1,0 +1,77 @@
+﻿
+@page "/dz/물류담당자"
+@using HiSFS.Api.Shared.Models.View_DZICUBE
+@inherits CustomComponent
+
+<SfSplitter Width="100%" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                <FGrid @ref="grid" DataSource="@list" TValue="VL_MES_PLN" DefaultMode="true" EditMode="DGridEditMode.EditDelete" PageSize="15"
+                       OnCreated="RefreshAsync" OnToolbarClick="OnToolbarClick">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(VL_MES_PLN.CO_CD) HeaderText="회사코드" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.PLN_CD) HeaderText="담당자코드" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.PLN_NM) HeaderText="담당자명" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.EMP_CD) HeaderText="사원코드" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.EMP_NM) HeaderText="사원명" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.PLN_TEL) HeaderText="전화번호" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.PLN_FAX) HeaderText="팩스번호" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.PLN_CP) HeaderText="핸드폰번호" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.PLNS_CD) HeaderText="담당그룹코드" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.PLNS_NM) HeaderText="담당그룹명" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.FROM_DT) HeaderText="시작일" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.TO_DT) HeaderText="종료일" />
+                        <GridColumn Field=@nameof(VL_MES_PLN.USE_YN) HeaderText="사용여부" />
+
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    private FGrid<VL_MES_PLN> grid;
+    private List<VL_MES_PLN> list;
+    private VL_MES_PLN selectedRow;
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+
+        StateHasChanged();
+
+        //창고VIEW
+        var result = await Remote.Command.기준정보.VL_MES_PLN();
+
+        list = result.ToList();
+
+        StateHasChanged();
+    }
+
+
+    private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "btnCheckSave")
+        {
+            var YesOrNo = await ShowMessageBox("물류담당자정보반영", "물류담당자정보를 반영하시겠습니까?", MessageBoxResultType.YesOrNo);
+            bool result = false;
+            if (YesOrNo)
+            {
+                result = await Remote.Command.기준정보.VL_MES_PLN_반영(list);
+
+                if (result)
+                    NotifyMessage(Message.반영성공);
+                else
+                    NotifyMessage(Message.반영실패);
+            }
+
+        }
+
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

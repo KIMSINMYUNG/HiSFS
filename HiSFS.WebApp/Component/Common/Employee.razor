@@ -1,0 +1,104 @@
+﻿@inherits CustomComponent
+
+@using Syncfusion.Blazor.Data
+
+<SfComboBox Query="@Query1" TValue="string" TItem="직원정보" @bind-Value="@ListItem" PopupWidth="300px" DataSource="@직원정보List" PopupHeight="600px" CssClass="@Validate" Placeholder="사원코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+    @*<ComboBoxEvents TValue="string" TItem="직원정보" ValueChange="OnValueChanged"></ComboBoxEvents>*@
+    <ComboBoxTemplates TItem="직원정보">
+        <HeaderTemplate>
+            <table><tr><th class="e-text-center">사번</th><th width="100px">사용자명</th><th width="100px">부서코드</th></tr></table>
+        </HeaderTemplate>
+
+        <ItemTemplate Context="anotherContext">
+            @{
+                var 직원정보 = (anotherContext as 직원정보);
+            }
+
+            @*<ValidationMessage For="() => 직원정보.사번" />*@
+            <table>
+                <tbody>
+                    <tr>
+                        <td>@직원정보.사번</td>
+                        <td>@직원정보.사용자명</td>
+                        <td>@직원정보.부서코드</td>
+                    </tr>
+                </tbody>
+            </table>
+        </ItemTemplate>
+    </ComboBoxTemplates>
+    <ComboBoxFieldSettings Text="사용자명" Value="사번"></ComboBoxFieldSettings>
+</SfComboBox>
+
+
+
+@code {
+
+    [Parameter]
+    public EventCallback<string> ListItemChanged { get; set; }
+
+    [Parameter]
+    public string Validate { get; set; }
+
+    private string listItem { get; set; }
+
+    private string Edit사원코드 { get; set; }
+
+    public Query Query1;
+
+    [Parameter]
+    public string 부서코드 { get; set; }
+
+    [Parameter]
+    public string ListItem
+    {
+        get { return Edit사원코드; }
+        set
+        {
+
+            if (Edit사원코드 != value)
+            {
+                Edit사원코드 = value;
+
+                if (ListItemChanged.HasDelegate)
+                {
+                    ListItemChanged.InvokeAsync(value);
+
+                }
+            }
+
+        }
+    }
+
+    SfComboBox<string, 직원정보> ComboObj;
+
+    public ObservableCollection<직원정보> 직원정보List { get; set; }
+
+    public string 회사코드 = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await this.Remote.Command.기준정보.직원부서_조회(true, 회사코드, 부서코드);
+        직원정보List = result.ToObservableCollection();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+    }
+
+    public async Task Reload(string str부서코드)
+    {
+        //var result1 = await this.Remote.Command.기준정보.직원부서_조회(true, 회사코드, str부서코드);
+        //if (result1.ToList().Count > 0)
+        //    직원정보List = result1.ToObservableCollection();
+        //else
+        //    직원정보List.Clear();
+        //StateHasChanged();
+
+        Query1 = new Query().Select(new List<string> { "부서코드" }).Where("부서코드", "equal", str부서코드);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

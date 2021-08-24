@@ -1,0 +1,41 @@
+﻿<SfChart Title="목표대비 생산량" Theme="ChartTheme.MaterialDark">>
+    <ChartEvents Load="ChartLoad" />
+    <ChartArea><ChartAreaBorder Width="0"></ChartAreaBorder></ChartArea>
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.DateTime" LabelFormat="d" IntervalType="IntervalType.Days" EdgeLabelPlacement="EdgeLabelPlacement.Shift">
+        <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
+    </ChartPrimaryXAxis>
+    <ChartPrimaryYAxis Title="수량" Interval="10" LabelFormat="{value}EA">
+        <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+        <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
+    </ChartPrimaryYAxis>
+    <ChartSeriesCollection>
+        <ChartSeries DataSource="@ChartData" Name="목표량" XName="xValue" Width="2"
+                     Opacity="0.5" YName="yValue" Type="ChartSeriesType.Area">
+        </ChartSeries>
+        <ChartSeries DataSource="@ChartData" Name="생산량" XName="xValue" Width="2"
+                     Opacity="0.5" YName="yValue1" Type="ChartSeriesType.Area">
+        </ChartSeries>
+    </ChartSeriesCollection>
+</SfChart>
+
+@code{
+    public class AreaChartData
+    {
+        public DateTime xValue { get; set; }
+        public double yValue { get; set; }
+        public double yValue1 { get; set; }
+    }
+    public List<AreaChartData> ChartData = new List<AreaChartData>
+    {
+            new AreaChartData { xValue = new DateTime(2020, 9, 1), yValue = 10, yValue1 = 8 },
+            new AreaChartData { xValue = new DateTime(2020, 9, 2), yValue = 20, yValue1 = 15 },
+            new AreaChartData { xValue = new DateTime(2020, 9, 3), yValue = 30, yValue1 = 25 },
+            new AreaChartData { xValue = new DateTime(2020, 9, 4), yValue = 40, yValue1 = 38 },
+            new AreaChartData { xValue = new DateTime(2020, 9, 5), yValue = 50, yValue1 = 48 },
+            new AreaChartData { xValue = new DateTime(2020, 9, 6), yValue = 60, yValue1 = 62 },
+            new AreaChartData { xValue = new DateTime(2020, 9, 7), yValue = 70, yValue1 = 70 },
+        };
+    void ChartLoad(ILoadedEventArgs Args)
+    {
+    }
+}

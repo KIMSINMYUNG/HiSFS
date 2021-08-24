@@ -1,0 +1,89 @@
+﻿@inherits CustomComponent
+
+@page "/test/TreeGridTest"
+
+
+<SfButton OnClick="OnClick">Refresh</SfButton>
+<SfTreeGrid DataSource="@TreeData" IdMapping="TaskId" ParentIdMapping="ParentId" TreeColumnIndex="1" AllowPaging="false" Toolbar="@(new List<string>() { "Add", "Edit", "Delete" })">
+    <TreeGridColumns>
+        <TreeGridColumn Field="TaskId" HeaderText="Task ID" Width="80" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right"></TreeGridColumn>
+        <TreeGridColumn Field="TaskName" HeaderText="Task Name" Width="160"></TreeGridColumn>
+        <TreeGridColumn Field="Duration" HeaderText="Duration" Width="100" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right"></TreeGridColumn>
+        <TreeGridColumn Field="Progress" HeaderText="Progress" Width="100" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right"></TreeGridColumn>
+        <TreeGridColumn Field="Priority" HeaderText="Priority" Width="80"></TreeGridColumn>
+    </TreeGridColumns>
+
+    <TreeGridSelectionSettings EnableToggle="false" />
+    <TreeGridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" AllowEditOnDblClick="true" ShowDeleteConfirmDialog="true" Mode="Syncfusion.Blazor.TreeGrid.EditMode.Dialog" NewRowPosition="Syncfusion.Blazor.TreeGrid.RowPosition.Below" />
+
+    <TreeGridEvents TValue="BusinessObject" Created="RefreshAsync"/>
+</SfTreeGrid>
+
+@code{
+
+    public class BusinessObject : INotifyPropertyChanged
+    {
+#pragma warning disable CS0067
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public int TaskId { get; set; }
+        public string TaskName { get; set; }
+        public int Duration { get; set; }
+        public int Progress { get; set; }
+        public string Priority { get; set; }
+        public int? ParentId { get; set; }
+    }
+
+    public ObservableCollection<BusinessObject> TreeData = new ObservableCollection<BusinessObject>();
+
+
+    //protected override async Task OnInitializedAsync()
+    //{
+    //}
+
+    private async Task RefreshAsync()
+    {
+        await Task.Yield();
+
+        TreeData.Clear();
+        TreeData.Add(new BusinessObject() { TaskId = 1, TaskName = "Parent Task 1", Duration = 10, Progress = 70, ParentId = null, Priority = "High" });
+        TreeData.Add(new BusinessObject() { TaskId = 2, TaskName = "Child task 1", Duration = 4, Progress = 80, ParentId = 1, Priority = "Normal" });
+        TreeData.Add(new BusinessObject() { TaskId = 3, TaskName = "Child Task 2", Duration = 5, Progress = 65, ParentId = 1, Priority = "Critical" });
+        TreeData.Add(new BusinessObject() { TaskId = 4, TaskName = "Parent Task 2", Duration = 6, Progress = 77, ParentId = null, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 5, TaskName = "Child Task 5", Duration = 9, Progress = 25, ParentId = 4, Priority = "Normal" });
+        TreeData.Add(new BusinessObject() { TaskId = 6, TaskName = "Child Task 6", Duration = 9, Progress = 7, ParentId = 5, Priority = "Normal" });
+        TreeData.Add(new BusinessObject() { TaskId = 7, TaskName = "Parent Task 3", Duration = 4, Progress = 45, ParentId = null, Priority = "High" });
+        TreeData.Add(new BusinessObject() { TaskId = 8, TaskName = "Child Task 7", Duration = 3, Progress = 38, ParentId = 7, Priority = "Critical" });
+        TreeData.Add(new BusinessObject() { TaskId = 10, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 11, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 12, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 13, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 14, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 15, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 16, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 17, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 18, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 19, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 20, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 21, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 22, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 23, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 24, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+        TreeData.Add(new BusinessObject() { TaskId = 25, TaskName = "Child Task 8", Duration = 7, Progress = 70, ParentId = 7, Priority = "Low" });
+
+        StateHasChanged();
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+
+    private async Task OnClick()
+    {
+        await Task.Yield();
+
+        TreeData[0].TaskName = "!";
+        //StateHasChanged();
+    }
+}

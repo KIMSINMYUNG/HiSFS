@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HiSFS.Rpc.Router\HiSFS.Rpc.Router.csproj" />
+    <ProjectReference Include="..\HiSFS.Rpc.Shared\HiSFS.Rpc.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

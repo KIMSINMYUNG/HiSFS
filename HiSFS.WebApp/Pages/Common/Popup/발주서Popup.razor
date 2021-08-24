@@ -1,0 +1,98 @@
+﻿@page "/popup/발주서"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="발주서정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(발주서정보.회사코드) HeaderText="회사코드" Width="110" />
+        <GridColumn Field=@nameof(발주서정보.발주일) HeaderText="발주일" Width="120" />
+        <GridColumn Field=@nameof(발주서정보.납기일) HeaderText="납기일" Width="120" />
+        <GridColumn Field=@nameof(발주서정보.출하예정일) HeaderText="출하예정일" Width="120" />
+        <GridColumn Field=@nameof(발주서정보.거래처명) HeaderText="거래처명" Width="120" />
+        <GridColumn Field=@nameof(발주서정보.거래구분) HeaderText="거래구분" Width="120" />
+        <GridColumn Field=@nameof(발주서정보.발주번호) HeaderText="발주번호" Width="200" />
+        <GridColumn Field=@nameof(발주서정보.발주순번) HeaderText="발주순번" Width="120" />
+        <GridColumn Field=@nameof(발주서정보.환종) HeaderText="환종" Width="100" />
+        <GridColumn Field=@nameof(발주서정보.품번) HeaderText="품번" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.품명) HeaderText="품명" Width="200" />
+        <GridColumn Field=@nameof(발주서정보.규격) HeaderText="규격" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.관리단위) HeaderText="단위" Width="100" />
+        <GridColumn Field=@nameof(발주서정보.발주수량) HeaderText="발주수량" Width="120" />
+        <GridColumn Field=@nameof(발주서정보.발주단가) HeaderText="발주단가" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.공급가) HeaderText="공급가" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.부가세) HeaderText="부가세" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.합계액) HeaderText="합계액" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.관리구분명) HeaderText="관리구분명" Width="180" />
+        <GridColumn Field=@nameof(발주서정보.프록젝트명) HeaderText="프록젝트명" Width="180" />
+        <GridColumn Field=@nameof(발주서정보.비고_내역) HeaderText="비고(내역)" Width="200" />
+        <GridColumn Field=@nameof(발주서정보.담당자명) HeaderText="담당자명" Width="100" />
+        <GridColumn Field=@nameof(발주서정보.부가세구분) HeaderText="부가세구분" Width="100" />
+        <GridColumn Field=@nameof(발주서정보.과세구분명) HeaderText="과세구분명" Width="120" />
+        <GridColumn Field=@nameof(발주서정보.검사구분) HeaderText="검사구분" Width="100" />
+        <GridColumn Field=@nameof(발주서정보.비고) HeaderText="비고" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.과세구분) HeaderText="과세구분" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.담당자코드) HeaderText="담당자코드" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.사업장코드) HeaderText="사업장코드" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.부서코드) HeaderText="부서코드" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.사원코드) HeaderText="사원코드" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.거래처코드) HeaderText="거래처코드" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.관리구분코드) HeaderText="관리구분코드" Width="150" />
+        <GridColumn Field=@nameof(발주서정보.프로젝트) HeaderText="프로젝트" Width="150" />
+
+    </GridColumns>
+</FGrid>
+
+
+
+@code {
+
+
+
+    private FGrid<발주서정보> grid;
+    private ObservableCollection<발주서정보> list;
+    private 발주서정보 selectedRow;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<발주서정보>> OnSelectedEvent { get; set; }
+
+    [Parameter]
+    public string 발주번호 { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<발주서정보, bool> ReturnSelectedItem { get; set; }
+
+    
+
+    private async Task RefreshAsync()
+    {
+
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.발주서정보_조회Dz(발주번호, 회사코드);
+
+        list = result.ToObservableCollection();
+
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<발주서정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

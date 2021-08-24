@@ -1,0 +1,482 @@
+﻿@page "/pm/wo/작업지시"
+
+@inherits CustomComponent
+
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="60%" Collapsible="true">
+            <FGrid @ref="grid" DataSource="list" TValue="생산지시정보" DefaultMode="true" EditMode="DGridEditMode.Add | DGridEditMode.Delete" PageSize="8"
+                   OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                <GridTemplates>
+                    <DetailTemplate>
+                        <div style="padding:20px">
+                            <SfTab>
+                                <TabItems>
+                                    <TabItem>
+                                        <ChildContent>
+                                            <TabHeader Text="Details"></TabHeader>
+                                        </ChildContent>
+                                        <ContentTemplate>
+                                        </ContentTemplate>
+                                    </TabItem>
+
+                                    <TabItem>
+                                        <ChildContent>
+                                            <TabHeader Text="Report"></TabHeader>
+                                        </ChildContent>
+                                        <ContentTemplate>
+                                        </ContentTemplate>
+                                    </TabItem>
+                                </TabItems>
+                            </SfTab>
+                        </div>
+                    </DetailTemplate>
+                </GridTemplates>
+                <GridColumns>
+                    <GridColumn Field=@nameof(생산지시정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field=@nameof(생산지시정보.회사코드) Width="100">
+                        <Template>
+                            @((context as 생산지시정보).회사코드)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산지시정보; }
+                            <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="false"></SfTextBox>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산지시정보.생산지시코드) Visible="false" />
+                    <GridColumn Field=@nameof(생산지시정보.생산지시명) HeaderText="작업지시명" Width="200" />
+                    <GridColumn Field=@nameof(생산지시정보.순번) HeaderText="차수" AllowAdding="false" AllowEditing="false" />
+                    <GridColumn Field=@nameof(생산지시정보.실행상태코드) HeaderText="실행상태" Template=@CommonCodeTemplate(nameof(생산지시정보.실행상태코드))>
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산지시정보.생산계획코드) Width="0">
+                        <Template>
+                            @((context as 생산지시정보).생산계획?.생산계획명)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산지시정보; }
+                            <DInputSearch ID="생산계획코드" Placeholder="생산계획" Target="#root" DialogHeader="생산계획 조회" TValue="생산계획정보" TCode="string" TextField="생산계획명" ValueChanged="생산계획Changed" CodeField="생산계획코드" @bind-Code=@(info.생산계획코드)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.생산계획Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="생산계획.생산계획명" HeaderText="생산계획">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산지시정보.생산지시유형코드) HeaderText="생산지시유형" Template=@CommonCodeTemplate(nameof(생산지시정보.생산지시유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(생산지시정보.생산지시유형코드), "생산지시유형", "B21") />
+
+                    <GridColumn Field=@nameof(생산지시정보.생산수량) HeaderText="생산수량" Width="140">
+                        <Template>
+                            @((context as 생산지시정보).생산수량)
+                        </Template>
+                        <EditTemplate>
+                            <SfNumericTextBox Value=@edit_생산수량 FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="생산수량" />
+                        </EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field=@nameof(생산지시정보.시작일) Format="yyyy/MM/dd" HeaderText="시작일" Width="150">
+                        @*<Template>
+                            @{
+                                var Value = (DateTime)(context as 생산지시정보).시작일;
+                                <span>@Value.ToString("yyyy/MM/dd")</span>
+                            }
+                        </Template>*@
+                        <EditTemplate>
+                            <SfDatePicker ID="시작일" Value="@(edit_시작일)" FloatLabelType="FloatLabelType.Always" Placeholder="시작일">
+                            </SfDatePicker>
+                        </EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field=@nameof(생산지시정보.완료목표일) Format="yyyy/MM/dd" HeaderText="목표일" Width="150">
+                        @*<Template>
+                            @{
+                                var Value = (DateTime)(context as 생산지시정보).완료목표일;
+                                <span>@Value.ToString("yyyy/MM/dd")</span>
+                            }
+                        </Template>*@
+                        <EditTemplate>
+                            <SfDatePicker ID="완료목표일" Value="@(edit_목표일)" FloatLabelType="FloatLabelType.Always" Placeholder="완료목표일">
+                            </SfDatePicker>
+                        </EditTemplate>
+                    </GridColumn>
+
+
+
+                    @*<GridColumn Field=@nameof(생산지시정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(생산지시정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="변경일">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>*@
+
+                    <GridColumn Field=@nameof(생산지시정보.재작업여부) HeaderText="재작업여부" EditType="EditType.DropDownEdit" ValidationRules="@(new ValidationRules{ Required=true})">
+                        <Template>
+                            @{ var info = context as 생산지시정보;
+                                //0.정상작업, 1.재작업
+                                if (info.재작업여부.Equals("0"))
+                                {
+                                    <span>정상작업</span>
+                                }
+                                else if (info.재작업여부.Equals("1"))
+                                {
+                                    <span>재작업</span>
+                                }
+                            }
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산지시정보; }
+                            <SfDropDownList ID="재작업여부" Placeholder="재작업여부" TItem="재작업여부필드" TValue="string" @bind-Value="@(info.재작업여부)" DataSource="@list재작업여부" FloatLabelType="FloatLabelType.Always">
+                                @*<DropDownListEvents TValue="string" TItem="string" ValueChange="ValueChange"></DropDownListEvents>*@
+                                <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산지시정보.상세) HeaderText="" Width="120" TextAlign="TextAlign.Right" AllowAdding="false" AllowEditing="false">
+                        <Template>
+                            @{ var info = context as 생산지시정보; }
+                            <SfButton @onclick=@(() => OnShowDetail(info))>상세</SfButton>
+                        </Template>
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+        <SplitterPane Size="40%" Collapsible="true">
+            <div class="row mt-2 mr-3">
+                <div class="col section-header">
+                    <span class="my-auto">작업지시 기준 현황</span>
+                </div>
+            </div>
+            @if (selected != null)
+            {
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="공정별현황">
+                        <DGrid @ref="grid2" DataSource=@(작업지시공정현황목록) OnRowSelected="OnRowSelected2" DefaultMode="true" PageMode="PageMode.Inline" TValue="작업지시공정현황">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(작업지시공정현황.공정차수) Width="80" HeaderText="공정차수" />
+                                <GridColumn Field=@nameof(작업지시공정현황.공정명) Width="160" HeaderText="공정명" />
+                                <GridColumn Field=@nameof(작업지시공정현황.공정품명) Width="160" HeaderText="공정품명" />
+                                <GridColumn Field=@nameof(작업지시공정현황.시작일) Format="yyy/MM/dd" Width="120" HeaderText="시작일" />
+                                <GridColumn Field=@nameof(작업지시공정현황.완료목표일) Format="yyy/MM/dd" Width="120" HeaderText="완료목표일" />
+                                <GridColumn Field=@nameof(작업지시공정현황.목표수량) Width="120" HeaderText="목표수량" />
+                                <GridColumn Field=@nameof(작업지시공정현황.검사수량) Width="120" HeaderText="검사수량" />
+                                <GridColumn Field=@nameof(작업지시공정현황.합격수량) Width="120" HeaderText="합격수량" />
+                                <GridColumn Field=@nameof(작업지시공정현황.불량수량) Width="120" HeaderText="불량수량" />
+
+                            </GridColumns>
+
+                        </DGrid>
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="공정별실적현황">
+                        <DGrid @ref="grid3" DataSource=@(공정별실적현황) TValue="생산실적헤더정보" DefaultMode="true" PageMode="PageMode.Inline">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(생산실적헤더정보.생산지시코드) Visible="false" />
+                                <GridColumn Field=@nameof(생산실적헤더정보.생산지시명) HeaderText="작업지시명" Width="150" />
+                                <GridColumn Field=@nameof(생산실적헤더정보.생산품코드) HeaderText="실적품번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                                <GridColumn Field=@nameof(생산실적헤더정보.실적수량) HeaderText="실적수량" Width="100" Format="G29" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                                <GridColumn Field=@nameof(생산실적헤더정보.불량수량) HeaderText="불량수량" Width="100" Format="G29" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                                <GridColumn Field=@nameof(생산실적헤더정보.실적공정코드_창고코드) HeaderText="실적공정코드_창고코드" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                                <GridColumn Field=@nameof(생산실적헤더정보.실적작업장코드_장소코드) HeaderText="실적작업장코드_장소코드" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                            </GridColumns>
+                        </DGrid>
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="공정별품질검사현황">
+                        <DGrid @ref="grid4" DataSource=@(공정별품질검사현황목록) DefaultMode="true" PageMode="PageMode.Inline" TValue="작업지시공정현황">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(작업지시공정현황.공정차수) Width="80" HeaderText="공정차수" />
+                                <GridColumn Field=@nameof(작업지시공정현황.공정명) Width="160" HeaderText="공정명" />
+                                <GridColumn Field=@nameof(작업지시공정현황.공정품명) Width="160" HeaderText="공정품명" />
+                                <GridColumn Field=@nameof(작업지시공정현황.목표수량) Width="120" HeaderText="목표수량" />
+                                <GridColumn Field=@nameof(작업지시공정현황.검사수량) Width="120" HeaderText="검사수량" />
+                                <GridColumn Field=@nameof(작업지시공정현황.합격수량) Width="120" HeaderText="합격수량" />
+                                <GridColumn Field=@nameof(작업지시공정현황.불량수량) Width="120" HeaderText="불량수량" />
+                                <GridColumn Field=@nameof(작업지시공정현황.불량률) Width="120" HeaderText="불량률" />
+
+                            </GridColumns>
+
+                        </DGrid>
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+
+                @*<div class="row mx-2 mb-3">
+                        <HiSFS.WebApp.Pages.Common.단위 제목="불량현황">
+                            <DGrid DefaultMode="true" PageMode="PageMode.Inline" TValue="object">
+                                <GridColumns>
+                                    <GridColumn HeaderText="순번" />
+                                    <GridColumn HeaderText="공정" />
+                                    <GridColumn HeaderText="공정작업자" />
+                                    <GridColumn HeaderText="발생시각" />
+                                    <GridColumn HeaderText="불량 자재/공정품" />
+                                    <GridColumn HeaderText="불량수량" />
+                                    <GridColumn HeaderText="불량유형" />
+                                    <GridColumn HeaderText="비고" />
+                                </GridColumns>
+                            </DGrid>
+                        </HiSFS.WebApp.Pages.Common.단위>
+                    </div>
+                    <div class="row mx-2 mb-3">
+                        <HiSFS.WebApp.Pages.Common.단위 제목="자재소요현황">
+                            <DGrid DefaultMode="true" PageMode="PageMode.Inline" TValue="object">
+                                <GridColumns>
+                                    <GridColumn HeaderText="자재" />
+                                    <GridColumn HeaderText="1일" HeaderTextAlign="TextAlign.Center">
+                                        <GridColumns>
+                                            <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                        </GridColumns>
+                                    </GridColumn>
+                                    <GridColumn HeaderText="2일" HeaderTextAlign="TextAlign.Center">
+                                        <GridColumns>
+                                            <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                        </GridColumns>
+                                    </GridColumn>
+                                    <GridColumn HeaderText="3일" HeaderTextAlign="TextAlign.Center">
+                                        <GridColumns>
+                                            <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                        </GridColumns>
+                                    </GridColumn>
+                                    <GridColumn HeaderText="4일" HeaderTextAlign="TextAlign.Center">
+                                        <GridColumns>
+                                            <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                        </GridColumns>
+                                    </GridColumn>
+                                    <GridColumn HeaderText="5일" HeaderTextAlign="TextAlign.Center">
+                                        <GridColumns>
+                                            <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                        </GridColumns>
+                                    </GridColumn>
+                                    <GridColumn HeaderText="6일" HeaderTextAlign="TextAlign.Center">
+                                        <GridColumns>
+                                            <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                        </GridColumns>
+                                    </GridColumn>
+                                    <GridColumn HeaderText="7일" HeaderTextAlign="TextAlign.Center">
+                                        <GridColumns>
+                                            <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                        </GridColumns>
+                                    </GridColumn>
+                                    <GridColumn HeaderText="8일" HeaderTextAlign="TextAlign.Center">
+                                        <GridColumns>
+                                            <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                            <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                        </GridColumns>
+                                    </GridColumn>
+
+                                </GridColumns>
+                            </DGrid>
+                        </HiSFS.WebApp.Pages.Common.단위>
+                    </div>*@
+
+            }
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    /*
+            생산계획을 기반으로 작업자에게 작업 지시를 하는 메뉴
+
+            입력사항 :
+               - 생산유형, 생산수량, 시작일, 목표일   (기본값은 생산계획 입력값으로 함)
+               - 공정 별 작업자 선택 (기본값 미선택, 선택 시 해당 작업자에게 해당 공정의 작업이 배정됨)
+
+            동작 :
+               - 작업계획 목록 선택, 작업지시 기본정보 입력. 상세 버튼으로 작업지시상세로 이동 함
+               - 작업지시 상태 변경, 작업자 별 / 공정 별 작업지시서 생성
+
+            작업지시서 내용 :
+               - 공정 정보
+               - 도면 (도면번호, 도면명) ※ 도면 이미지는 포함하지 않음
+               - 필요자재 목록 및 정보
+               - 생산 공정품 정보
+               - 단위 생산 예상 시간
+               - 비고
+               - 바코드 (공정 시작, 완료, 자재불량, 공정품불량)
+                 ※ 자주검사 체크시 자주검사 시작/완료 바코드도 포함함
+                 ※ 품질검사 공정의 경우 품질검사 시작/완료 바코드
+            ※ 작업지시서의 양식은 1차 미적용. 2차 고객 협의 후 추가내용 적용 및 양식 적용 예정
+        */
+
+    private FGrid<생산지시정보> grid;
+    private ObservableCollection<생산지시정보> list;
+    private 생산지시정보 selected;
+
+    private DGrid<작업지시공정현황> grid2;
+    private IEnumerable<작업지시공정현황> 작업지시공정현황목록;
+    private 작업지시공정현황 selected작업지시공정현황;
+
+    private DGrid<생산실적헤더정보> grid3;
+    private ObservableCollection<생산실적헤더정보> 공정별실적현황;
+
+    private DGrid<작업지시공정현황> grid4;
+    private ObservableCollection<작업지시공정현황> 공정별품질검사현황목록;
+
+
+    private decimal edit_생산수량 = 0;
+    public DateTime edit_시작일;
+    public DateTime edit_목표일;
+    private 생산계획정보 생산계획;
+
+
+    public async Task 생산계획Changed(생산계획정보 value)
+    {
+        // Here you can customize your code
+        edit_생산수량 = value.계획수량;
+        edit_시작일 = (DateTime)value.실행일시;
+        edit_목표일 = (DateTime)value.종료일시;
+        생산계획 = value;
+
+    }
+
+    public class 재작업여부필드
+    {
+        public int ID { get; set; }
+        public string Text { get; set; }
+    }
+    public List<재작업여부필드>
+      list재작업여부 = new List<재작업여부필드>() {
+    new 재작업여부필드(){ ID=0, Text="정상작업"},
+    new 재작업여부필드(){ ID=1, Text="재작업"},
+                    };
+
+    private string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.작업지시기준_조회(회사코드);
+        ModifyList(result, (x, map) =>
+        {
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<생산지시정보> args)
+    {
+        // 추가시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.실행상태코드 = "B2001"; // 확정전
+            newRow.회사코드 = 회사코드;
+        }
+        // 편집 시작시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.작업지시_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+            newRow.회사코드 = 회사코드;
+            newRow.생산수량 = edit_생산수량;
+            newRow.시작일 = edit_시작일;
+            newRow.완료목표일 = edit_목표일;
+            newRow.생산계획 = 생산계획;
+
+            await Remote.Command.생산관리.작업지시_저장(args.Data, args.Action == "Add" ? true : false);
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<생산지시정보> args)
+    {
+
+        selected = args.Data;
+
+        작업지시공정현황목록 = null;
+
+        작업지시공정현황목록 = await Remote.Command.생산관리.작업지시공정현황_조회(회사코드, selected.생산지시코드);
+        ModifyList(작업지시공정현황목록, (info, map) =>
+        {
+        });
+
+        await grid2.Grid.ClearCellSelection();
+
+        StateHasChanged();
+
+    }
+
+    private async Task OnRowSelected2(RowSelectEventArgs<작업지시공정현황> args)
+    {
+        await grid3.Grid.ClearCellSelection();
+        selected작업지시공정현황 = args.Data;
+        공정별실적현황?.Clear();
+        var result = await Remote.Command.생산관리.작업지시공정별실적현황_조회(회사코드, selected작업지시공정현황);
+
+
+        ModifyList(result, (info, map) =>
+        {
+        });
+
+        공정별실적현황 = result.ToObservableCollection();
+
+
+        공정별품질검사현황목록?.Clear();
+        if (selected작업지시공정현황.공정코드 == "P0011")
+        {
+
+            var result2 = await Remote.Command.생산관리.작업지시공정별품질검사현황_조회(회사코드, selected작업지시공정현황);
+
+            ModifyList(result2, (info, map) =>
+            {
+            });
+
+            공정별품질검사현황목록 = result2.ToObservableCollection();
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnShowDetail(생산지시정보 info)
+    {
+        // 작업지시 상세 페이지로 이동
+        NotifyMessage(Message.SelectedMenu, null, null, "/pm/wo/작업지시상세", null, info.생산지시코드);
+    }
+
+    protected override void OnDispose()
+    {
+
+    }
+}

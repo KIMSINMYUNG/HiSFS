@@ -1,0 +1,40 @@
+﻿@*
+    이미지 또는 PDF 또는 파일을 다양한 방식으로 볼 수 있는 컨트롤
+*@
+
+<div class="container-fluid">
+    @* 헤더 영역 *@
+    <div class="row dpanel-header my-auto">
+        <div class="col">
+            @if (string.IsNullOrWhiteSpace(Header) == false)
+            {
+
+                <b>@Header</b>
+            }
+            else
+            {
+                @HeaderTemplate
+            }
+        </div>
+    </div>
+    @* 내용 영역 *@
+    <div class="row dpanel-content" style="height: @Height; min-height: @Height">
+        <div class="col">
+            @ContentTemplate
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public RenderFragment HeaderTemplate { get; set; }
+
+    [Parameter]
+    public string Header { get; set; }
+
+    [Parameter]
+    public RenderFragment ContentTemplate { get; set; }
+
+    [Parameter]
+    public string Height { get; set; }
+}

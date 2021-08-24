@@ -1,0 +1,551 @@
+﻿@inherits CustomComponent
+@page "/pm/pp/생산계획"
+
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="60%" Collapsible="true">
+            <FGrid @ref="grid" DataSource="@list" TValue="생산계획정보" DefaultMode="true" EditMode="DGridEditMode.AddDelete" PageSize="5"
+                   OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                <GridColumns>
+                    <GridColumn Field=@nameof(생산계획정보.생산계획코드) IsPrimaryKey="true" Visible="false" />
+                    <GridColumn Field="No" HeaderText="순번" AllowAdding="false" AllowEditing="false" Width="60">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산계획정보.회사코드) Width="100">
+                        <Template>
+                            @((context as 생산계획정보).회사코드)
+                        </Template>
+                        <EditTemplate>
+                            @*@{ var info = context as 생산계획정보; }
+                                <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="false"></SfTextBox>*@
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산계획정보.주문번호) Width="150" HeaderText="주문번호" ValidationRules="@(new ValidationRules{ Required=true})">
+                        <Template>
+                            @((context as 생산계획정보).주문번호)
+                        </Template>
+                        <EditTemplate>
+                            @((context as 생산계획정보).주문번호)
+                            @{ var info = context as 생산계획정보; }
+                            <DInputSearch Placeholder="주문번호" Target="#main" DialogHeader="주문서 조회" ValueChanged="주문서Changed" TValue="주문서정보" TCode="string" TextField="주문번호" CodeField="주문번호" @bind-Code=@(info.주문번호)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.생산계획주문서Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산계획정보.생산계획명) HeaderText="계획명" Width="200" />
+                    <GridColumn Field="생산품코드" Width="100">
+                        <Template>
+                            @((context as 생산계획정보).생산품코드)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산계획정보; }
+                            @*<DInputSearch ID="생산품코드" Placeholder="생산품" Target="#root" DialogHeader="생산품 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@(info.생산품) CodeField="품목코드" @bind-Code=@(info.생산품코드)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.생산품Popup />
+                                    </DialogContent>
+                                </DInputSearch>*@
+
+                            <SfTextBox ID="생산품코드" FloatLabelType="FloatLabelType.Always" Placeholder="생산품코드" Value=@(edit_품목코드) Enabled="false"></SfTextBox>
+                        </EditTemplate>
+                    </GridColumn>
+                    @*<GridColumn Field="생산품.품목명" HeaderText="생산품" Width="160">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>*@
+                    <GridColumn Field="생산품공정코드" Width="0">
+                        <Template>
+                            @((context as 생산계획정보).생산품공정?.생산품공정명)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산계획정보; }
+                            <DInputSearch ID="생산품공정코드" Placeholder="생산품공정" Target="#root" DialogHeader="생산품공정 조회" TValue="생산품공정정보" TCode="string" TextField="생산품공정명"
+                                          @bind-Value=@(info.생산품공정) CodeField="생산품공정코드" @bind-Code=@(info.생산품공정코드)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.생산품공정Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="생산품공정.생산품공정명" HeaderText="생산품공정" Width="160">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="발주처코드" Width="0">
+                        <Template>
+                            @((context as 생산계획정보).발주처?.거래처명)
+                        </Template>
+                        <EditTemplate>
+                            @*@{ var info = context as 생산계획정보; }
+                                <DInputSearch ID="발주처코드" Placeholder="발주처" Target="#root" DialogHeader="발주처 조회" TValue="거래처정보" TCode="string" TextField="거래처명" @bind-Value=@(info.발주처) CodeField="거래처코드" @bind-Code=@(info.발주처코드)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.거래처Popup />
+                                    </DialogContent>
+                                </DInputSearch>*@
+                            <SfTextBox ID="발주처코드" FloatLabelType="FloatLabelType.Always" Placeholder="납품처코드" Value=@(edit_고객코드) Enabled="false"></SfTextBox>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="발주처.거래처명" HeaderText="발주처" Width="120">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산계획정보.발주일) Format="yyyy/MM/dd" HeaderText="주문일" Width="120">
+                        <Template>
+                            @((context as 생산계획정보).발주일)
+                        </Template>
+                        <EditTemplate>
+                            <SfDatePicker ID="납품일" Value="@(edit_주문일)" FloatLabelType="FloatLabelType.Always" Placeholder="주문일" Enabled="false">
+                            </SfDatePicker>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산계획정보.발주수량) HeaderText="발주수량" Width="100">
+                        <Template>
+                            @((context as 생산계획정보).발주수량)
+                        </Template>
+                        <EditTemplate>
+                            <SfNumericTextBox Value=@edit_발주수량 FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="발주수량" Enabled="false" />
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산계획정보.납품일) Format="yyyy/MM/dd" HeaderText="납품일" Width="120">
+                        <Template>
+                            @((context as 생산계획정보).납품일)
+                        </Template>
+                        <EditTemplate>
+                            <SfDatePicker ID="납품일" Value="@(edit_납기일)" FloatLabelType="FloatLabelType.Always" Placeholder="납품일" Enabled="false">
+                            </SfDatePicker>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산계획정보.실행일시) Format="yyyy/MM/dd" HeaderText="실행예정일" Width="120">
+                        <Template>
+                            @((context as 생산계획정보).실행일시)
+                        </Template>
+                        <EditTemplate>
+                            <SfDatePicker ID="실행예정일" Value="@(edit_실행일시)" FloatLabelType="FloatLabelType.Always" Placeholder="실행예정일">
+                            </SfDatePicker>
+                        </EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field=@nameof(생산계획정보.종료일시) Format="yyyy/MM/dd" HeaderText="목표일" Width="120">
+                        <Template>
+                            @((context as 생산계획정보).종료일시)
+                        </Template>
+                        <EditTemplate>
+                            <SfDatePicker ID="목표일" Value="@(edit_목표일)" FloatLabelType="FloatLabelType.Always" Placeholder="목표일">
+                            </SfDatePicker>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산계획정보.계획수량) HeaderText="계획수량" Width="100">
+                        <Template>
+                            @((context as 생산계획정보).계획수량)
+                        </Template>
+                        <EditTemplate>
+                            <SfNumericTextBox Value=@edit_계획수량 FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="계획수량" />
+                        </EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field="생산책임자사번" Width="0">
+                        <Template>
+                            @((context as 생산계획정보).생산책임자?.사용자명)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산계획정보; }
+                            <DInputSearch ID="생산책임자사번" Placeholder="책임자" Target="#root" DialogHeader="책임자 조회" TValue="직원정보" TCode="string" TextField="사용자명" @bind-Value=@(info.생산책임자) CodeField="사번" @bind-Code=@(info.생산책임자사번)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.직원Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="생산책임자.사용자명" HeaderText="책임자" Width="100">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+
+                    <GridColumn Field="@nameof(생산계획정보.부서코드)" HeaderText="부서코드" Width="100">
+                        <Template>
+                            @((context as 생산계획정보).부서코드)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산계획정보; }
+                            <SfComboBox TValue="string" TItem="부서정보" @bind-Value="@(info.부서코드)" PopupWidth="400px" DataSource="@부서정보List" PopupHeight="400px" CssClass="e-multi-column" Placeholder="부서코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                                <ComboBoxTemplates TItem="부서정보">
+                                    <HeaderTemplate>
+                                        <table>
+                                            <tr>
+                                                <th width="100px">부서코드</th>
+                                                <th width="100px">부서명</th>
+                                                <th width="100px">부문코드</th>
+                                                <th width="100px">부문명</th>
+                                            </tr>
+                                        </table>
+
+                                    </HeaderTemplate>
+                                    <ItemTemplate Context="anotherContext">
+                                        @{
+                                            var 부서 = (anotherContext as 부서정보);
+                                        }
+
+                                        <table>
+                                            <tbody>
+                                                <tr>
+                                                    <td>@부서.부서코드</td>
+                                                    <td>@부서.부서명</td>
+                                                    <td>@부서.부문코드</td>
+                                                    <td>@부서.부문명</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </ItemTemplate>
+                                </ComboBoxTemplates>
+                                <ComboBoxFieldSettings Text="부서명" Value="부서코드"></ComboBoxFieldSettings>
+                            </SfComboBox>
+
+
+                        </EditTemplate>
+                    </GridColumn>
+
+
+
+                    <GridColumn Field=@nameof(생산계획정보.사용유무) HeaderText="확정" EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" AllowAdding="false" AllowEditing="false" Width="80" />
+                    <GridColumn Field=@nameof(생산계획정보.상세) HeaderText="" Width="120" TextAlign="TextAlign.Right" AllowAdding="false" AllowEditing="false">
+                        <Template>
+                            @{ var info = context as 생산계획정보; }
+                            <SfButton @onclick=@(() => OnShowDetail(info))>상세</SfButton>
+                        </Template>
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+        <SplitterPane Size="40%" Collapsible="true">
+            <div class="row mt-2 mr-3">
+                <div class="col section-header">
+                    <span class="my-auto">생산계획 기준 현황</span>
+                </div>
+            </div>
+            @if (selected != null && 생산계획생산지시현황목록 != null)
+            {
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="작업지시현황">
+                        <DGrid DataSource=@(생산계획생산지시현황목록) DefaultMode="true" PageMode="PageMode.Inline" TValue="생산계획작업지시현황">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(생산계획작업지시현황.No) Width="80" HeaderText="순번" />
+                                <GridColumn Field=@nameof(생산계획작업지시현황.작업지시명) Width="160" HeaderText="작업지시명" />
+                                <GridColumn Field="생산지시유형.코드명" Width="120" HeaderText="생산유형" />
+                                <GridColumn Field="실행상태.코드명" Width="120" HeaderText="실행상태" />
+                                <GridColumn Field=@nameof(생산계획작업지시현황.시작일) Format="yyy/MM/dd" Width="120" HeaderText="시작일" />
+                                <GridColumn Field=@nameof(생산계획작업지시현황.완료목표일) Format="yyy/MM/dd" Width="120" HeaderText="완료목표일" />
+                                <GridColumn Field=@nameof(생산계획작업지시현황.목표수량) Width="120" HeaderText="목표수량" />
+                                <GridColumn Field=@nameof(생산계획작업지시현황.양산수량) Width="120" HeaderText="양산수량" />
+                                <GridColumn Field=@nameof(생산계획작업지시현황.불량수량) Width="120" HeaderText="불량수량" />
+                                <GridColumn Width="100" HeaderText="">
+                                    <Template>
+                                        @{ var info = context as 생산계획작업지시현황; }
+                                        <SfButton OnClick="() => OnGoWorkOrder(info)">이동</SfButton>
+                                    </Template>
+                                </GridColumn>
+                            </GridColumns>
+                            @*<GridAggregates>
+                                    <GridAggregate>
+                                        <GridAggregateColumns>
+                                            <GridAggregateColumn Field=@nameof(생산계획작업지시현황.시작일) Format="yyyy/MM/dd" Type="AggregateType.Min">
+                                                <FooterTemplate>
+                                                    @{ var info = (context as AggregateTemplateContext); }
+                                                    <div>@info.Min</div>
+                                                </FooterTemplate>
+                                            </GridAggregateColumn>
+                                            <GridAggregateColumn Field=@nameof(생산계획작업지시현황.완료목표일) Format="yyyy/MM/dd" Type="AggregateType.Max">
+                                                <FooterTemplate>
+                                                    @{ var info = (context as AggregateTemplateContext); }
+                                                    <div>@info.Max</div>
+                                                </FooterTemplate>
+                                            </GridAggregateColumn>
+                                            <GridAggregateColumn Field=@nameof(생산계획작업지시현황.목표수량) Type="AggregateType.Sum">
+                                                <FooterTemplate>
+                                                    @{ var info = (context as AggregateTemplateContext); }
+                                                    <div>@info.Sum</div>
+                                                </FooterTemplate>
+                                            </GridAggregateColumn>
+                                            <GridAggregateColumn Field=@nameof(생산계획작업지시현황.양산수량) Type="AggregateType.Sum">
+                                                <FooterTemplate>
+                                                    @{ var info = (context as AggregateTemplateContext); }
+                                                    <div>@info.Sum</div>
+                                                </FooterTemplate>
+                                            </GridAggregateColumn>
+                                            <GridAggregateColumn Field=@nameof(생산계획작업지시현황.불량수량) Type="AggregateType.Sum">
+                                                <FooterTemplate>
+                                                    @{ var info = (context as AggregateTemplateContext); }
+                                                    <div>@info.Sum</div>
+                                                </FooterTemplate>
+                                            </GridAggregateColumn>
+                                        </GridAggregateColumns>
+                                    </GridAggregate>
+                                </GridAggregates>*@
+                        </DGrid>
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="작업진행현황">
+                        <DGrid DefaultMode="true" PageMode="PageMode.Inline" TValue="object">
+                            <GridColumns>
+                                <GridColumn HeaderText="일" />
+                                <GridColumn HeaderText="계획수량" />
+                                <GridColumn HeaderText="지시수량" />
+                                <GridColumn HeaderText="생산수량" />
+                                <GridColumn HeaderText="양산율" />
+                                <GridColumn HeaderText="진행율" />
+                            </GridColumns>
+                        </DGrid>
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="불량현황">
+                        <DGrid DefaultMode="true" PageMode="PageMode.Inline" TValue="object">
+                            <GridColumns>
+                                <GridColumn HeaderText="순번" />
+                                <GridColumn HeaderText="생산지시" />
+                                <GridColumn HeaderText="공정" />
+                                <GridColumn HeaderText="공정작업자" />
+                                <GridColumn HeaderText="발생시각" />
+                                <GridColumn HeaderText="불량 자재/공정품" />
+                                <GridColumn HeaderText="불량수량" />
+                                <GridColumn HeaderText="불량유형" />
+                                <GridColumn HeaderText="비고" />
+                            </GridColumns>
+                        </DGrid>
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+                <div class="row mx-2 mb-3">
+                    <HiSFS.WebApp.Pages.Common.단위 제목="자재소요현황">
+                        <DGrid DefaultMode="true" PageMode="PageMode.Inline" TValue="object">
+                            <GridColumns>
+                                <GridColumn HeaderText="자재" />
+                                <GridColumn HeaderText="1일" HeaderTextAlign="TextAlign.Center">
+                                    <GridColumns>
+                                        <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                    </GridColumns>
+                                </GridColumn>
+                                <GridColumn HeaderText="2일" HeaderTextAlign="TextAlign.Center">
+                                    <GridColumns>
+                                        <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                    </GridColumns>
+                                </GridColumn>
+                                <GridColumn HeaderText="3일" HeaderTextAlign="TextAlign.Center">
+                                    <GridColumns>
+                                        <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                    </GridColumns>
+                                </GridColumn>
+                                <GridColumn HeaderText="4일" HeaderTextAlign="TextAlign.Center">
+                                    <GridColumns>
+                                        <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                    </GridColumns>
+                                </GridColumn>
+                                <GridColumn HeaderText="5일" HeaderTextAlign="TextAlign.Center">
+                                    <GridColumns>
+                                        <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                    </GridColumns>
+                                </GridColumn>
+                                <GridColumn HeaderText="6일" HeaderTextAlign="TextAlign.Center">
+                                    <GridColumns>
+                                        <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                    </GridColumns>
+                                </GridColumn>
+                                <GridColumn HeaderText="7일" HeaderTextAlign="TextAlign.Center">
+                                    <GridColumns>
+                                        <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                    </GridColumns>
+                                </GridColumn>
+                                <GridColumn HeaderText="8일" HeaderTextAlign="TextAlign.Center">
+                                    <GridColumns>
+                                        <GridColumn HeaderText="보유" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="필요" HeaderTextAlign="TextAlign.Center" />
+                                        <GridColumn HeaderText="소요" HeaderTextAlign="TextAlign.Center" />
+                                    </GridColumns>
+                                </GridColumn>
+
+                            </GridColumns>
+                        </DGrid>
+                    </HiSFS.WebApp.Pages.Common.단위>
+                </div>
+
+            }
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<생산계획정보> grid;
+    private ObservableCollection<생산계획정보> list;
+    private 생산계획정보 selected;
+    private IEnumerable<생산계획작업지시현황> 생산계획생산지시현황목록;
+
+    public List<부서정보> 부서정보List { get; set; }
+
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    await Task.Yield();
+
+    //    grid.SetDefault(PageMode.Default);
+    //    grid.SetEditMode(allowEditing:false);
+    //    //grid.EditSettings.AllowEditing = false;
+    //}
+
+    //protected override async Task OnReadyRemoteServiceAsync(bool isReady)
+    //{
+    //    if (isReady == false)
+    //        return;
+
+    //    await RefreshAsync();
+    //}
+
+    public string edit_품목코드 = "";
+    public string edit_고객코드 = "";
+
+    public decimal edit_계획수량 = 0;
+    public decimal edit_발주수량 = 0;
+    public DateTime edit_납기일;
+    public DateTime edit_주문일;
+    public DateTime edit_목표일;
+    public DateTime edit_실행일시;
+
+
+    public void 주문서Changed(주문서정보 value)
+    {
+        edit_품목코드 = value.품목코드;
+        edit_고객코드 = value.고객코드;
+        edit_납기일 = DateTime.ParseExact(value.납기일, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None);
+        edit_주문일 = DateTime.ParseExact(value.주문일자, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None);
+        edit_목표일 = DateTime.ParseExact(value.납기일, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None);
+        edit_실행일시 = DateTime.ParseExact(value.주문일자, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None);
+        edit_발주수량 = value.수량;
+
+        edit_계획수량 = value.수량;
+    }
+
+    private string 회사코드 = "";
+    private async Task RefreshAsync()
+    {
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.생산계획_조회(회사코드);
+
+
+        ModifyList(result, (x, map) =>
+        {
+        });
+        list = result.ToObservableCollection();
+
+        var result2 = await Remote.Command.기준정보.부서정보_조회(회사코드);
+        부서정보List = result2.ToList();
+
+
+        StateHasChanged();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<생산계획정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.사용유무 = false;        // 최초 확정 전 단계
+            newRow.회사코드 = 회사코드;
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //state = "delete";
+            var newRow = args.Data;
+
+            await Remote.Command.생산관리.생산계획_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            var newRow = args.Data;
+            //newRow.발주처코드 = newRow.발주처.거래처코드;
+            //newRow.생산품코드 = newRow.생산품.품목코드;
+
+            newRow.발주처코드 = edit_고객코드;
+
+            newRow.생산품코드 = edit_품목코드;
+            newRow.납품일 = edit_납기일;
+            newRow.발주일 = edit_주문일;
+            newRow.실행일시 = edit_실행일시;
+            newRow.종료일시 = edit_목표일;
+            newRow.계획수량 = edit_계획수량;
+
+            newRow.발주수량 = edit_발주수량;
+            newRow.생산품공정코드 = newRow.생산품공정.생산품공정코드;
+            newRow.생산책임자사번 = newRow.생산책임자.사번;
+            newRow.회사코드 = 회사코드;
+
+
+            await Remote.Command.생산관리.생산계획_저장(newRow, args.Action == "Add" ? true : false);
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<생산계획정보> args)
+    {
+        selected = args.Data;
+
+        생산계획생산지시현황목록 = null;
+        StateHasChanged();
+
+        생산계획생산지시현황목록 = await Remote.Command.생산관리.생산계획생산지시현황_조회(selected.생산계획코드, 회사코드);
+        if (생산계획생산지시현황목록 != null)
+        {
+            ModifyList(생산계획생산지시현황목록, (info, map) =>
+            {
+                if (info.생산지시유형코드 != null)
+                    info.생산지시유형 = map[info.생산지시유형코드];
+                if (info.실행상태코드 != null)
+                    info.실행상태 = map[info.실행상태코드];
+            });
+
+            // 목록을 실행상태에 따라 정렬
+            생산계획생산지시현황목록 = 생산계획생산지시현황목록.OrderBy(x => x.실행상태, Comparer<공통코드>.Create((a, b) => a.인자1[0] > b.인자1[0] ? 1 : 0)).ToList();
+            ModifyList(생산계획생산지시현황목록, (info, map) =>
+            {
+            }, false);
+        }
+    }
+
+    private void OnShowDetail(생산계획정보 info)
+    {
+        NotifyMessage(Message.SelectedMenu, null, null, "/pm/pp/생산계획상세", null, info);
+    }
+
+    private void OnGoWorkOrder(생산계획작업지시현황 info)
+    {
+        NotifyMessage(Message.SelectedMenu, null, null, "/pm/wo/작업지시상세", null, info.작업지시코드);
+    }
+
+    protected override void OnDispose()
+    {
+
+    }
+}

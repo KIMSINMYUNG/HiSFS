@@ -1,0 +1,83 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+	  <LangVersion>preview</LangVersion>
+	  <TargetFramework>net5.0</TargetFramework>
+	  <UserSecretsId>4d617d1b-bbf2-44c0-b0f5-9df473cf4e0f</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Migrations\20200525035912_200525.cs" />
+    <Compile Remove="Migrations\20200525035912_200525.Designer.cs" />
+    <Compile Remove="Migrations\20200525041758_200525.cs" />
+    <Compile Remove="Migrations\20200525041758_200525.Designer.cs" />
+    <Compile Remove="Migrations\20200525042525_200525.cs" />
+    <Compile Remove="Migrations\20200525042525_200525.Designer.cs" />
+    <Compile Remove="Migrations\20200525075730_200525.cs" />
+    <Compile Remove="Migrations\20200525075730_200525.Designer.cs" />
+    <Compile Remove="Migrations\20200525080013_200525.cs" />
+    <Compile Remove="Migrations\20200525080013_200525.Designer.cs" />
+    <Compile Remove="Migrations\20200527042829_200527-2.cs" />
+    <Compile Remove="Migrations\20200527042829_200527-2.Designer.cs" />
+    <Compile Remove="Migrations\20200529063719_200529.cs" />
+    <Compile Remove="Migrations\20200529063719_200529.Designer.cs" />
+    <Compile Remove="Migrations\20200529071342_200529-2.cs" />
+    <Compile Remove="Migrations\20200529071342_200529-2.Designer.cs" />
+    <Compile Remove="Migrations\20200529072217_200529-2.cs" />
+    <Compile Remove="Migrations\20200529072217_200529-2.Designer.cs" />
+    <Compile Remove="Migrations\20200622040950_2006221309.cs" />
+    <Compile Remove="Migrations\20200622040950_2006221309.Designer.cs" />
+    <Compile Remove="Migrations\20200622072800_2006221627.cs" />
+    <Compile Remove="Migrations\20200622072800_2006221627.Designer.cs" />
+    <Compile Remove="Migrations\20200623081526_2006231715.cs" />
+    <Compile Remove="Migrations\20200623081526_2006231715.Designer.cs" />
+    <Compile Remove="Migrations\20200806120125_2008062101.cs" />
+    <Compile Remove="Migrations\20200806120125_2008062101.Designer.cs" />
+    <Compile Remove="Migrations\20200811085953_2008111759.cs" />
+    <Compile Remove="Migrations\20200811085953_2008111759.Designer.cs" />
+    <Compile Remove="Migrations\20200813133618_2008132236.cs" />
+    <Compile Remove="Migrations\20200813133618_2008132236.Designer.cs" />
+    <Compile Remove="Migrations\20200818013609_2008181032.cs" />
+    <Compile Remove="Migrations\20200818013609_2008181032.Designer.cs" />
+    <Compile Remove="Migrations\20200818024508_2008181145.cs" />
+    <Compile Remove="Migrations\20200818024508_2008181145.Designer.cs" />
+    <Compile Remove="Migrations\20200818024625_2008181146.cs" />
+    <Compile Remove="Migrations\20200818024625_2008181146.Designer.cs" />
+    <Compile Remove="Migrations\20200819080631_2008191706.cs" />
+    <Compile Remove="Migrations\20200819080631_2008191706.Designer.cs" />
+    <Compile Remove="Migrations\20200819080814_2008191708.cs" />
+    <Compile Remove="Migrations\20200819080814_2008191708.Designer.cs" />
+    <Compile Remove="Migrations\20200819081157_2008191711.cs" />
+    <Compile Remove="Migrations\20200819081157_2008191711.Designer.cs" />
+    <Compile Remove="Migrations\20200819082719_2008191727.cs" />
+    <Compile Remove="Migrations\20200819082719_2008191727.Designer.cs" />
+    <Compile Remove="Migrations\20200819095838_2008191858.cs" />
+    <Compile Remove="Migrations\20200819095838_2008191858.Designer.cs" />
+    <Compile Remove="Migrations\20200819163829_2008200138.cs" />
+    <Compile Remove="Migrations\20200819163829_2008200138.Designer.cs" />
+    <Compile Remove="Migrations\20200820161236_200821.cs" />
+    <Compile Remove="Migrations\20200820161236_200821.Designer.cs" />
+    <Compile Remove="Migrations\20200911052215_2009111421.cs" />
+    <Compile Remove="Migrations\20200911052215_2009111421.Designer.cs" />
+    <Compile Remove="Migrations\20200911102600_2009111925.cs" />
+    <Compile Remove="Migrations\20200911102600_2009111925.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="WampSharp.Default" Version="20.1.1" />
+    <PackageReference Include="WampSharp.NewtonsoftMsgpack" Version="20.1.1" />
+    <PackageReference Include="WampSharp.RawSocket" Version="20.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HiSFS.Api.Shared\HiSFS.Api.Shared.csproj" />
+    <ProjectReference Include="..\HiSFS.Core\HiSFS.Core.csproj" />
+    <ProjectReference Include="..\HiSFS.Shared\HiSFS.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

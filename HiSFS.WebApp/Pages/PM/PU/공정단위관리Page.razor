@@ -1,0 +1,798 @@
+﻿@page "/pm/pu/공정단위관리"
+
+@inherits CustomComponent
+
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6" ID="root">
+    <SplitterPanes>
+        <SplitterPane Size="50%" Collapsible="true">
+            <ContentTemplate>
+                <FGrid @ref="grid" DataSource="@list" TValue="공정단위정보" DefaultMode="true" EditMode="DGridEditMode.All"
+                       OnCreated="RefreshAsync" OnRowSelected="OnGrid1RowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(공정단위정보.No) HeaderText="순번" Width="80" AllowAdding="false" AllowEditing="false">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(공정단위정보.회사코드) Width="100">
+                            <Template>
+                                @((context as 공정단위정보).회사코드)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as 공정단위정보; }
+                                <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Readonly="true"></SfTextBox>
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(공정단위정보.공정단위코드) Visible="false" />
+                        <GridColumn Field=@nameof(공정단위정보.원공정단위코드) HeaderText="공정단위코드" Visible="false" />
+                        <GridColumn Field=@nameof(공정단위정보.공정단위명) Width="200" />
+                        <GridColumn Field=@nameof(공정단위정보.관리차수) Width="80" HeaderText="차수" AllowAdding="false" AllowEditing="false" />
+                        <GridColumn Field=@nameof(공정단위정보.공정품유형코드) Template=@CommonCodeTemplate(nameof(공정단위정보.공정품유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(공정단위정보.공정품유형코드), "공정퓸유형", "B04") HeaderText="공정품유형" Width="120" />
+
+
+                        <GridColumn Field="완제품.품목명" Width="200" HeaderText="완제품">
+                            <Template>
+                                @((context as 공정단위정보).완제품?.품목명)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as 공정단위정보; }
+                                <DInputSearch Placeholder="완제품" Target="#root" ValueChanged="완제품Changed" Value=@((context as 공정단위정보).완제품) DialogHeader="완제품 조회" TValue="품목정보" TCode="string" TextField="품목명" CodeField="품목코드" @bind-Code=@(info.완제품코드)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.생산품Popup 반제품유무="true" />
+                                    </DialogContent>
+                                </DInputSearch>
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(공정단위정보.완제품코드) Width="0">
+                            <EditTemplate>
+                                @{ var info = context as 공정단위정보; }
+                                <SfTextBox ID="공정품코드" Value="@(완제품코드 != null ? 완제품코드 : info.완제품코드)" FloatLabelType="FloatLabelType.Always" Placeholder="완제품코드" Readonly="true"></SfTextBox>
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(공정단위정보.공정품코드) Width="0">
+                            <Template>
+                                @((context as 공정단위정보).공정품?.품목명)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as 공정단위정보; }
+                                <SfTextBox ID="공정품코드" Value="@(공정품코드 != null ? 공정품코드 : info.공정품코드)" FloatLabelType="FloatLabelType.Always" Placeholder="공정품코드" Readonly="true"></SfTextBox>
+                                @*<DInputSearch ID="공정품코드" Placeholder="공정품" Target="#root" DialogHeader="공정품 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@(info.공정품) CodeField="품목코드" @bind-Code=@(info.공정품코드)>
+                                        <DialogContent>
+                                            <HiSFS.WebApp.Pages.Common.Popup.생산품Popup 반제품유무="true" />
+                                        </DialogContent>
+                                    </DInputSearch>*@
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field="공정품.품목명" Width="200" HeaderText="공정품">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(공정단위정보.공정코드) Width="0">
+                            <Template>
+                                @((context as 공정단위정보).공정?.공정명)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as 공정단위정보; }
+                                <DInputSearch ID="공정코드" Placeholder="공정" Target="#root" DialogHeader="공정 조회" TValue="공정정보" TCode="string" TextField="공정명" @bind-Value=@((context as 공정단위정보).공정) CodeField="공정코드" @bind-Code=@(info.공정코드)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.공정Popup />
+                                    </DialogContent>
+                                </DInputSearch>
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field="공정.공정명" Width="120" HeaderText="공정">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field="공정품.품목코드" Visible="false" />
+                        <GridColumn Field="공정품.품목명" Visible="false" />
+                        <GridColumn Field=@nameof(공정단위정보.도면코드) Width="0">
+                            <Template>
+                                @((context as 공정단위정보).도면?.도면명)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as 공정단위정보; }
+                                <DInputSearch ID="도면코드" Placeholder="도면" Target="#root" DialogHeader="도면 조회" TValue="도면정보" TCode="string" TextField="도면명" @bind-Value=@((context as 공정단위정보).도면) CodeField="도면코드" @bind-Code=@(info.도면코드)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.도면Popup />
+                                    </DialogContent>
+                                </DInputSearch>
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field="도면.도면명" Width="120" HeaderText="도면">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(공정단위정보.공정예상시간) Width="120" />
+                        <GridColumn Field=@nameof(공정단위정보.사용유무) HeaderText="확정유무" Width="100" EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+                        <GridColumn Field=@nameof(공정단위정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일" Width="120">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(공정단위정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="변경일" Width="120">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                    </GridColumns>
+                </FGrid>
+            </ContentTemplate>
+        </SplitterPane>
+        <SplitterPane Size="50%" Collapsible="true">
+            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+                <SplitterPanes>
+                    <SplitterPane Size="50%" Collapsible="true">
+                        @if (selected?.공정?.공정유형코드 == "B0205")
+                        {
+                            <div class="row section-header">
+                                <span class="my-auto">검사 항목</span>
+                            </div>
+                            <FGrid @ref="grid4" DataSource=@(list4) TValue="공정단위검사정보" DefaultMode="true" EditMode="DGridEditMode.All"
+                                   OnActionBegin="OnActionBegin" OnRowSelected="OnGrid4RowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                                <GridColumns>
+                                    <GridColumn Field=@nameof(공정단위검사정보.No) HeaderText="순번" Width="80">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(공정단위검사정보.공정단위코드) Visible="false" />
+                                    <GridColumn Field=@nameof(공정단위검사정보.품질검사코드) Width="0" IsPrimaryKey="true">
+                                        <Template>
+                                            @((context as 공정단위검사정보).품질검사?.품질검사명)
+                                        </Template>
+                                        <EditTemplate>
+                                            @{ var info = context as 공정단위검사정보; }
+                                            <DInputSearch ID="품질검사코드" Placeholder="품질검사" Target="#root" DialogHeader="품질검사 조회" TValue="품질검사정보" TCode="string" TextField="품질검사명" @bind-Value=@(info.품질검사) CodeField="품질검사코드" @bind-Code=@(info.품질검사코드)>
+                                                <DialogContent>
+                                                    <HiSFS.WebApp.Pages.Common.Popup.검사Popup />
+                                                </DialogContent>
+                                            </DInputSearch>
+                                        </EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field="품질검사.품질검사명" Width="160" HeaderText="품질검사">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(공정단위검사정보.검사단위코드) Width="0">
+                                        <Template>
+                                            @{ var info = context as 공정단위검사정보; }
+                                            @info.검사단위?.코드명
+                                        </Template>
+                                        <EditTemplate>
+                                            @{ var info = context as 공정단위검사정보; }
+                                            <DCommonCodeDropList ID="검사단위코드" Placeholder="검사단위" ParentCode="B24" @bind-Value=@(info.검사단위코드) />
+                                        </EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field="검사단위.코드명" Width="120" HeaderText="검사단위">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(공정단위검사정보.검사기준값) HeaderText="검사기준값" />
+                                    @*<GridColumn Field=@nameof(공정단위검사정보.오차범위) HeaderText="오차범위" />*@
+                                    <GridColumn Field=@nameof(공정단위검사정보.오차범위상한) HeaderText="오차범위상한" />
+                                    <GridColumn Field=@nameof(공정단위검사정보.오차범위하한) HeaderText="오차범위하한" />
+                                </GridColumns>
+                            </FGrid>
+                        }
+                        else
+                        {
+                            <div class="row section-header">
+                                <span class="my-auto">공정 자재</span>
+                            </div>
+                            <FGrid @ref="grid2" DataSource=@(list2) TValue="공정단위자재정보" DefaultMode="true" EditMode="DGridEditMode.All"
+                                   OnActionBegin="OnActionBegin" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                                <GridColumns>
+                                    <GridColumn Field=@nameof(공정단위검사정보.No) HeaderText="순번" Width="80">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(공정단위자재정보.공정단위코드) Visible="false" />
+                                    @*<GridColumn Field=@nameof(공정단위자재정보.자재코드) IsPrimaryKey="true" HeaderText="자재코드"  Width="150"/>*@
+                                    <GridColumn Field=@nameof(공정단위자재정보.자재코드)>
+                                        <Template>
+                                            @((context as 공정단위자재정보).자재코드)
+                                        </Template>
+                                        <EditTemplate>
+                                            @{ var info = context as 공정단위자재정보; }
+                                            <DInputSearch ID="자재코드" Placeholder="자재/부품" Target="#root" DialogHeader="자재/부품 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@(info.자재) CodeField="품목코드" @bind-Code=@(info.자재코드)>
+                                                <DialogContent>
+                                                    <HiSFS.WebApp.Pages.Common.Popup.원자재부품Popup 반제품포함유무="true" />
+                                                </DialogContent>
+                                            </DInputSearch>
+                                        </EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field="자재.품목명" HeaderText="자재/부품">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(공정단위자재정보.수량) HeaderText="수량" />
+                                </GridColumns>
+                            </FGrid>
+                        }
+                    </SplitterPane>
+                    <SplitterPane Collapsible="true">
+                        @if (selected?.공정?.공정유형코드 == "B0205")
+                        {
+                            <div class="row section-header">
+                                <span class="my-auto">검사 장비</span>
+                            </div>
+                            <FGrid @ref="grid5" DataSource=@(list5) TValue="공정단위검사장비" DefaultMode="true" EditMode="DGridEditMode.All"
+                                   OnActionBegin="OnActionBegin" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                                <GridColumns>
+                                    <GridColumn Field=@nameof(공정단위검사정보.No) HeaderText="순번" Width="80">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(공정단위검사장비.공정단위코드) Visible="false" />
+                                    <GridColumn Field=@nameof(공정단위검사장비.품질검사코드) Visible="false" />
+                                    <GridColumn Field=@nameof(공정단위검사장비.검사장비식별번호) Width="0" IsPrimaryKey="true">
+                                        <Template>
+                                            @((context as 공정단위검사장비).검사장비?.장비명)
+                                        </Template>
+                                        <EditTemplate>
+                                            @{ var info = context as 공정단위검사장비; }
+                                            <DInputSearch ID="검사장비식별번호" Placeholder="검사장비" Target="#root" DialogHeader="검사장비 조회" TValue="연동장비정보" TCode="int?" TextField="장비명" @bind-Value=@(info.검사장비) CodeField="식별번호" @bind-Code=@(info.검사장비식별번호)>
+                                                <DialogContent>
+                                                    <HiSFS.WebApp.Pages.Common.Popup.연동장비Popup />
+                                                </DialogContent>
+                                            </DInputSearch>
+                                        </EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field="검사장비.장비명" Width="200" HeaderText="검사장비명">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field="검사장비.연동장비유형.코드명" Width="160" HeaderText="연동장비유형">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                </GridColumns>
+                            </FGrid>
+                        }
+                        else
+                        {
+                            <div class="row section-header">
+                                <span class="my-auto">공정 설비</span>
+                            </div>
+                            <FGrid @ref="grid3" DataSource=@(list3) TValue="공정단위설비정보" DefaultMode="true" EditMode="DGridEditMode.All"
+                                   OnActionBegin="OnActionBegin" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                                <GridColumns>
+                                    <GridColumn Field=@nameof(공정단위검사정보.No) HeaderText="순번" Width="80">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(공정단위설비정보.공정단위코드) Visible="false" />
+                                    <GridColumn Field=@nameof(공정단위설비정보.설비코드) Width="0" IsPrimaryKey="true">
+                                        <Template>
+                                            @((context as 공정단위설비정보).설비?.보유명)
+                                        </Template>
+                                        <EditTemplate>
+                                            @{ var info = context as 공정단위설비정보; }
+                                            <DInputSearch ID="설비코드" Placeholder="설비" Target="#root" DialogHeader="설비 조회" TValue="보유품목정보" TCode="string" TextField="보유명" @bind-Value=@(info.설비) CodeField="보유품목코드" @bind-Code=@(info.설비코드)>
+                                                <DialogContent>
+                                                    <HiSFS.WebApp.Pages.Common.Popup.공정설비Popup />
+                                                </DialogContent>
+                                            </DInputSearch>
+                                        </EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field="설비.보유명" HeaderText="설비">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field="설비.품목.품목명" HeaderText="장비">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field="설비.장소.장소명" HeaderText="장소">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field="설비.장소위치.위치명" HeaderText="위치">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                </GridColumns>
+                            </FGrid>
+                        }
+                    </SplitterPane>
+                </SplitterPanes>
+            </SfSplitter>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<공정단위정보> grid;
+    private ObservableCollection<공정단위정보> list;
+    private 공정단위정보 selected;
+
+    private FGrid<공정단위자재정보> grid2;
+    private ObservableCollection<공정단위자재정보> list2 = new ObservableCollection<공정단위자재정보>();
+
+    private FGrid<공정단위설비정보> grid3;
+    private ObservableCollection<공정단위설비정보> list3 = new ObservableCollection<공정단위설비정보>();
+
+    private FGrid<공정단위검사정보> grid4;
+    private ObservableCollection<공정단위검사정보> list4 = new ObservableCollection<공정단위검사정보>();
+    private 공정단위검사정보 selected공정단위검사정보;
+
+    private FGrid<공정단위검사장비> grid5;
+    private ObservableCollection<공정단위검사장비> list5 = new ObservableCollection<공정단위검사장비>();
+
+    private string 회사코드 = "";
+
+    List<BOM_정보> BOM_정보list = new List<BOM_정보>();
+
+    async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.공정단위_조회(회사코드);
+        ModifyList(result, (x, map) =>
+        {
+            if (x.공정품유형 != null)
+                x.공정품유형 = map[x.공정품유형.코드];
+
+        });
+        list = result.ToObservableCollection();
+
+        var BOM_정보_All = await Remote.Command.기준정보.NEW공정단위BOM_정보_조회(회사코드);
+        BOM_정보list = BOM_정보_All.ToList();
+
+        StateHasChanged();
+    }
+
+    public string 공정품유형;
+
+    public void 공정품유형Changed(string value)
+    {
+        공정품유형 = value;
+    }
+    public class 공정품유형필드
+    {
+        public string ID { get; set; }
+        public string Text { get; set; }
+    }
+    public List<공정품유형필드>
+      list공정품유형 = new List<공정품유형필드>() {
+    new 공정품유형필드(){ ID="B0401", Text="반제품"},
+    new 공정품유형필드(){ ID="B0402", Text="완제품"},
+            };
+
+    private string 공정품코드;
+    private string 완제품코드;
+
+    private async Task 완제품Changed(품목정보 value)
+    {
+
+        var result = await Remote.Command.기준정보.NEW공정단위BOM_정보_조회(회사코드);
+
+        var BOM_Single = result.Where(x => x.모품번 == value.품목코드).FirstOrDefault();
+
+        var 더존비오엠 = BOM_Single;
+
+        if (BOM_Single == null)
+        {
+            완제품코드 = value.품목코드;
+
+        }
+
+
+        else if (BOM_Single != null)
+        {
+            var CharCheck = BOM_Single.자품번.EndsWith("I");
+            if (CharCheck)
+            {
+                더존비오엠 = result.Where(x => x.모품번 == BOM_Single.자품번).FirstOrDefault();
+            }
+            else
+            {
+                더존비오엠 = BOM_Single;
+            }
+
+            공정품코드 = BOM_Single.자품번;
+            완제품코드 = BOM_Single.모품번;
+        }
+
+
+
+        grid.Grid.PreventRender(false);
+        StateHasChanged();
+    }
+
+    private async Task OnGrid1RowSelected(RowSelectEventArgs<공정단위정보> args)
+    {
+        selected = args.Data;
+        selected공정단위검사정보 = null;
+        if (selected == null)
+            return;
+
+        //var result = await Remote.Command.기준정보.BOM품목정보상세_조회(selected.공정품코드, selected.공정단위코드);
+        list2?.Clear();
+
+        var 공정자재목록 = BOM_정보list.Where(x => x.모품번 == selected.공정품코드).ToList();
+        List<공정단위자재정보> Bom가져올list = new List<공정단위자재정보>();
+        foreach (var item in 공정자재목록)
+        {
+            var 공정단위자재정보 = new 공정단위자재정보
+            {
+                회사코드 = 회사코드,
+                공정단위코드 = selected.공정단위코드,
+                자재코드 = item.자품번,
+                수량 = item.필요수량,
+            };
+            Bom가져올list.Add(공정단위자재정보);
+
+        }
+
+        if (selected.공정자재목록?.Count > 0)
+        {
+            //await Task.Delay(500);
+            //await Remote.Command.생산관리.BOM정보를공정단위자재_저장(Bom가져올list.ToList() , selected.공정자재목록);
+
+            ModifyList(Bom가져올list, (x, map) =>
+            {
+            }, false);
+            if (Bom가져올list != null)
+            {
+                foreach (var item in Bom가져올list)
+                    list2.Add(item);
+            }
+
+        }
+        else if (공정자재목록.Count > 0)
+        {
+            ModifyList(Bom가져올list, (x, map) =>
+            {
+            }, false);
+            if (Bom가져올list != null)
+            {
+                foreach (var item in Bom가져올list)
+                    list2.Add(item);
+            }
+        }
+
+        ModifyList(selected.공정설비목록, (x, map) =>
+        {
+        }, false);
+        list3.Clear();
+        if (selected.공정설비목록 != null)
+        {
+            foreach (var item in selected.공정설비목록)
+                list3.Add(item);
+        }
+
+        ModifyList(selected.공정검사목록, (x, map) =>
+        {
+            if (x.검사단위코드 != null)
+                x.검사단위 = map[x.검사단위코드];
+        }, false);
+        list4.Clear();
+        if (selected.공정검사목록 != null)
+        {
+            foreach (var item in selected.공정검사목록)
+                list4.Add(item);
+        }
+
+        StateHasChanged();
+    }
+
+
+
+
+    private void OnGrid4RowSelected(RowSelectEventArgs<공정단위검사정보> args)
+    {
+        selected공정단위검사정보 = args.Data;
+
+        ModifyList(selected공정단위검사정보.공정검사장비목록, (x, map) =>
+        {
+            if (x.검사장비?.연동장비유형코드 != null)
+                x.검사장비.연동장비유형 = map[x.검사장비?.연동장비유형코드];
+        });
+        list5.Clear();
+        if (selected공정단위검사정보.공정검사장비목록 != null)
+        {
+            foreach (var item in selected공정단위검사정보.공정검사장비목록)
+                list5.Add(item);
+        }
+    }
+
+
+
+    void OnRowDataBound(RowDataBoundEventArgs<공정단위정보> args)
+    {
+        if (args.Data.사용유무 == true)
+            return;
+
+        args.Row.AddStyle(new[] { "background-color: #444422;" });
+    }
+
+    private void OnActionBegin(ActionEventArgs<공정단위자재정보> args)
+    {
+        //await Task.Yield();
+
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            if (parentRow == null)
+            {
+                args.Cancel = true;
+                return;
+            }
+        }
+    }
+
+    private void OnActionBegin(ActionEventArgs<공정단위검사정보> args)
+    {
+        //await Task.Yield();
+
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            if (parentRow == null)
+            {
+                args.Cancel = true;
+                return;
+            }
+        }
+    }
+
+    private void OnActionBegin(ActionEventArgs<공정단위검사장비> args)
+    {
+        //await Task.Yield();
+
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            if (parentRow == null || selected공정단위검사정보 == null)
+            {
+                args.Cancel = true;
+                return;
+            }
+        }
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<공정단위정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+
+            var newRow = args.Data;
+            newRow.관리차수 = 1;
+            newRow.사용유무 = false;
+            newRow.회사코드 = 회사코드;
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+            ;
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //state = "delete";
+
+            await Remote.Command.생산관리.공정단위_삭제(args.Data, false);
+
+            await RefreshAsync();
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            var newData = args.Data;
+            newData.회사코드 = 회사코드;
+            newData.공정품코드 = 공정품코드 != null ? 공정품코드 : selected.공정품코드;
+            newData.공정품.품목코드 = 공정품코드 != null ? 공정품코드 : selected.공정품코드;
+            newData.완제품.품목코드 = 완제품코드 != null ? 완제품코드 : newData.완제품코드;
+
+            try
+            {
+                await Remote.Command.생산관리.NEW공정단위_저장(newData, args.Action == "Add" ? true : false);
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            //try
+            //{
+            //    //await Remote.Command.기준정보.BOM품목정보상세공정단위_저장(newData.공정단위코드, newData.공정품코드, false);
+            //}
+            //catch (Exception ex)
+            //{
+            //}
+
+
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<공정단위검사정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+
+            var newRow = args.Data;
+            newRow.공정단위코드 = parentRow.공정단위코드;
+            newRow.회사코드 = parentRow.회사코드;
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.공정단위검사_삭제(args.Data, true);
+
+            await RefreshAsync();
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newData = args.Data;
+
+            await Remote.Command.생산관리.공정단위검사_저장(newData, args.Action == "Add" ? true : false);
+            if (args.Action == "Add")
+                await RefreshAsync();
+
+            ModifyList(list4, (info, map) =>
+            {
+                if (info.검사단위코드 != null)
+                    info.검사단위 = map[info.검사단위코드];
+            }, false);
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<공정단위검사장비> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+
+            var newRow = args.Data;
+            newRow.공정단위코드 = parentRow.공정단위코드;
+            newRow.품질검사코드 = selected공정단위검사정보.품질검사코드;
+            newRow.회사코드 = parentRow.회사코드;
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.공정단위검사장비_삭제(args.Data, true);
+
+            await RefreshAsync();
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newData = args.Data;
+
+            await Remote.Command.생산관리.공정단위검사장비_저장(newData, args.Action == "Add" ? true : false);
+            if (args.Action == "Add")
+                await RefreshAsync();
+
+            ModifyList(list5, (info, map) =>
+            {
+                if (info.검사장비.연동장비유형코드 != null)
+                    info.검사장비.연동장비유형 = map[info.검사장비.연동장비유형코드];
+            }, false);
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<공정단위자재정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+
+            var newRow = args.Data;
+            newRow.공정단위코드 = parentRow.공정단위코드;
+            newRow.자재코드 = parentRow.공정품코드;
+            newRow.회사코드 = parentRow.회사코드;
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //state = "delete";
+
+            await Remote.Command.생산관리.공정단위자재_삭제(args.Data, true);
+
+            await RefreshAsync();
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            var newData = args.Data;
+            newData.자재코드 = newData.자재.품목코드;
+            await Remote.Command.생산관리.공정단위자재_저장(newData, args.Action == "Add" ? true : false);
+
+            //  20210513 자재추가시 처리
+            //await Remote.Command.생산관리.공정단위자재BOM정보_저장(list2.ToList(), args.Action == "Add" ? true : false);
+
+            if (args.Action == "Add")
+                await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private void OnActionBegin(ActionEventArgs<공정단위설비정보> args)
+    {
+        //await Task.Yield();
+
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            if (parentRow == null)
+            {
+                args.Cancel = true;
+                return;
+            }
+        }
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<공정단위설비정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+
+            var newRow = args.Data;
+            newRow.공정단위코드 = parentRow.공정단위코드;
+            newRow.회사코드 = parentRow.회사코드;
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //state = "delete";
+
+            await Remote.Command.생산관리.공정단위설비_삭제(args.Data, true);
+
+            await RefreshAsync();
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            var newData = args.Data;
+            newData.설비코드 = newData.설비.보유품목코드;
+
+
+            await Remote.Command.생산관리.공정단위설비_저장(newData, args.Action == "Add" ? true : false);
+            ModifyList(list3, (info, map) =>
+            {
+            }, false);
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    protected override void OnDispose()
+    {
+
+    }
+}

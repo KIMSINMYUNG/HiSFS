@@ -1,0 +1,72 @@
+﻿@page "/popup/외주작업지시헤더"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="외주작업지시헤더정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(외주작업지시헤더정보.회사코드) HeaderText="회사코드" Width="110" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.지시번호) HeaderText="지시번호" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.품번) HeaderText="품번" Width="200" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.품명) HeaderText="품명" Width="200" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.전개순번) HeaderText="전개순번" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.공정) HeaderText="공정" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.공정명) HeaderText="공정명" Width="100" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.지시구분) HeaderText="지시구분" Width="100" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.지시구분명) HeaderText="지시구분명" Width="100" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.생산외주구분) HeaderText="생산외주구분" Width="100" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.생산외주구분명) HeaderText="생산외주구분명" Width="100" />
+        <GridColumn Field=@nameof(외주작업지시헤더정보.수량) HeaderText="수량" Width="100" />
+    </GridColumns>
+</FGrid>
+
+
+
+@code {
+
+
+
+    private FGrid<외주작업지시헤더정보> grid;
+    private ObservableCollection<외주작업지시헤더정보> list;
+    private 외주작업지시헤더정보 selectedRow;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<외주작업지시헤더정보>> OnSelectedEvent { get; set; }
+
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<외주작업지시헤더정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        //var result = await Remote.Command.기준정보.외주작업지시헤더정보_조회(회사코드);
+
+        var result = await Remote.Command.기준정보.VL_MES_WO_WF_View(회사코드);
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<외주작업지시헤더정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

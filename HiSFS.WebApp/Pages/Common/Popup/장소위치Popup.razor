@@ -1,0 +1,81 @@
+﻿@page "/popup/장소위치"
+
+@inherits CustomComponent
+
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="장소위치정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(장소위치정보.No) Width="90" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(장소위치정보.장소위치코드) Visible="false" />
+        <GridColumn Field=@nameof(장소위치정보.장소코드) Visible="false" />
+        <GridColumn Field=@nameof(장소위치정보.위치코드) Visible="false" />
+        <GridColumn Field="장소.장소명" Width="120" HeaderText="장소명" />
+        <GridColumn Field=@nameof(장소위치정보.위치명) Width="120" HeaderText="위치명" />
+        <GridColumn Field=@nameof(장소위치정보.위치분류코드) Width="0" Template=@CommonCodeTemplate(nameof(장소위치정보.위치분류코드)) EditTemplate=@CommonCodeEditTemplate(nameof(장소위치정보.위치분류코드), "위치분류", "B07") HeaderText="위치분류" />
+        <GridColumn Field="위치분류.코드명" Width="120" HeaderText="위치분류">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(장소위치정보.CreateTime) Width="120" Format="yyyy/MM/dd" HeaderText="등록일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(장소위치정보.UpdateTime) Width="120" Format="yyyy/MM/dd" HeaderText="변경일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+    </GridColumns>
+</FGrid>
+
+
+
+@code {
+
+
+    private FGrid<장소위치정보> grid;
+    private ObservableCollection<장소위치정보> list;
+    private 장소위치정보 selectedRow;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<장소위치정보>> OnSelectedEvent { get; set; }
+
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<장소위치정보, bool> ReturnSelectedItem { get; set; }
+
+
+    private async Task RefreshAsync()
+    {
+
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.장소위치_조회(회사코드);
+        ModifyList(result, (x, map) =>
+        {
+            if (x.위치분류코드 != null)
+                x.위치분류 = map[x.위치분류코드];
+        }, false);
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<장소위치정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

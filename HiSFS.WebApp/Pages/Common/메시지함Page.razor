@@ -1,0 +1,179 @@
+﻿@page "/common/메시지함"
+
+@inherits CustomComponent
+
+
+<SfTab CssClass="e-fill h-100" HeaderPlacement="HeaderPosition.Left" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable">
+    <TabEvents Selected="OnTabSelected" />
+
+    <TabItems>
+        <TabItem>
+            <ChildContent>
+                <TabHeader Text="받은메시지" />
+            </ChildContent>
+            <ContentTemplate>
+                <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="1">
+                    <SplitterPanes>
+                        <SplitterPane Size="100%">
+                            <DGrid DataSource="수신메시지목록" TValue="메시지정보" DefaultMode="true"
+                                   OnCreated="Refresh수신메시지목록Async" OnRowSelected="On수신메시지선택">
+                                <GridColumns>
+                                    <GridColumn Field=@nameof(메시지정보.No) Width="80" HeaderText="순번" />
+                                    @*<GridColumn Field=@nameof(메시지정보.발송인사번) Width="120" HeaderText="사번" />*@
+                                    <GridColumn Field="발송인.사용자명" Width="120" HeaderText="발송인" />
+                                    <GridColumn Field=@nameof(메시지정보.메시지) Width="180" HeaderText="메시지" />
+                                    <GridColumn Field=@nameof(메시지정보.메시지확인유무) Width="120" EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" HeaderText="확인유무" />
+                                    <GridColumn Field=@nameof(메시지정보.CreateTime) Format="yyyy/MM/dd HH:mm:ss" Width="180" HeaderText="발송시각" />
+                                </GridColumns>
+                            </DGrid>
+                        </SplitterPane>
+                        <SplitterPane Size="0%">
+                            @if (선택수신메시지 != null)
+                            {
+                                <SfRichTextEditor Readonly="true">
+                                    <ChildContent>
+                                        @선택수신메시지.메시지
+
+                                        <RichTextEditorInlineMode Enable="true" OnSelection="true" />
+                                    </ChildContent>
+                                </SfRichTextEditor>
+                            }
+                        </SplitterPane>
+                    </SplitterPanes>
+                </SfSplitter>
+            </ContentTemplate>
+        </TabItem>
+        <TabItem>
+            <ChildContent>
+                <TabHeader Text="보낸메시지" />
+            </ChildContent>
+            <ContentTemplate>
+                <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="1">
+                    <SplitterPanes>
+                        <SplitterPane Size="100%">
+                            <DGrid DataSource="송신메시지목록" TValue="메시지정보" DefaultMode="true" EditMode="DGridEditMode.Add"
+                                   OnCreated="Refresh송신메시지목록Async" OnActionComplete="OnActionComplete" OnRowSelected="On송신메시지선택">
+                                <GridColumns>
+                                    <GridColumn Field=@nameof(메시지정보.No) Width="80" HeaderText="순번">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    @*<GridColumn Field=@nameof(메시지정보.수신인사번) Width="120" HeaderText="사번" />*@
+                                <GridColumn Field="수신인.사용자명" Width="120" HeaderText="수신인">
+                                    <Template>
+                                        @((context as 메시지정보).수신인?.사용자명)
+                                    </Template>
+                                    <EditTemplate>
+                                        <DInputSearch Placeholder="수신인" Target="#root" DialogHeader="수신인 조회" TValue="직원정보" TCode="string" TextField="사용자명" @bind-Value=@((context as 메시지정보).수신인)>
+                                            <DialogContent>
+                                                <HiSFS.WebApp.Pages.Common.Popup.직원Popup />
+                                            </DialogContent>
+                                        </DInputSearch>
+                                    </EditTemplate>
+                                </GridColumn>
+                                    <GridColumn Field=@nameof(메시지정보.메시지) Width="180" HeaderText="메시지" />
+                                    <GridColumn Field=@nameof(메시지정보.메시지확인유무) Width="120" EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" HeaderText="확인유무">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(메시지정보.CreateTime) Format="yyyy/MM/dd HH:mm:ss" Width="180" HeaderText="발송시각">
+                                        <EditTemplate></EditTemplate>
+                                    </GridColumn>
+                                </GridColumns>
+                            </DGrid>
+                        </SplitterPane>
+                        <SplitterPane Size="0%">
+                            @if (선택송신메시지 != null)
+                            {
+                                <SfRichTextEditor Readonly="true">
+                                    <ChildContent>
+                                        @선택송신메시지.메시지
+
+                                        <RichTextEditorInlineMode Enable="true" OnSelection="true" />
+                                    </ChildContent>
+                                </SfRichTextEditor>
+                            }
+                        </SplitterPane>
+                    </SplitterPanes>
+                </SfSplitter>
+            </ContentTemplate>
+        </TabItem>
+    </TabItems>
+
+    <TabAnimationSettings>
+        <TabAnimationPrevious Effect="AnimationEffect.None" />
+        <TabAnimationNext Effect="AnimationEffect.None" />
+    </TabAnimationSettings>
+</SfTab>
+
+
+@code {
+    private ObservableCollection<메시지정보> 수신메시지목록;
+    private 메시지정보 선택수신메시지;
+
+    private ObservableCollection<메시지정보> 송신메시지목록;
+    private 메시지정보 선택송신메시지;
+
+
+    protected override void OnDispose()
+    {
+    }
+
+    private async Task Refresh수신메시지목록Async()
+    {
+        await Remote.WaitForReadyRemoteService();
+        var result = await Remote.Command.공통.메시지_수신조회(Context.직원.사번);
+        ModifyList(result, (info, map) =>
+        {
+        });
+        수신메시지목록 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task Refresh송신메시지목록Async()
+    {
+        await Remote.WaitForReadyRemoteService();
+        var result = await Remote.Command.공통.메시지_송신조회(Context.직원.사번);
+        ModifyList(result, (info, map) =>
+        {
+        });
+        송신메시지목록 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<메시지정보> e)
+    {
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var row = e.Data;
+            row.발송인사번 = Context.직원.사번;
+            row.수신인사번 = row.수신인.사번;
+            row.수신인 = null;
+            await Remote.Command.공통.메시지_송신(row);
+            StateHasChanged();
+
+            NotifyMessage(Message.SendMessage);
+
+            await Refresh송신메시지목록Async();
+        }
+    }
+
+    private async Task On수신메시지선택(RowSelectEventArgs<메시지정보> e)
+    {
+        선택수신메시지 = e.Data;
+
+        if (선택수신메시지.메시지확인유무 == false)
+            await Remote.Command.공통.메시지_확인(선택수신메시지);
+    }
+
+    private void On송신메시지선택(RowSelectEventArgs<메시지정보> e)
+    {
+        선택송신메시지 = e.Data;
+    }
+
+    private async Task OnTabSelected(Syncfusion.Blazor.Navigations.SelectEventArgs e)
+    {
+        await Refresh수신메시지목록Async();
+        await Refresh송신메시지목록Async();
+    }
+}

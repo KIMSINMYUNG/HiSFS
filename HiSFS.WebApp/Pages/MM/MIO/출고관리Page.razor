@@ -1,0 +1,551 @@
+﻿@inherits CustomComponent
+@page "/mm/mio/출고관리"
+
+
+
+
+<SfSplitter Width="100%" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="50%" Collapsible="true">
+            <ContentTemplate>
+                <FGrid @ref="grid" DataSource="@list" TValue="출고처리헤더정보" DefaultMode="true" EditMode="DGridEditMode.None"
+                       OnActionComplete="OnActionComplete" OnRowSelected="OnRowSelected" OnCreated="RefreshAsync" OnCheckAuth="CheckAuth">
+                    <GridColumns>
+
+                        <GridColumn Field=@nameof(출고처리헤더정보.회사코드) Width="100" HeaderText="회사코드" IsPrimaryKey="true">
+                            <Template>
+                                @((context as 출고처리헤더정보).회사코드)
+                            </Template>
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(출고처리헤더정보.작업번호) Width="100" HeaderText="작업번호" IsPrimaryKey="true">
+                            <Template>
+                                @((context as 출고처리헤더정보).작업번호)
+                            </Template>
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field="주문번호" Width="150" HeaderText="주문번호" ValidationRules="@(new ValidationRules{ Required=true})">
+                            <Template>
+                                @((context as 출고처리헤더정보).주문번호)
+                            </Template>
+                            <EditTemplate>
+                                @((context as 출고처리헤더정보).주문번호)
+                                @{ var info = context as 출고처리헤더정보; }
+                                <DInputSearch Placeholder="주문번호" Target="#main" DialogHeader="주문서 조회" TValue="주문서헤더정보" TCode="string" TextField="주문번호" @bind-Value=@(주문서헤더정보selected)  CodeField="주문번호" @bind-Code=@(info.주문번호)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.주문서헤더Popup />
+                                    </DialogContent>
+                                </DInputSearch>
+                            </EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(출고처리헤더정보.작업일자)" Width="100" HeaderText="작업일자" Format="yyyy/MM/dd"  ValidationRules="@(new ValidationRules{ Required=true})" >
+                        </GridColumn>
+
+                        @*<GridColumn Field=@nameof(출고처리헤더정보.출고구분) Width="100" AllowAdding="false" AllowEditing="false">
+                            <Template>
+                            </Template>
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>*@
+                        <GridColumn Field=@nameof(출고처리헤더정보.거래처코드) Width="100">
+                            <Template>
+                                @((context as 출고처리헤더정보).거래처코드)
+                            </Template>
+                            <EditTemplate>
+                                @*@{ var info = context as 출고처리헤더정보; }
+                                <DInputSearch Placeholder="거래처코드" Target="#root" DialogHeader="거래처 조회" TValue="거래처정보" TCode="string" TextField="거래처명" CodeField="거래처코드" @bind-Code=@(info.거래처코드)>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.거래처Popup />
+                                    </DialogContent>
+                                </DInputSearch>*@
+                            </EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field=@nameof(출고처리헤더정보.출고일자) Width="100" Format="yyyyMMdd"  ValidationRules="@(new ValidationRules{ Required=true})" />
+
+                        <GridColumn Field=@nameof(출고처리헤더정보.창고코드) Width="100">
+                            <Template>
+                                @((context as 출고처리헤더정보).창고코드)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as 출고처리헤더정보; }
+                                <DInputSearch Placeholder="창고위치" Target="#main" DialogHeader="창고위치 조회" TValue="장소위치정보" TCode="string" TextField="위치명" CodeField="장소코드" @bind-Code=@(info.창고코드)>
+                                    <DialogContent>
+
+                                        <HiSFS.WebApp.Pages.Common.Popup.장소위치Popup />
+                                    </DialogContent>
+                                </DInputSearch>
+                            </EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field=@nameof(출고처리헤더정보.과세구분) Width="100" EditType="EditType.DropDownEdit">
+                            <EditTemplate>
+                                @*<SfDropDownList ID="ddl과세구분" Placeholder="과세구분" TItem="과세구분필드" TValue="string" ValueChanged=@(과세구분OnChanged) DataSource="@list과세구분" FloatLabelType="FloatLabelType.Always">
+                                    <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                                </SfDropDownList>*@
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(출고처리헤더정보.단가구분) Width="100" EditType="EditType.DropDownEdit">
+                            <EditTemplate>
+                                @*<SfDropDownList ID="ddl단가구분" Placeholder="단가구분" TItem="단가구분필드" TValue="string" ValueChanged=@(단가구분OnChanged) DataSource="@list단가구분" FloatLabelType="FloatLabelType.Always">
+                                    <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                                </SfDropDownList>*@
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(출고처리헤더정보.연동구분) Width="100" AllowAdding="false" AllowEditing="false">
+                            <Template>
+                                @((context as 출고처리헤더정보).연동구분)
+                            </Template>
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+
+                    </GridColumns>
+                </FGrid>
+
+            </ContentTemplate>
+        </SplitterPane>
+        <SplitterPane Size="50%" Collapsible="true">
+
+            <ContentTemplate>
+                <FGrid @ref="grid2" DataSource="@list2" TValue="출고처리상세정보" DefaultMode="true" EditMode="DGridEditMode.None"
+                       OnActionBegin="OnActionBegin"  OnActionComplete="OnActionComplete" OnCreated="RefreshAsync" OnCheckAuth="CheckAuth">
+                    <GridColumns>
+
+                        <GridColumn Field=@nameof(출고처리상세정보.회사코드) Width="100" HeaderText="회사코드" IsPrimaryKey="true">
+                            <Template>
+                                @((context as 출고처리상세정보).회사코드)
+                            </Template>
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(출고처리상세정보.작업번호) Width="100" HeaderText="작업번호" IsPrimaryKey="true" AllowAdding="false" AllowEditing="false">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(출고처리상세정보.작업순번)" Width="100">
+                            <Template>
+                                @((context as 출고처리상세정보).작업순번)
+                            </Template>
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field=@nameof(출고처리상세정보.주문번호) Width="100">
+                            <Template>
+                                @((context as 출고처리상세정보).주문번호)
+                            </Template>
+                            <EditTemplate>
+                                @((context as 출고처리상세정보).주문번호)
+                                @{ var info = context as 출고처리상세정보; }
+                                <DInputSearch Placeholder="주문번호" Target="#main" DialogHeader="주문서 조회" ValueChanged=@(주문서OnChanged) TValue="주문서정보" TCode="string" TextField="주문번호" CodeField="주문번호" @bind-Code=@(info.주문번호) Enabled=@주문번호Check>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.주문서Popup 주문번호="@주문번호" />
+                                    </DialogContent>
+                                </DInputSearch>
+
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(출고처리상세정보.주문순번)" Width="80">
+                            <Template>
+                                @((context as 출고처리상세정보).주문순번)
+                            </Template>
+                            <EditTemplate>
+                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="주문순번" Value=@(주문순번) Enabled="false" />
+                            </EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field=@nameof(출고처리상세정보.품번) Width="100">
+                            <Template>
+                                @((context as 출고처리상세정보).품번)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as 출고처리상세정보; }
+                                @*<DInputSearch Placeholder="품번" Target="#root" DialogHeader="품목 조회" TValue="품목정보" TCode="string" TextField="품목코드" CodeField="품목코드" @bind-Code=@(info.품번) >
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.품목Popup />
+                                    </DialogContent>
+                                </DInputSearch>*@
+                                <SfTextBox Placeholder="품번" FloatLabelType="FloatLabelType.Always" Value=@(품목코드) Enabled="false" />
+
+                            </EditTemplate>
+                        </GridColumn>
+
+
+                        <GridColumn Field=@nameof(출고처리상세정보.장소코드) Width="100">
+                            <Template>
+                                @((context as 출고처리상세정보).장소코드)
+                            </Template>
+                            <EditTemplate>
+                                @((context as 출고처리상세정보).장소코드)
+                                @{ var info = context as 출고처리상세정보; }
+                                <DInputSearch Placeholder="장소위치" Target="#main" DialogHeader="장소위치 조회" TValue="장소위치정보" TCode="string" TextField="위치명" CodeField="위치코드" @bind-Code=@(info.장소코드) @bind-Value="장소위치정보Selected" Enabled=@장소위치정보Check>
+                                    <DialogContent>
+                                        <HiSFS.WebApp.Pages.Common.Popup.장소위치Popup />
+                                    </DialogContent>
+                                </DInputSearch>
+                            </EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(출고처리상세정보.출고수량_관리단위) Width="100" EditType="EditType.NumericEdit">
+                            <Template>
+                                @((context as 출고처리상세정보).출고수량_관리단위)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as 출고처리상세정보; }
+                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="int" Placeholder="출고수량_관리단위" Value=@(출고수량_관리단위) Enabled="false" ValueChanged="출고수량_관리단위Changed" />
+                            </EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field=@nameof(출고처리상세정보.출고수량_재고단위) Width="100" EditType="EditType.NumericEdit">
+                            <Template>
+                                @((context as 출고처리상세정보).출고수량_재고단위)
+                            </Template>
+                            <EditTemplate>
+                                @{ var info = context as 출고처리상세정보; }
+                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="int" Placeholder="출고수량_재고단위" Value=@(출고수량_재고단위) Enabled="false" ValueChanged="출고수량_재고단위Changed"/>
+                            </EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field=@nameof(출고처리헤더정보.연동구분) Width="100" AllowAdding="false" AllowEditing="false">
+                            <Template>
+                                @((context as 출고처리상세정보).연동구분)
+                            </Template>
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+
+                    </GridColumns>
+                </FGrid>
+
+            </ContentTemplate>
+
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+
+@code
+{
+
+    private DialogSettings DialogParams = new DialogSettings { MinHeight = "400px", Width = "450px" };
+
+    private FGrid<출고처리헤더정보> grid;
+    private ObservableCollection<출고처리헤더정보> list;
+
+    private FGrid<출고처리상세정보> grid2;
+    private ObservableCollection<출고처리상세정보> list2;
+
+    private 주문서정보 주문서정보selected { get; set; }
+    private 주문서헤더정보 주문서헤더정보selected { get; set; }
+
+    private 장소위치정보 장소위치정보Selected { get; set; }
+
+    private string 회사코드 = "";
+    private string 작업번호 = "";
+
+    public string 과세구분 = "";
+    public string 품목코드 = "";
+    public string 창고코드 = "";
+
+    public Decimal 주문순번 = 0;
+    private string 주문번호 = "";
+
+    private int 출고수량_관리단위;
+    private int 출고수량_재고단위;
+
+    private bool 주문번호Check = false;
+    private bool 장소위치정보Check = false;
+
+
+    public void 주문서OnChanged(주문서정보 value )
+    {
+        주문순번 = value.순번;
+        품목코드 = value.품목코드;
+        출고수량_관리단위 = Convert.ToInt32(value.수량);
+        출고수량_재고단위 = Convert.ToInt32(value.수량);
+
+
+    }
+
+    public void  출고수량_관리단위Changed(int value)
+    {
+        출고수량_관리단위 = value;
+    }
+    public void 출고수량_재고단위Changed(int value)
+    {
+        출고수량_재고단위 = value;
+    }
+
+
+    public void 과세구분OnChanged(string value)
+    {
+        과세구분 = value;
+    }
+    public class 과세구분필드
+    {
+        public int ID { get; set; }
+        public string Text { get; set; }
+    }
+    public List<과세구분필드> list과세구분 = new List<과세구분필드>() {
+        new 과세구분필드(){ ID=0, Text="매출과세"},
+        new 과세구분필드(){ ID=1, Text="수출영세"},
+        new 과세구분필드(){ ID=2, Text="매출면세"},
+        new 과세구분필드(){ ID=3, Text="매출기타"},
+    };
+
+    public string 단가구분 = "";
+
+    public void 단가구분OnChanged(string value)
+    {
+        단가구분 = value;
+    }
+    public class 단가구분필드
+    {
+        public int ID { get; set; }
+        public string Text { get; set; }
+    }
+    public List<단가구분필드> list단가구분 = new List<단가구분필드>() {
+        new 단가구분필드(){ ID=0, Text="부가세미포함"},
+        new 단가구분필드(){ ID=1, Text="부가세포함"},
+    };
+
+
+    async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await Remote.Command.기준정보.MES출고추가_조회(회사코드);
+
+        list = result.ToObservableCollection();
+
+        grid.Grid.ClearCellSelection();
+
+        StateHasChanged();
+    }
+
+    async Task RefreshAsync2()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await Remote.Command.기준정보.MES출고상세_조회(작업번호,회사코드);
+
+        list2 = result.ToObservableCollection();
+
+        grid2.Grid.ClearCellSelection();
+
+        StateHasChanged();
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<출고처리헤더정보> e)
+    {
+        작업번호 = e.Data.작업번호;
+        주문번호 = e.Data.주문번호;
+        창고코드 = e.Data.창고코드;
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await Remote.Command.기준정보.MES출고상세_조회(e.Data.작업번호, 회사코드);
+        list2 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<출고처리헤더정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+
+            var newRow = args.Data;
+
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            var newData = args.Data;
+            newData.출고구분 = "0";
+            newData.거래구분 = "0";
+            newData.환종 = "KRW";
+            newData.환율 = 1;
+            newData.사업장코드 = "1000";
+            newData.연동구분 = "0";
+            newData.회사코드 = 회사코드;
+            newData.부서코드 = "1001";
+            newData.과세구분 = 과세구분;
+            newData.단가구분 = 단가구분;
+
+
+            try
+            {
+                //await Remote.Command.생산관리.공정단위_저장(newData, args.Action == "Add" ? true : false);
+
+                await Remote.Command.기준정보.MES출고처리_출고처리헤더정보_등록(newData, args.Action == "Add" ? true : false);
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+
+    private async Task OnActionComplete(ActionEventArgs<출고처리상세정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            var newRow = args.Data;
+            newRow.작업번호 = parentRow.작업번호;
+            newRow.회사코드 = parentRow.회사코드;
+            창고코드 = parentRow.창고코드 ;
+
+            주문번호Check = true;
+            장소위치정보Check = true;
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            var newRow = args.Data;
+            품목코드 = newRow.품번;
+            출고수량_관리단위 = Convert.ToInt32(newRow.출고수량_관리단위);
+            출고수량_재고단위 = Convert.ToInt32(newRow.출고수량_재고단위);
+            주문순번 = newRow.주문순번;
+            주문번호Check = false;
+            장소위치정보Check = false;
+
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            var newData = args.Data;
+
+            if (주문순번 == null) return;
+            if (출고수량_관리단위 == null) return;
+            if (출고수량_재고단위 == null) return;
+            if (품목코드 == null) return;
+            if (장소위치정보Selected == null && newData.장소코드 == "") return;
+
+
+            newData.주문순번 = 주문순번;
+            newData.출고수량_관리단위 = 출고수량_관리단위;
+            newData.출고수량_재고단위 = 출고수량_재고단위;
+            newData.연동구분 = "0";
+            newData.품번 = 품목코드;
+
+
+            string str장소코드 = 장소위치정보Selected != null ? 장소위치정보Selected.장소코드 : 창고코드;
+            string str위치코드 = 장소위치정보Selected != null ? 장소위치정보Selected.위치코드 : newData.장소코드;
+            string str장소위치코드 = $"{str장소코드}{str위치코드}";
+
+            var now = DateTime.Now;
+            var info = new 보유품목정보
+            {
+                보유품목코드 = 품목코드,
+                회사코드 = 회사코드,
+                품목코드 = 품목코드,
+                수량 = Convert.ToInt32(출고수량_관리단위),
+                장소코드 = str장소코드,
+                장소위치코드 = str장소위치코드,
+                보유년월일 = now.ToString("yyMMdd"),
+
+            };
+
+
+            var info1 = new 출고처리상세정보
+            {
+                품번 = newData.품번,
+                회사코드 = 회사코드,
+                출고수량_관리단위 = Convert.ToInt32(출고수량_관리단위),
+                장소코드 = str장소위치코드,
+                작업순번 = newData.작업순번 != null ? newData.작업순번 : 0,
+
+
+            };
+
+            try
+            {
+                //출고처리
+                //var bResult = await Remote.Command.자재관리.출고관리보유품목입고_등록(info1, args.Action == "Add" ? true : false);
+
+                var bResult = await Remote.Command.기준정보.MES출고처리_출고처리상세정보_등록(newData, args.Action == "Add" ? true : false);
+
+                if (bResult == false)
+                {
+                    NotifyMessage(Message.반영실패);
+                }
+                else
+                {
+
+                    //2021.04.23
+                    // 보유품목일지
+                    //await Remote.Command.기준정보.보유품목_출고처리(품목코드, Convert.ToDecimal(info.수량), 장소위치정보Selected.장소코드, info.장소코드, "출고처리");
+
+                    await Remote.Command.자재관리.보유품목출고_위치등록(info, "출고처리", "");
+
+                    NotifyMessage(Message.반영성공);
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+
+            주문순번 = 0;
+            출고수량_관리단위 = 0;
+            출고수량_재고단위 = 0;
+            품목코드 = null;
+            장소위치정보Selected = null;
+
+            await RefreshAsync();
+
+            //NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+
+    private void OnActionBegin(ActionEventArgs<출고처리상세정보> args)
+    {
+        //await Task.Yield();
+
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            if (parentRow == null)
+            {
+                args.Cancel = true;
+                return;
+            }
+        }
+    }
+
+    protected override void OnDispose()
+    {
+        //throw new NotImplementedException();
+    }
+
+}

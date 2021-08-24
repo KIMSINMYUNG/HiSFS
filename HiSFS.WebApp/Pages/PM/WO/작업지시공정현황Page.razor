@@ -1,0 +1,105 @@
+﻿@page "/pm/wo/작업지시공정현황"
+@inherits CustomComponent
+
+
+<SfSplitter Width="100%" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="50%" Collapsible="true">
+
+            <!-- <발주현황 /> -->
+            <FGrid @ref="grid" DataSource="@list" TValue="공정이력정보" DefaultMode="true" EditMode="DGridEditMode.None"
+                 OnRowSelected="OnRowSelected"   OnDataBound="OnDataBound" OnCreated="RefreshAsync" OnCheckAuth="CheckAuth">
+
+                <GridColumns>
+                    <GridColumn Field=@nameof(공정이력정보.생산지시명) HeaderText="작업지시명" Width="150" />
+                    <GridColumn Field=생산품.품목명 Width="150" HeaderText="생산품명" />
+                    <GridColumn Field=생산품공정.생산품공정명 Width="150" HeaderText="생산품공정명" />
+                    <GridColumn Field=@nameof(공정이력정보.생산품코드) Width="150" HeaderText="생산품코드" />
+                    <GridColumn Field=@nameof(공정이력정보.생산품공정코드) Width="150" HeaderText="생산품공정코드" />
+                    <GridColumn Field=@nameof(공정이력정보.공정상태) Width="100" HeaderText="공정상태" />
+                    <GridColumn Field=@nameof(공정이력정보.목표수량) Format="G29" Width="100" HeaderText="목표수량" />
+                    <GridColumn Field=@nameof(공정이력정보.생산수량) Format="G29" Width="100" HeaderText="생산수량" />
+                    <GridColumn Field=@nameof(공정이력정보.불량수량) Format="G29" Width="100" HeaderText="불량수량" />
+                    <GridColumn Field=@nameof(공정이력정보.자재불량수량) Format="G29" Width="100" HeaderText="자재불량수량" />
+                    <GridColumn Field=@nameof(공정이력정보.시작일) Width="120" Format="yyyy/MM/dd" HeaderText="시작일" />
+                    <GridColumn Field=@nameof(공정이력정보.완료목표일) Width="120" Format="yyyy/MM/dd" HeaderText="완료목표일" />
+
+                </GridColumns>
+            </FGrid>
+
+        </SplitterPane>
+
+        <SplitterPane Size="50%" Collapsible="true">
+
+            <!-- <발주현황 /> -->
+            <FGrid @ref="grid2" DataSource="@list2" TValue="공정이력상세정보" DefaultMode="true" EditMode="DGridEditMode.None"
+                   OnCheckAuth="CheckAuth">
+
+                <GridColumns>
+                    <GridColumn Field="작업자.사용자명" Width="100" HeaderText="작업자명" />
+                    <GridColumn Field=@nameof(공정이력상세정보.공정상태) Width="100" HeaderText="공정상태" />
+                    <GridColumn Field=@nameof(공정이력상세정보.생산수량) Format="G29" Width="100" HeaderText="생산수량" />
+                    <GridColumn Field=@nameof(공정이력상세정보.불량수량) Format="G29" Width="100" HeaderText="불량수량" />
+                    <GridColumn Field=@nameof(공정이력상세정보.자재불량수량) Format="G29" Width="100" HeaderText="자재불량수량" />
+                    <GridColumn Field=@nameof(공정이력상세정보.시작타임) Width="120" Format="yyyy/MM/dd hh:mm:ss" HeaderText="시작타임" />
+                    <GridColumn Field=@nameof(공정이력상세정보.종료타임) Width="120" Format="yyyy/MM/dd hh:mm:ss" HeaderText="종료타임" />
+                </GridColumns>
+            </FGrid>
+
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<공정이력정보> grid;
+    private ObservableCollection<공정이력정보> list;
+    private 공정이력정보 selectedRow;
+
+    private FGrid<공정이력상세정보> grid2;
+    private ObservableCollection<공정이력상세정보> list2;
+
+    private string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.작업지시공정이력현황_조회(회사코드);
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+
+    private void OnDataBound(BeforeDataBoundArgs<공정이력정보> args)
+    {
+        //list2?.Clear();
+    }
+
+
+    private async Task OnRowSelected(RowSelectEventArgs<공정이력정보> args)
+    {
+
+        selectedRow = args.Data;
+
+        var result  = await Remote.Command.생산관리.작업지시공정이력상세_조회(selectedRow.인덱스);
+        ModifyList(result, (info, map) =>
+        {
+        });
+
+        list2 = result.ToObservableCollection();
+
+        StateHasChanged();
+
+    }
+
+
+
+    // 페이지가 소멸할 때 호출된다.
+    protected override void OnDispose()
+    {
+    }
+
+}

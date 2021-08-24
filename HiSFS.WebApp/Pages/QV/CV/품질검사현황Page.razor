@@ -1,0 +1,822 @@
+﻿@page "/qv/iv/품질검사현황"
+@using HiSFS.Api.Shared.Models
+@using System.ComponentModel.DataAnnotations.Schema
+
+
+@inherits CustomComponent
+
+
+
+<SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top" @bind-SelectedItem=@(tabIndex)>
+    <TabItems>
+        <TabItem>
+            <ChildContent>
+                <TabHeader Text="생산품질검사현황"  />
+            </ChildContent>
+            <ContentTemplate>
+                <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                    <SplitterPanes>
+                        <SplitterPane Size="40%" Collapsible="true">
+                            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                                <FGrid @ref="grid" DataSource="list" TValue="생산지시정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="5"
+                                       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                                    <GridColumns>
+                                        <GridColumn Field=@nameof(생산지시정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                        <GridColumn Field=@nameof(생산지시정보.생산지시코드) Visible="false" />
+                                        <GridColumn Field=@nameof(생산지시정보.생산지시명) HeaderText="작업지시명" />
+                                        <GridColumn Field=@nameof(생산지시정보.순번) HeaderText="차수" AllowAdding="false" AllowEditing="false" />
+                                        <GridColumn Field=@nameof(생산지시정보.실행상태코드) HeaderText="실행상태" Template=@CommonCodeTemplate(nameof(생산지시정보.실행상태코드))>
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                        <GridColumn Field=@nameof(생산지시정보.생산계획코드) Width="0">
+                                            <Template>
+                                                @((context as 생산지시정보).생산계획?.생산계획명)
+                                            </Template>
+                                            <EditTemplate>
+                                                @{ var info = context as 생산지시정보; }
+                                                <DInputSearch ID="생산계획코드" Placeholder="생산계획" Target="#root" DialogHeader="생산계획 조회" TValue="생산계획정보" TCode="string" TextField="생산계획명" @bind-Value=@(info.생산계획) CodeField="생산계획코드" @bind-Code=@(info.생산계획코드)>
+                                                    <DialogContent>
+                                                        <HiSFS.WebApp.Pages.Common.Popup.생산계획Popup />
+                                                    </DialogContent>
+                                                </DInputSearch>
+                                            </EditTemplate>
+                                        </GridColumn>
+                                        <GridColumn Field="생산계획.생산계획명" HeaderText="생산계획">
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                        <GridColumn Field=@nameof(생산지시정보.생산지시유형코드) HeaderText="생산지시유형" Template=@CommonCodeTemplate(nameof(생산지시정보.생산지시유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(생산지시정보.생산지시유형코드), "생산지시유형", "B21") />
+                                        <GridColumn Field=@nameof(생산지시정보.생산수량)  HeaderText="목표수량" />
+                                        <GridColumn Field=@nameof(생산지시정보.시작일) Format="yyyy/MM/dd" />
+                                        <GridColumn Field=@nameof(생산지시정보.완료목표일) Format="yyyy/MM/dd" />
+                                        <GridColumn Field=@nameof(생산지시정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일">
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                        <GridColumn Field=@nameof(생산지시정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="변경일">
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                        <GridColumn Field=@nameof(생산지시정보.상세) HeaderText="" Width="120" TextAlign="TextAlign.Right" AllowAdding="false" AllowEditing="false">
+                                            <Template>
+                                                @{ var info = context as 생산지시정보; }
+
+                                                <SfButton @ref="btnExcel" @onclick=@(async () => { await ExcelExport(); } )>엑셀</SfButton>
+                                            </Template>
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                    </GridColumns>
+                                </FGrid>
+                            </SfTab>
+                        </SplitterPane>
+                        <SplitterPane Size="55%" Collapsible="true">
+                            <div class="row mx-2 mb-3">
+                                <HiSFS.WebApp.Pages.Common.단위 제목="품질검사현황">
+                                    <DGrid DataSource=@(작업지시공정현황목록) DefaultMode="true" PageMode="PageMode.Inline" TValue="작업지시공정현황" OnRowSelected="OnRowSelected">
+                                        <GridColumns>
+                                            <GridColumn Field=@nameof(작업지시공정현황.공정차수) Width="80" HeaderText="공정차수" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.공정단위코드) Width="160" HeaderText="공정단위코드" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.공정명) Width="160" HeaderText="공정명" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.공정품명) Width="160" HeaderText="생산품공정코드" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.시작일) Format="yyy/MM/dd" Width="120" HeaderText="시작일" Visible="false" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.완료목표일) Format="yyy/MM/dd" Width="120" HeaderText="완료목표일" Visible="false" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.목표수량) Width="120" HeaderText="목표수량" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.검사수량) Width="120" HeaderText="검사수량" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.합격수량) Width="120" HeaderText="합격수량" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.불량수량) Width="120" HeaderText="불량수량" />
+                                            <GridColumn Field=@nameof(작업지시공정현황.불량률) Width="120" HeaderText="불량률" />
+                                        </GridColumns>
+
+                                    </DGrid>
+                                </HiSFS.WebApp.Pages.Common.단위>
+                            </div>
+
+                            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+                                <SplitterPanes>
+                                    <SplitterPane Size="30%" Collapsible="true">
+                                        <HiSFS.WebApp.Pages.Common.단위 제목="품목">
+
+                                            <SfGrid @ref="grid3" DataSource="@list3" TValue="품질검사측정정보" Height="300">
+                                                <GridEvents RowSelected="RowSelectHandler" TValue="품질검사측정정보"></GridEvents>
+                                                <GridColumns>
+                                                    <GridColumn Field=@nameof(품질검사측정정보.시리얼넘버) HeaderText="SEQ" TextAlign="TextAlign.Left" Width="50" IsPrimaryKey="true"></GridColumn>
+                                                    <GridColumn Field=@nameof(품질검사측정정보.생산품공정코드) HeaderText="생산품공정코드" Width="100" HeaderTextAlign="TextAlign.Left"></GridColumn>
+                                                    <GridColumn Field=@nameof(품질검사측정정보.생산품공정명) HeaderText="생산품공정명" Width="100"></GridColumn>
+                                                </GridColumns>
+                                            </SfGrid>
+                                        </HiSFS.WebApp.Pages.Common.단위>
+                                    </SplitterPane>
+                                    <SplitterPane Size="70%" Collapsible="true">
+                                        <HiSFS.WebApp.Pages.Common.단위 제목="검사 항목">
+                                            <SfGrid @ref="grid4" DataSource=@(list4) TValue="공정단위검사정보" DefaultMode="false" OnCheckAuth="CheckAuth" Height="300">
+                                                <GridColumns>
+                                                    <GridColumn Field=@nameof(공정단위검사정보.No) HeaderText="순번" Width="80" IsPrimaryKey="true">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(공정단위검사정보.공정단위코드) Visible="false" />
+                                                    <GridColumn Field=@nameof(공정단위검사정보.품질검사코드) Width="0" IsPrimaryKey="true">
+                                                        <Template>
+                                                            @((context as 공정단위검사정보).품질검사?.품질검사명)
+                                                        </Template>
+                                                        <EditTemplate>
+                                                            @{ var info = context as 공정단위검사정보; }
+                                                            <DInputSearch ID="품질검사코드" Placeholder="품질검사" Target="#root" DialogHeader="품질검사 조회" TValue="품질검사정보" TCode="string" TextField="품질검사명" @bind-Value=@(info.품질검사) CodeField="품질검사코드" @bind-Code=@(info.품질검사코드)>
+                                                                <DialogContent>
+                                                                    <HiSFS.WebApp.Pages.Common.Popup.검사Popup />
+                                                                </DialogContent>
+                                                            </DInputSearch>
+                                                        </EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field="품질검사.품질검사명" Width="160" HeaderText="품질검사">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(공정단위검사정보.검사단위코드) Width="130">
+                                                        <Template>
+                                                            @{ var info = context as 공정단위검사정보; }
+                                                            @info.검사단위?.코드명
+                                                        </Template>
+                                                        <EditTemplate>
+                                                            @{ var info = context as 공정단위검사정보; }
+                                                            <DCommonCodeDropList ID="검사단위코드" Placeholder="검사단위" ParentCode="B24" @bind-Value=@(info.검사단위코드) />
+                                                        </EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field="검사단위.코드명" Width="120" HeaderText="검사단위">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(공정단위검사정보.검사기준값) HeaderText="검사기준값" Width="120" />
+                                                    @*<GridColumn Field=@nameof(공정단위검사정보.오차범위) HeaderText="오차범위" Width="120" />*@
+                                                    <GridColumn Field=@nameof(공정단위검사정보.오차범위상한) HeaderText="오차범위상한" Width="120" />
+                                                    <GridColumn Field=@nameof(공정단위검사정보.오차범위하한) HeaderText="오차범위하한" Width="120" />
+                                                    <GridColumn Field=@nameof(공정단위검사정보.합격여부) HeaderText="합격여부" Width="120">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                    <GridColumn Field=@nameof(공정단위검사정보.검사측정값) HeaderText="검사측정값" Width="100" Format="C2">
+                                                        <EditTemplate></EditTemplate>
+                                                    </GridColumn>
+                                                </GridColumns>
+                                            </SfGrid>
+                                        </HiSFS.WebApp.Pages.Common.단위>
+                                    </SplitterPane>
+                                </SplitterPanes>
+                            </SfSplitter>
+
+                            @*<div class="row mx-2 mb-3">
+                                <HiSFS.WebApp.Pages.Common.단위 제목="품질검사 항목">
+                                    <DGrid DataSource=@(품목검사측정현황목록) DefaultMode="true" PageMode="PageMode.Inline" TValue="품질검사측정정보">
+                                        <GridColumns>
+                                            <GridColumn Field=@nameof(품질검사측정정보.시리얼넘버) Width="80" HeaderText="시리얼넘버" />
+                                            <GridColumn Field=@nameof(품질검사측정정보.공정단위코드) Width="160" HeaderText="공정단위코드" Visible="false" />
+                                            <GridColumn Field=@nameof(품질검사측정정보.검사단위코드) Width="160" HeaderText="검사단위코드" Visible="false" />
+                                            <GridColumn Field=@nameof(품질검사측정정보.품질검사코드) Width="0" IsPrimaryKey="true">
+                                                <Template>
+                                                    @((context as 품질검사측정정보).품질검사?.품질검사명)
+                                                </Template>
+                                                <EditTemplate>
+                                                    @{ var info = context as 품질검사측정정보; }
+                                                    <DInputSearch ID="품질검사코드" Placeholder="품질검사" Target="#root" DialogHeader="품질검사 조회" TValue="품질검사정보" TCode="string" TextField="품질검사명" @bind-Value=@(info.품질검사) CodeField="품질검사코드" @bind-Code=@(info.품질검사코드)>
+                                                        <DialogContent>
+                                                            <HiSFS.WebApp.Pages.Common.Popup.검사Popup />
+                                                        </DialogContent>
+                                                    </DInputSearch>
+                                                </EditTemplate>
+                                            </GridColumn>
+                                            <GridColumn Field="품질검사.품질검사명" Width="160" HeaderText="품질검사">
+                                                <EditTemplate></EditTemplate>
+                                            </GridColumn>
+
+                                            <GridColumn Field=@nameof(품질검사측정정보.생산품공정명) Width="160" HeaderText="생산품공정명" />
+                                            <GridColumn Field=@nameof(품질검사측정정보.생산품코드) Width="120" HeaderText="생산품코드" />
+                                            <GridColumn Field=@nameof(품질검사측정정보.검사기준값) Width="120" HeaderText="검사기준값" />
+                                            <GridColumn Field=@nameof(품질검사측정정보.오차범위) Width="120" HeaderText="오차범위" />
+                                            <GridColumn Field=@nameof(품질검사측정정보.검사측정값) Width="120" HeaderText="검사측정값" />
+                                            <GridColumn Field=@nameof(품질검사측정정보.합격여부) Width="120" HeaderText="검사측정값" />
+                                        </GridColumns>
+                                    </DGrid>
+                                </HiSFS.WebApp.Pages.Common.단위>
+                            </div>*@
+
+
+                        </SplitterPane>
+                    </SplitterPanes>
+                </SfSplitter>
+            </ContentTemplate>
+        </TabItem>
+        <TabItem>
+            <ChildContent>
+                <TabHeader Text="수입검사현황"></TabHeader>
+            </ChildContent>
+            <ContentTemplate>
+
+                <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                    <SplitterPanes>
+                        <SplitterPane Size="45%" Collapsible="true">
+                            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                                <FGrid @ref="grid_t1" DataSource="list_t1" TValue="발주서별수입검사" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="5"
+                                       OnCreated="RefreshAsync2" OnRowSelected="OnRowSelected"  OnCheckAuth="CheckAuth">
+                                    <GridColumns>
+                                        <GridColumn Field=@nameof(발주서별수입검사.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                        <GridColumn Field=@nameof(발주서별수입검사.발주번호) HeaderText="발주번호" />
+                                        <GridColumn Field=@nameof(발주서별수입검사.발주순번) HeaderText="발주순번" AllowAdding="false" AllowEditing="false" />
+                                        <GridColumn Field=@nameof(발주서별수입검사.품번) HeaderText="품번" />
+                                        <GridColumn Field=@nameof(발주서별수입검사.품명) HeaderText="품명" />
+                                        <GridColumn Field=@nameof(발주서별수입검사.발주수량) HeaderText="발주수량" />
+                                        <GridColumn Field=@nameof(발주서별수입검사.검사수량) HeaderText="검사수량" />
+                                        <GridColumn Field=@nameof(발주서별수입검사.합격수량) HeaderText="합격수량" />
+                                        <GridColumn Field=@nameof(발주서별수입검사.불량수량) HeaderText="불량수량" />
+
+                                        <GridColumn Field=@nameof(발주서별수입검사.종료일) Format="yyyy/MM/dd" HeaderText="변경일" />
+
+                                        <GridColumn Field=@nameof(발주서별수입검사.상세) HeaderText="" Width="120" TextAlign="TextAlign.Right" AllowAdding="false" AllowEditing="false">
+                                            <Template>
+                                                @{ var info = context as 생산지시정보; }
+
+                                                <SfButton @ref="btnExcel" @onclick=@(async () => { await ExcelExport(); } )>엑셀</SfButton>
+                                            </Template>
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                    </GridColumns>
+                                </FGrid>
+                            </SfTab>
+                        </SplitterPane>
+                        <SplitterPane Size="55%" Collapsible="true">
+                            <div class="row mx-2 mb-3">
+                                <HiSFS.WebApp.Pages.Common.단위 제목="품질검사현황">
+                                    <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+                                        <SplitterPanes>
+                                            <SplitterPane Size="30%" Collapsible="true">
+                                                <HiSFS.WebApp.Pages.Common.단위 제목="품목">
+
+                                                    <SfGrid @ref="grid_t3" DataSource="@list_t3" TValue="발주서별품질검사측정정보" Height="300">
+                                                        <GridEvents RowSelected="RowSelectHandler" TValue="발주서별품질검사측정정보"></GridEvents>
+                                                        <GridColumns>
+                                                            <GridColumn Field=@nameof(발주서별품질검사측정정보.시리얼넘버) HeaderText="SEQ" TextAlign="TextAlign.Left" Width="50" IsPrimaryKey="true"></GridColumn>
+                                                            <GridColumn Field=@nameof(발주서별품질검사측정정보.생산품공정코드) HeaderText="생산품공정코드" Width="100" HeaderTextAlign="TextAlign.Left"></GridColumn>
+                                                            <GridColumn Field=@nameof(발주서별품질검사측정정보.생산품공정명) HeaderText="생산품공정명" Width="100"></GridColumn>
+                                                        </GridColumns>
+                                                    </SfGrid>
+                                                </HiSFS.WebApp.Pages.Common.단위>
+                                            </SplitterPane>
+                                            <SplitterPane Size="70%" Collapsible="true">
+                                                <HiSFS.WebApp.Pages.Common.단위 제목="검사 항목">
+                                                    <SfGrid @ref="grid_t4" DataSource=@(list_t4) TValue="발주서별품질검사정보" DefaultMode="false" OnCheckAuth="CheckAuth" Height="300">
+                                                        <GridColumns>
+                                                            <GridColumn Field=@nameof(발주서별품질검사정보.No) HeaderText="순번" Width="80" IsPrimaryKey="true">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field=@nameof(발주서별품질검사정보.품질검사코드) Width="0" IsPrimaryKey="true">
+                                                                <Template>
+                                                                    @((context as 발주서별품질검사정보).품질검사?.품질검사명)
+                                                                </Template>
+                                                                <EditTemplate>
+                                                                    @{ var info = context as 발주서별품질검사정보; }
+                                                                    <DInputSearch ID="품질검사코드" Placeholder="품질검사" Target="#root" DialogHeader="품질검사 조회" TValue="품질검사정보" TCode="string" TextField="품질검사명" @bind-Value=@(info.품질검사) CodeField="품질검사코드" @bind-Code=@(info.품질검사코드)>
+                                                                        <DialogContent>
+                                                                            <HiSFS.WebApp.Pages.Common.Popup.검사Popup />
+                                                                        </DialogContent>
+                                                                    </DInputSearch>
+                                                                </EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field="품질검사.품질검사명" Width="160" HeaderText="품질검사">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field=@nameof(발주서별품질검사정보.검사단위코드) Width="130">
+                                                                <Template>
+                                                                    @{ var info = context as 발주서별품질검사정보; }
+                                                                    @info.검사단위?.코드명
+                                                                </Template>
+                                                                <EditTemplate>
+                                                                    @{ var info = context as 발주서별품질검사정보; }
+                                                                    <DCommonCodeDropList ID="검사단위코드" Placeholder="검사단위" ParentCode="B24" @bind-Value=@(info.검사단위코드) />
+                                                                </EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field="검사단위.코드명" Width="120" HeaderText="검사단위">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field=@nameof(발주서별품질검사정보.검사기준값) HeaderText="검사기준값" Width="120" />
+                                                            @*<GridColumn Field=@nameof(공정단위검사정보.오차범위) HeaderText="오차범위" Width="120" />*@
+                                                            <GridColumn Field=@nameof(발주서별품질검사정보.오차범위상한) HeaderText="오차범위상한" Width="120" />
+                                                            <GridColumn Field=@nameof(발주서별품질검사정보.오차범위하한) HeaderText="오차범위하한" Width="120" />
+                                                            <GridColumn Field=@nameof(발주서별품질검사정보.합격여부) HeaderText="합격여부" Width="120">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field=@nameof(발주서별품질검사정보.검사측정값) HeaderText="검사측정값" Width="100" Format="C2">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                        </GridColumns>
+                                                    </SfGrid>
+                                                </HiSFS.WebApp.Pages.Common.단위>
+                                            </SplitterPane>
+                                        </SplitterPanes>
+                                    </SfSplitter>
+                                </HiSFS.WebApp.Pages.Common.단위>
+                            </div>
+
+                        
+                        </SplitterPane>
+                    </SplitterPanes>
+                </SfSplitter>
+
+            </ContentTemplate>
+        </TabItem>
+
+        <TabItem>
+            <ChildContent>
+                <TabHeader Text="외주품질검사현황"></TabHeader>
+            </ChildContent>
+            <ContentTemplate>
+
+                <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                    <SplitterPanes>
+                        <SplitterPane Size="45%" Collapsible="true">
+                            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                                <FGrid @ref="grid_v1" DataSource="list_v1" TValue="외주작업지시서품검정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="5"
+                                       OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+                                    <GridColumns>
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.지시번호) HeaderText="지시번호" />
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.전개순번) HeaderText="전개순번" AllowAdding="false" AllowEditing="false" />
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.품번) HeaderText="품번" />
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.품명) HeaderText="품명" />
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.수량) HeaderText="발주수량" />
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.검사수량) HeaderText="검사수량" />
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.합격수량) HeaderText="합격수량" />
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.불량수량) HeaderText="불량수량" />
+
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.종료일) Format="yyyy/MM/dd" HeaderText="변경일" />
+
+                                        <GridColumn Field=@nameof(외주작업지시서품검정보.상세) HeaderText="" Width="120" TextAlign="TextAlign.Right" AllowAdding="false" AllowEditing="false">
+                                            <Template>
+                                                @{ var info = context as 외주작업지시서품검정보; }
+
+                                                <SfButton @ref="btnExcel" @onclick=@(async () => { await ExcelExport(); } )>엑셀</SfButton>
+                                            </Template>
+                                            <EditTemplate></EditTemplate>
+                                        </GridColumn>
+                                    </GridColumns>
+                                </FGrid>
+                            </SfTab>
+                        </SplitterPane>
+                        <SplitterPane Size="55%" Collapsible="true">
+                            <div class="row mx-2 mb-3">
+                                <HiSFS.WebApp.Pages.Common.단위 제목="품질검사현황">
+                                    <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+                                        <SplitterPanes>
+                                            <SplitterPane Size="30%" Collapsible="true">
+                                                <HiSFS.WebApp.Pages.Common.단위 제목="품목">
+
+                                                    <SfGrid @ref="grid_v3" DataSource="@list_v3" TValue="외주품질검사측정정보" Height="300">
+                                                        <GridEvents RowSelected="RowSelectHandler" TValue="외주품질검사측정정보"></GridEvents>
+                                                        <GridColumns>
+                                                            <GridColumn Field=@nameof(외주품질검사측정정보.시리얼넘버) HeaderText="SEQ" TextAlign="TextAlign.Left" Width="50" IsPrimaryKey="true"></GridColumn>
+                                                            <GridColumn Field=@nameof(외주품질검사측정정보.생산품공정코드) HeaderText="생산품공정코드" Width="100" HeaderTextAlign="TextAlign.Left"></GridColumn>
+                                                            <GridColumn Field=@nameof(외주품질검사측정정보.생산품공정명) HeaderText="생산품공정명" Width="100"></GridColumn>
+                                                        </GridColumns>
+                                                    </SfGrid>
+                                                </HiSFS.WebApp.Pages.Common.단위>
+                                            </SplitterPane>
+                                            <SplitterPane Size="70%" Collapsible="true">
+                                                <HiSFS.WebApp.Pages.Common.단위 제목="검사 항목">
+                                                    <SfGrid @ref="grid_v4" DataSource=@(list_v4) TValue="외주지시별검사정보" DefaultMode="false" OnCheckAuth="CheckAuth" Height="300">
+                                                        <GridColumns>
+                                                            <GridColumn Field=@nameof(외주지시별검사정보.No) HeaderText="순번" Width="80" IsPrimaryKey="true">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field=@nameof(외주지시별검사정보.품질검사코드) Width="0" IsPrimaryKey="true">
+                                                                <Template>
+                                                                    @((context as 외주지시별검사정보).품질검사?.품질검사명)
+                                                                </Template>
+                                                                <EditTemplate>
+                                                                    @{ var info = context as 외주지시별검사정보; }
+                                                                    <DInputSearch ID="품질검사코드" Placeholder="품질검사" Target="#root" DialogHeader="품질검사 조회" TValue="품질검사정보" TCode="string" TextField="품질검사명" @bind-Value=@(info.품질검사) CodeField="품질검사코드" @bind-Code=@(info.품질검사코드)>
+                                                                        <DialogContent>
+                                                                            <HiSFS.WebApp.Pages.Common.Popup.검사Popup />
+                                                                        </DialogContent>
+                                                                    </DInputSearch>
+                                                                </EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field="품질검사.품질검사명" Width="160" HeaderText="품질검사">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field=@nameof(외주지시별검사정보.검사단위코드) Width="130">
+                                                                <Template>
+                                                                    @{ var info = context as 외주지시별검사정보; }
+                                                                    @info.검사단위?.코드명
+                                                                </Template>
+                                                                <EditTemplate>
+                                                                    @{ var info = context as 외주지시별검사정보; }
+                                                                    <DCommonCodeDropList ID="검사단위코드" Placeholder="검사단위" ParentCode="B24" @bind-Value=@(info.검사단위코드) />
+                                                                </EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field="검사단위.코드명" Width="120" HeaderText="검사단위">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field=@nameof(외주지시별검사정보.검사기준값) HeaderText="검사기준값" Width="120" />
+                                                            <GridColumn Field=@nameof(공정단위검사정보.오차범위) HeaderText="오차범위" Width="120" />
+                                                            <GridColumn Field=@nameof(외주지시별검사정보.오차범위상한) HeaderText="오차범위상한" Width="120" />
+                                                            <GridColumn Field=@nameof(외주지시별검사정보.오차범위하한) HeaderText="오차범위하한" Width="120" />
+                                                            <GridColumn Field=@nameof(외주지시별검사정보.합격여부) HeaderText="합격여부" Width="120">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                            <GridColumn Field=@nameof(외주지시별검사정보.검사측정값) HeaderText="검사측정값" Width="100" Format="C2">
+                                                                <EditTemplate></EditTemplate>
+                                                            </GridColumn>
+                                                        </GridColumns>
+                                                    </SfGrid>
+                                                </HiSFS.WebApp.Pages.Common.단위>
+                                            </SplitterPane>
+                                        </SplitterPanes>
+                                    </SfSplitter>
+                                </HiSFS.WebApp.Pages.Common.단위>
+                            </div>
+
+
+                        </SplitterPane>
+                    </SplitterPanes>
+                </SfSplitter>
+
+            </ContentTemplate>
+        </TabItem>
+    </TabItems>
+
+    <TabEvents Selected="OnSelected" />
+</SfTab>
+
+
+
+
+
+
+@code {
+
+    int selectedIdx = 0;
+
+    private FGrid<발주서별수입검사> grid_t1;
+    private ObservableCollection<발주서별수입검사> list_t1;
+    private 발주서별수입검사 발주서별수입검사selected;
+
+    private SfGrid<발주서별품질검사측정정보> grid_t3;
+    private List<발주서별품질검사측정정보> list_t3 = new List<발주서별품질검사측정정보>();
+    private 발주서별품질검사측정정보 selected발주서별품질검사측정정보;
+
+    private SfGrid<발주서별품질검사정보> grid_t4;
+    private ObservableCollection<발주서별품질검사정보> list_t4 = new ObservableCollection<발주서별품질검사정보>();
+    private 발주서별품질검사정보 selected발주서별품질검사정보;
+
+
+
+    private FGrid<외주작업지시서품검정보> grid_v1;
+    private ObservableCollection<외주작업지시서품검정보> list_v1;
+    private 외주작업지시서품검정보 외주작업지시서품검selected;
+
+    private SfGrid<외주품질검사측정정보> grid_v3;
+    private List<외주품질검사측정정보> list_v3 = new List<외주품질검사측정정보>();
+    private 외주품질검사측정정보 selected외주품질검사측정정보;
+
+    private SfGrid<외주지시별검사정보> grid_v4;
+    private ObservableCollection<외주지시별검사정보> list_v4 = new ObservableCollection<외주지시별검사정보>();
+    private 외주지시별검사정보 selected외주지시별검사정보;
+
+
+
+
+    private async Task OnSelected(Syncfusion.Blazor.Navigations.SelectEventArgs e)
+    {
+        selectedIdx = e.SelectedIndex;
+
+        if(selectedIdx == 1)
+        {
+
+            var result1 = await Remote.Command.생산관리.수입검사품질검사현황_조회(회사코드);
+
+            ModifyList(result1, (x, map) =>
+            {
+            });
+
+            list_t1 = result1.ToObservableCollection();
+        }
+        else if (selectedIdx == 2)
+        {
+            var result1 = await Remote.Command.생산관리.외주작업지시서품검정보현황_조회(회사코드);
+
+            ModifyList(result1, (x, map) =>
+            {
+            });
+
+            list_v1 = result1.ToObservableCollection();
+
+        }
+
+    }
+    // 순번  보유품번 품번 품명 규격 수량 단위 장소 위치 품질검사 검사기준값 오차값 측정값 검사단위 검사장비 검사결과
+    public SfButton btnExcel;
+
+    private FGrid<생산지시정보> grid;
+    private ObservableCollection<생산지시정보> list;
+    private 생산지시정보 selected;
+    private IEnumerable<작업지시공정현황> 작업지시공정현황목록;
+
+    private 작업지시공정현황 작업지시공정현황selected;
+    private IEnumerable<품질검사측정정보> 품목검사측정현황목록;
+
+    private SfGrid<품질검사측정정보> grid3;
+    private List<품질검사측정정보> list3 = new List<품질검사측정정보>();
+    private 품질검사측정정보 selected품질검사측정정보;
+
+
+    private SfGrid<공정단위검사정보> grid4;
+    private ObservableCollection<공정단위검사정보> list4 = new ObservableCollection<공정단위검사정보>();
+    private 공정단위검사정보 selected공정단위검사정보;
+
+    private int tabIndex = 0;
+
+    private string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+        //var result = await Remote.Command.생산관리.작업지시_조회();
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        var result = await Remote.Command.생산관리.작업지시품질검사_조회(회사코드);
+
+
+        ModifyList(result, (x, map) =>
+        {
+        });
+        //var result2 = result.FirstOrDefault(x => x.생산계획.생산품공정.생산품공정차수목록[0].공정단위.공정품유형코드 == "B0205");
+
+        list = result.ToObservableCollection();
+
+        //작업지시공정현황목록 = await Remote.Command.생산관리.작업지시품질검사현황_조회();
+
+        ModifyList(작업지시공정현황목록, (info, map) =>
+        {
+        });
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<생산지시정보> args)
+    {
+        // 추가시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.실행상태코드 = "B0205"; // 확정전
+        }
+        // 편집 시작시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.작업지시_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            await Remote.Command.생산관리.작업지시_저장(args.Data, args.Action == "Add" ? true : false);
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<생산지시정보> args)
+    {
+        selected = args.Data;
+
+        작업지시공정현황목록 = null;
+        StateHasChanged();
+
+        작업지시공정현황목록 = await Remote.Command.생산관리.작업지시품질검사현황_조회(selected.생산지시코드);
+
+
+        ModifyList(작업지시공정현황목록, (info, map) =>
+        {
+
+        });
+        if (작업지시공정현황목록.Count() > 0)
+        {
+
+            var 공정단위코드 = 작업지시공정현황목록.FirstOrDefault(x => x.생산지시코드 == selected.생산지시코드).공정단위코드;
+
+            품목검사측정현황목록 = await Remote.Command.생산관리.작업지시품질검사항목_조회(selected.생산지시코드);
+
+            ModifyList(품목검사측정현황목록, (info, map) =>
+            {
+                if (info.검사단위코드 != null)
+                    info.검사단위 = map[info.검사단위코드];
+            });
+
+            List<품질검사측정정보> listResult = new List<품질검사측정정보>();
+            listResult = await Remote.Command.생산관리.작업지시품질검사품목_조회(selected.생산지시코드);
+
+            IEnumerable<품질검사측정정보> documents = listResult.GroupBy(x => x.시리얼넘버).Select(g => g.First()).ToList();
+
+            list3 = documents.ToList();
+
+            var result = await Remote.Command.생산관리.공정단위검사_조회(공정단위코드);
+
+            ModifyList(result, (x, map) =>
+            {
+                if (x.검사단위코드 != null)
+                    x.검사단위 = map[x.검사단위코드];
+            });
+
+            //result.FirstOrDefault(x => x.공정검사장비목록 != );
+            list4 = result.ToObservableCollection();
+        }
+
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<작업지시공정현황> args)
+    {
+        작업지시공정현황selected = args.Data;
+
+        품목검사측정현황목록 = null;
+        StateHasChanged();
+
+        품목검사측정현황목록 = await Remote.Command.생산관리.작업지시품질검사항목_조회(args.Data.생산지시코드);
+
+        ModifyList(품목검사측정현황목록, (info, map) =>
+        {
+            if (info.검사단위코드 != null)
+                info.검사단위 = map[info.검사단위코드];
+        });
+
+        List<품질검사측정정보> listResult = new List<품질검사측정정보>();
+        listResult = await Remote.Command.생산관리.작업지시품질검사품목_조회(args.Data.생산지시코드);
+
+        IEnumerable<품질검사측정정보> documents = listResult.GroupBy(x => x.시리얼넘버).Select(g => g.First()).ToList();
+
+        list3 = documents.ToList();
+
+        var result = await Remote.Command.생산관리.공정단위검사_조회(args.Data.공정단위코드);
+
+        ModifyList(result, (x, map) =>
+        {
+            if (x.검사단위코드 != null)
+                x.검사단위 = map[x.검사단위코드];
+        });
+
+        //result.FirstOrDefault(x => x.공정검사장비목록 != );
+        list4 = result.ToObservableCollection();
+
+    }
+
+    public async Task RowSelectHandler(RowSelectEventArgs<품질검사측정정보> args)
+    {
+        // Here you can customize your code
+        //selected품질검사생산품 = args.Data;
+        //var found = list4.FirstOrDefault(x => x.공정단위코드 == args.Data.공정단위코드);
+        //var result = await Remote.Command.품질관리.품질검사측정정보_조회(args.Data.시리얼넘버);
+        //int i = 0;
+        //foreach (var item in result)
+        //{
+        //    list4[i].검사측정값 = item.검사측정값;
+        //    list4[i].합격여부 = item.합격여부;
+        //    i++;
+        //}
+
+        var result = await Remote.Command.품질관리.품질검사측정정보_조회(args.Data.생산지시코드, args.Data.시리얼넘버);
+        int i = 0;
+
+        foreach (var item in list4)
+        {
+            var found = result.FirstOrDefault(x => x.품질검사코드 == list4[i].품질검사코드);
+
+            if (found != null)
+            {
+                list4[i].검사측정값 = found.검사측정값; ///result.FirstOrDefault(x => x.품질검사코드 == list4[i].품질검사코드).검사측정값;
+                list4[i].합격여부 = found.합격여부;//result.FirstOrDefault(x => x.품질검사코드 == list4[i].품질검사코드).합격여부;
+            }
+            else
+            {
+                list4[i].검사측정값 = null;
+                list4[i].합격여부 = null;
+            }
+            i++;
+        }
+
+    }
+
+    private async Task RefreshAsync2()
+    {
+
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<발주서별수입검사> args)
+    {
+        발주서별수입검사selected = args.Data;
+
+
+        List<발주서별품질검사측정정보> listResult = new List<발주서별품질검사측정정보>();
+        listResult = await Remote.Command.생산관리.발주서별품질검사항목_조회(발주서별수입검사selected);
+        IEnumerable<발주서별품질검사측정정보> documents = listResult.GroupBy(x => x.시리얼넘버).Select(g => g.First()).ToList();
+
+        list_t3 = documents.ToList();
+
+        var result = await Remote.Command.생산관리.발주서별품질검사_조회(발주서별수입검사selected);
+
+        ModifyList(result, (x, map) =>
+        {
+            if (x.검사단위코드 != null)
+                x.검사단위 = map[x.검사단위코드];
+        });
+
+
+        list_t4 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    public async Task RowSelectHandler(RowSelectEventArgs<발주서별품질검사측정정보> args)
+    {
+
+        var result = await Remote.Command.생산관리.발주서별품질검사측정정보_조회(args.Data, args.Data.시리얼넘버);
+        int i = 0;
+
+        foreach (var item in list_t4)
+        {
+            var found = result.FirstOrDefault(x => x.품질검사코드 == list_t4[i].품질검사코드);
+
+            if (found != null)
+            {
+                list_t4[i].검사측정값 = found.검사측정값; ///result.FirstOrDefault(x => x.품질검사코드 == list4[i].품질검사코드).검사측정값;
+                list_t4[i].합격여부 = found.합격여부;//result.FirstOrDefault(x => x.품질검사코드 == list4[i].품질검사코드).합격여부;
+            }
+            else
+            {
+                list_t4[i].검사측정값 = null;
+                list_t4[i].합격여부 = null;
+            }
+            i++;
+        }
+
+    }
+
+
+    private async Task OnRowSelected(RowSelectEventArgs<외주작업지시서품검정보> args)
+    {
+        외주작업지시서품검selected = args.Data;
+
+        List<외주품질검사측정정보> listResult = new List<외주품질검사측정정보>();
+        listResult = await Remote.Command.생산관리.외주작업지시서품검항목_조회(외주작업지시서품검selected);
+        IEnumerable<외주품질검사측정정보> documents = listResult.GroupBy(x => x.시리얼넘버).Select(g => g.First()).ToList();
+
+        list_v3 = documents.ToList();
+
+        var result = await Remote.Command.생산관리.외주품질검사_조회(외주작업지시서품검selected);
+
+        ModifyList(result, (x, map) =>
+        {
+            if (x.검사단위코드 != null)
+                x.검사단위 = map[x.검사단위코드];
+        });
+
+        list_v4 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+    public async Task RowSelectHandler(RowSelectEventArgs<외주품질검사측정정보> args)
+    {
+
+        var result = await Remote.Command.생산관리.외주품질검사측정정보_조회(args.Data, args.Data.시리얼넘버);
+        int i = 0;
+
+        foreach (var item in list_v4)
+        {
+            var found = result.FirstOrDefault(x => x.품질검사코드 == list_v4[i].품질검사코드);
+
+            if (found != null)
+            {
+                list_v4[i].검사측정값 = found.검사측정값; ///result.FirstOrDefault(x => x.품질검사코드 == list4[i].품질검사코드).검사측정값;
+                list_v4[i].합격여부 = found.합격여부;//result.FirstOrDefault(x => x.품질검사코드 == list4[i].품질검사코드).합격여부;
+            }
+            else
+            {
+                list_v4[i].검사측정값 = null;
+                list_v4[i].합격여부 = null;
+            }
+            i++;
+        }
+
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

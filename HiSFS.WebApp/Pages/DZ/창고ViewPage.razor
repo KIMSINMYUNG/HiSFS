@@ -1,0 +1,73 @@
+﻿
+@page "/dz/창고view"
+@using HiSFS.Api.Shared.Models.View_DZICUBE
+@inherits CustomComponent
+
+<SfSplitter Width="2500px" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                <FGrid @ref="grid" DataSource="@list" TValue="VL_MES_LOC" DefaultMode="true" EditMode="DGridEditMode.EditDelete" PageSize="15"
+                       OnCreated="RefreshAsync" OnToolbarClick="OnToolbarClick">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(VL_MES_LOC.CO_CD) HeaderText="회사코드" />
+                        <GridColumn Field=@nameof(VL_MES_LOC.BASELOC_FG) HeaderText="공정구분" />
+                        <GridColumn Field=@nameof(VL_MES_LOC.BASELOC_FG_NM) HeaderText="공정구분명" />
+                        <GridColumn Field=@nameof(VL_MES_LOC.BASELOC_CD) HeaderText="창고/공정/외주코드" />
+                        <GridColumn Field=@nameof(VL_MES_LOC.BASELOC_NM) HeaderText="창고/공정/외주명" />
+                        <GridColumn Field=@nameof(VL_MES_LOC.BASELOC_USE_YN) HeaderText="창고/공정/외주사용여부" />
+                        <GridColumn Field=@nameof(VL_MES_LOC.LOC_CD) HeaderText="장소/작업장/외주처코드" />
+                        <GridColumn Field=@nameof(VL_MES_LOC.LOC_NM) HeaderText="장소/작업장/외주처명" />
+                        <GridColumn Field=@nameof(VL_MES_LOC.LOC_USE_YN) HeaderText="장소/작업장/외주처사용여부" />
+                        <GridColumn Field=@nameof(VL_MES_LOC.DIV_CD) HeaderText="사업장코드" />
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    private FGrid<VL_MES_LOC> grid;
+    private List<VL_MES_LOC> list;
+    private VL_MES_LOC selectedRow;
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+
+        StateHasChanged();
+
+        //창고VIEW
+        var result = await Remote.Command.기준정보.VL_MES_LOC();
+
+        list = result.ToList();
+
+        StateHasChanged();
+    }
+
+
+    private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "btnCheckSave")
+        {
+            var YesOrNo = await ShowMessageBox("창고반영", "창고정보를 반영하시겠습니까?", MessageBoxResultType.YesOrNo);
+            bool result = false;
+            if (YesOrNo)
+            {
+                result = await Remote.Command.기준정보.VL_MES_LOC_반영(list);
+
+                if (result)
+                    NotifyMessage(Message.반영성공);
+                else
+                    NotifyMessage(Message.반영실패);
+            }
+
+        }
+
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

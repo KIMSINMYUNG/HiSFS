@@ -1,0 +1,323 @@
+﻿@typeparam TValue
+
+<SfGrid @ref="grid" DataSource=@(DataSource) TValue=@(TValue) AllowPaging=@(allowPaging)
+        AllowExcelExport=@(allowExcelExport) Toolbar=@(toolbar) ContextMenuItems=@(contextMenuItems)
+        @ondblclick=@(ondblclick) AllowFiltering="true">
+
+    @ChildContent
+
+    <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single" EnableToggle="false" />
+    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
+    @*<GridSearchSettings Fields=@(searchFields) Operator="Syncfusion.Blazor.Operator.Contains" Key=@(searchKeywords) IgnoreCase="true" />
+        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings> *@
+    <GridEditSettings AllowAdding=@(allowAdding) AllowEditing=@(allowEditing) AllowDeleting=@(allowDeleting) Mode="Syncfusion.Blazor.Grids.EditMode.Dialog" NewRowPosition="NewRowPosition.Bottom" ShowDeleteConfirmDialog="true" />
+
+    <GridPageSettings PageCount=@(pageCount) PageSize=@(pageSize) />
+
+    <GridEvents Created="OnCreated" RowSelected="OnRowSelected" OnDataBound="OnDataBound" RowDataBound="OnRowDataBound" OnActionBegin="OnInternelActionBegin" OnActionComplete="OnActionComplete" OnToolbarClick="OnInnerToolbarClick" TValue=@(TValue) />
+
+    @*<SfToolbar>
+            <Syncfusion.Blazor.Navigations.ToolbarItems>
+                <ToolbarItem Type="ItemType.Input">
+                    <Template>
+                        <SfTextBox Placeholder="검색" FloatLabelType="FloatLabelType.Never" Width="240" />
+                    </Template>
+                </ToolbarItem>
+            </Syncfusion.Blazor.Navigations.ToolbarItems>
+        </SfToolbar>*@
+</SfGrid>
+
+@code {
+    [Parameter] public IEnumerable<TValue> DataSource { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+
+    [Parameter] public bool DefaultMode { get; set; }
+    [Parameter] public DGridEditMode EditMode { get; set; }
+    [Parameter] public PageMode PageMode { get; set; }
+    [Parameter] public int PageSize { get; set; }
+    [Parameter] public List<object> AddToolbar { get; set; }
+
+    [Parameter] public EventCallback OnCreated { get; set; }
+    [Parameter] public EventCallback<RowSelectEventArgs<TValue>> OnRowSelected { get; set; }
+    [Parameter] public EventCallback<BeforeDataBoundArgs<TValue>> OnDataBound { get; set; }
+    [Parameter] public EventCallback<RowDataBoundEventArgs<TValue>> OnRowDataBound { get; set; }
+    [Parameter] public EventCallback<ActionEventArgs<TValue>> OnActionBegin { get; set; }
+    [Parameter] public EventCallback<ActionEventArgs<TValue>> OnActionComplete { get; set; }
+    [Parameter] public EventCallback<Syncfusion.Blazor.Navigations.ClickEventArgs> OnToolbarClick { get; set; }
+    [Parameter] public EventCallback<CheckAuthEventArgs> OnCheckAuth { get; set; }
+
+    [Parameter] public EventCallback<MouseEventArgs> ondblclick { get; set; }
+
+    [Parameter] public EventCallback<Syncfusion.Blazor.DropDowns.ChangeEventArgs<TValue>> OnValueChange { get; set; }
+
+
+    public SfGrid<TValue> Grid => grid;
+
+
+    private SfGrid<TValue> grid;
+
+    private bool allowPaging;
+    private int pageCount;
+    private int pageSize;
+
+    private bool allowAdding;
+    private bool allowEditing;
+    private bool allowDeleting;
+
+    private bool allowExcelExport;
+
+    private List<object> toolbar;
+
+    private List<GridColumn> searchFieldList;
+    private string searchField;
+    private string SearchField
+    {
+        get => searchField;
+        set
+        {
+            if (searchField == value)
+                return;
+
+            searchField = value;
+            searchFields = new string[] { searchField };
+        }
+    }
+    private string[] searchFields;
+
+    private ElementReference searchTextInput;
+    private string searchKeywords = "";
+    private string beforeSearchKeywords;
+    private List<object> contextMenuItems;
+
+
+    private readonly List<object> editModeToolbars = new List<object>
+{
+        "Add", "Edit", "Delete", /*"Cancel", "Update",*/ "ExcelExport",
+
+        new Syncfusion.Blazor.Navigations.ItemModel { Text="새로고침", TooltipText = "새로고침", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Reload" }
+    };
+
+    private readonly List<object> editModeToolbars_1 = new List<object>
+{
+        "Add", "Edit", "Delete", /*"Cancel", "Update",*/ "ExcelExport",
+
+        //new Syncfusion.Blazor.Navigations.ItemModel { Text="판매", TooltipText = "판매", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Sell" },
+        //new Syncfusion.Blazor.Navigations.ItemModel { Text="보유", TooltipText = "보유", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Dele" }
+    };
+
+    private readonly List<object> editModeToolbars_2 = new List<object>
+{
+        "Add", "Edit", /*"Delete", "Cancel", "Update",*/ "ExcelExport",
+
+        new Syncfusion.Blazor.Navigations.ItemModel { Text="새로고침", TooltipText = "새로고침", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Reload" }
+        //new Syncfusion.Blazor.Navigations.ItemModel { Text="판매", TooltipText = "판매", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Sell" },
+        //new Syncfusion.Blazor.Navigations.ItemModel { Text="보유", TooltipText = "보유", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Dele" }
+    };
+
+    private readonly List<object> editModeToolbars_3 = new List<object>
+{
+        "Add", /*"Edit",*/ "Delete", /*"Cancel", "Update",*/ "ExcelExport",
+
+        new Syncfusion.Blazor.Navigations.ItemModel { Text="새로고침", TooltipText = "새로고침", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Reload" }
+        //new Syncfusion.Blazor.Navigations.ItemModel { Text="판매", TooltipText = "판매", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Sell" },
+        //new Syncfusion.Blazor.Navigations.ItemModel { Text="보유", TooltipText = "보유", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Dele" }
+    };
+
+    private readonly List<object> editModeContextMenuItems = new List<object>
+{
+        "Edit", "Delete"
+    };
+
+    private readonly List<object> readModeToolbars = new List<object>
+{
+        "ExcelExport",
+
+        new Syncfusion.Blazor.Navigations.ItemModel { Text="새로고침", TooltipText = "새로고침", PrefixIcon = "e-reload", Align = ItemAlign.Left, Id = "Reload" }
+    };
+
+    private readonly List<object> editModeToolbars_4 = new List<object>
+{
+        "ExcelExport",
+
+        new Syncfusion.Blazor.Navigations.ItemModel { Text="반영하기", TooltipText = "반영하기", PrefixIcon =  "e-save", Align = ItemAlign.Left, Id = "btnCheckSave" }
+
+    };
+
+    private readonly List<object> popupModeToolbars = new List<object>
+    {
+        //"Search"
+        //SearchInputTextBox
+    };
+
+    private ItemModel CreateSearchSelectDropdown() => new Syncfusion.Blazor.Navigations.ItemModel
+    {
+        Type = ItemType.Input,
+        TooltipText = "검색대상",
+        Text = "검색대상",
+        Template =@<SfDropDownList DataSource=@(searchFieldList) Placeholder="검색대상" Width="160px" TValue="string" TItem="GridColumn" @bind-Value=@(SearchField)>
+        <DropDownListFieldSettings Value="Field" Text="HeaderText" />
+    </SfDropDownList>,
+Align = ItemAlign.Right,
+Id = "SearchField"
+};
+
+private ItemModel CreateSearchInputTextBox(EventCallback e) => new Syncfusion.Blazor.Navigations.ItemModel
+{
+Type = ItemType.Input,
+TooltipText = "검색",
+//PrefixIcon = "e-reload",
+Text = "검색",
+Template = @<div class="e-input-group" style="width: 240px;">
+    <input @ref="searchTextInput" class="e-input" placeholder="검색" type="text" @bind-value=@(beforeSearchKeywords) @onkeyup=@(e) />
+    <span class="e-input-group-icon e-icons e-search" @onclick=@(e)></span>
+</div>,
+Align = ItemAlign.Right,
+Id = "Search"
+};
+
+protected override void OnInitialized()
+{
+base.OnInitialized();
+
+if (DefaultMode == true)
+{
+if (PageMode != PageMode.Inline && PageSize != -1)
+allowPaging = true;
+
+pageCount = 10;
+
+if (PageMode == PageMode.Default)
+{
+pageSize = PageSize == 0 ? 19 : PageSize;
+
+allowExcelExport = true;
+
+if (PageMode != PageMode.Inline)
+toolbar = readModeToolbars;
+}
+else if (PageMode == PageMode.Small)
+{
+pageSize = PageSize == 0 ? 12 : PageSize;
+
+allowExcelExport = true;
+
+if (PageMode != PageMode.Inline)
+toolbar = readModeToolbars;
+}
+else
+{
+pageSize = PageSize == 0 ? 10 : PageSize;
+
+if (PageMode != PageMode.Inline)
+toolbar = popupModeToolbars;
+}
+}
+
+if (EditMode > DGridEditMode.None)
+{
+allowAdding = EditMode.HasFlag(DGridEditMode.Add);
+allowDeleting = EditMode.HasFlag(DGridEditMode.Delete);
+allowEditing = EditMode.HasFlag(DGridEditMode.Edit);
+
+if (EditMode == DGridEditMode.All)
+{
+toolbar = editModeToolbars;
+}
+else if (EditMode == DGridEditMode.AddEdit)
+{
+toolbar = editModeToolbars_2;
+}
+else if (EditMode == DGridEditMode.AddDelete)
+{
+toolbar = editModeToolbars_3;
+}
+else if (EditMode == DGridEditMode.EditDelete)
+{
+toolbar = editModeToolbars_4;
+}
+
+contextMenuItems = editModeContextMenuItems;
+}
+
+// 인라인 모드일 경우 검색 툴바를 노출하지 않는다.
+if (PageMode != PageMode.Inline)
+{
+if (AddToolbar != null)
+toolbar.AddRange(AddToolbar);
+//toolbar.Add(CreateSearchSelectDropdown());
+//toolbar.Add(CreateSearchInputTextBox(EventCallback.Factory.Create(this, async e =>
+//{
+//    if (e is Microsoft.AspNetCore.Components.Web.KeyboardEventArgs ke)
+//    {
+//        if (ke.Key != "Enter")
+//            return;
+//    }
+
+//    searchKeywords = beforeSearchKeywords;
+
+//    await searchTextInput.FocusAsync();
+//})));
+}
+}
+
+protected override void OnAfterRender(bool firstRender)
+{
+if (firstRender == true)
+{
+//searchFieldList = grid.Columns.Where(x => x.AllowSearching == true).ToList();
+//searchFieldList = grid.Columns.Where(x => x.Visible == true && x.Width != "0" && x.Field != "No" && string.IsNullOrWhiteSpace(x.HeaderText) == false).ToList();
+//searchFields = searchFieldList.Select(x => x.Field).ToArray();
+}
+}
+
+private async Task OnInnerToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+{
+if (args.Item.Id == "Reload")
+{
+await OnCreated.InvokeAsync(null);
+}
+else if (args.Item.Id.EndsWith("excelexport") == true)
+{
+var excelProperties = new ExcelExportProperties();
+
+// 모든 필드를 엑셀에 표현하도록 가공한다. (20-09-16) {{{
+//var gridList = new List<System.Dynamic.ExpandoObject>();
+//var orignList = grid.DataSource as IEnumerable<TValue>;
+//foreach (var row in orignList)
+//{
+//    var newRow = new System.Dynamic.ExpandoObject() as IDictionary<string, object>;
+
+//}
+//excelProperties.DataSource = gridList;
+//var columns = new List<GridColumn>();
+//foreach (var column in grid.Columns)
+//{
+//    if (column.Visible == false)
+//        continue;
+
+//    columns.Add(new GridColumn { Field = column.Field, HeaderText = column.HeaderText, Width = "100px" });
+//}
+//excelProperties.Columns = columns;
+// }}}
+
+await grid.ExcelExport(excelProperties);
+}
+else
+{
+await OnToolbarClick.InvokeAsync(args);
+}
+}
+
+private async Task OnInternelActionBegin(ActionEventArgs<TValue> e)
+{
+var args = new CheckAuthEventArgs(e.RequestType.ToString());
+await OnCheckAuth.InvokeAsync(args);
+if (args.Cancel == true)
+{
+e.Cancel = true;
+return;
+}
+
+await OnActionBegin.InvokeAsync(e);
+}
+}

@@ -1,0 +1,91 @@
+﻿@page "/popup/공정"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="공정정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected">
+    <GridColumns>
+       <GridColumn Field=@nameof(공정정보.공정코드) AllowAdding="false" AllowEditing="false" />
+        <GridColumn Field=@nameof(공정정보.공정명) ValidationRules="@(new ValidationRules { Required = true })" />
+        <GridColumn Field=@nameof(공정정보.공정유형코드) Template=@CommonCodeTemplate(nameof(공정정보.공정유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(공정정보.공정유형코드), "공정유형", "B02") HeaderText="공정유형" ValidationRules="@(new ValidationRules { Required = true })" />
+        <GridColumn Field="공정유형.코드명" Visible="false" />
+        <GridColumn Field=@nameof(공정정보.설비사용유무) EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+        <GridColumn Field=@nameof(공정정보.설비유형코드) Template=@CommonCodeTemplate(nameof(공정정보.설비유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(공정정보.설비유형코드), "설비유형", "B15") HeaderText="설비유형" />
+    </GridColumns>
+</FGrid>
+
+@code {
+    private FGrid<공정정보> grid;
+    private ObservableCollection<공정정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<공정정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<공정정보, bool> ReturnSelectedItem { get; set; }
+
+
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    await Task.Yield();
+
+    //    grid.SetDefault(PageMode.Popup, "원품목코드", "품목명", "품목구분.코드명", "단위.코드명");
+    //}
+
+    //protected override async Task OnReadyRemoteServiceAsync(bool isReady)
+    //{
+    //    if (isReady == false)
+    //        return;
+
+    //    var result = await Remote.Command.기준정보.공정_조회(true);
+    //    ModifyList(result, (x, map) =>
+    //    {
+    //        //if (x.품목구분코드 != null)
+    //        //    x.품목구분 = map[x.품목구분코드];
+    //        //if (x.조달구분코드 != null)
+    //        //    x.조달구분 = map[x.조달구분코드];
+    //        //if (x.단위코드 != null)
+    //        //    x.단위 = map[x.단위코드];
+    //    });
+    //    list = result.ToObservableCollection();
+
+    //    StateHasChanged();
+    //}
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.기준정보.공정_조회(true);
+        ModifyList(result, (x, map) =>
+        {
+            //if (x.품목구분코드 != null)
+            //    x.품목구분 = map[x.품목구분코드];
+            //if (x.조달구분코드 != null)
+            //    x.조달구분 = map[x.조달구분코드];
+            //if (x.단위코드 != null)
+            //    x.단위 = map[x.단위코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<공정정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

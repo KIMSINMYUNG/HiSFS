@@ -1,0 +1,57 @@
+﻿<SfChart Title="생산 안정율" Theme="ChartTheme.MaterialDark">
+    <ChartEvents Load="ChartLoad" />
+    <ChartArea>
+        <ChartAreaBorder Width="0"></ChartAreaBorder>
+    </ChartArea>
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category">
+        <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
+    </ChartPrimaryXAxis>
+    <ChartPrimaryYAxis Minimum="0" Maximum="1.5" Interval="0.1" LabelFormat="{value}" RangePadding="Syncfusion.Blazor.Charts.ChartRangePadding.None">
+        <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+        <ChartAxisLineStyle Color="#808080"></ChartAxisLineStyle>
+        <ChartStriplines>
+            <ChartStripline Start="1.2" End="2" Text="생산 부실" Color="darkgray" Opacity="0.5" Visible="true">
+                <ChartStriplineTextStyle Size="18px" Color="#ffffff" FontWeight="600"></ChartStriplineTextStyle>
+                <ChartStriplineBorder Width="0"></ChartStriplineBorder>
+            </ChartStripline>
+            <ChartStripline Start="1" End="1.2" Text="생산 안정" Color="green" Opacity="0.5" Visible="true">
+                <ChartStriplineTextStyle Size="18px" Color="#ffffff" FontWeight="600"></ChartStriplineTextStyle>
+                <ChartStriplineBorder Width="0"></ChartStriplineBorder>
+            </ChartStripline>
+            <ChartStripline Start="0" End="1" Text="생산 불안정" Color="orange" Opacity="0.5" Visible="true">
+                <ChartStriplineTextStyle Size="18px" Color="#ffffff" FontWeight="600"></ChartStriplineTextStyle>
+                <ChartStriplineBorder Width="0"></ChartStriplineBorder>
+            </ChartStripline>
+        </ChartStriplines>
+    </ChartPrimaryYAxis>
+    <ChartSeriesCollection>
+        <ChartSeries Name="Weather" Type="ChartSeriesType.Line" DataSource="@WeatherReports" Fill="#ffffff" XName="XValue" YName="YValue" Width="2">
+            <ChartMarker Visible="true" Width="10" Height="10" Fill="#666666">
+                <ChartMarkerBorder Width="2" Color="#ffffff"></ChartMarkerBorder>
+            </ChartMarker>
+        </ChartSeries>
+    </ChartSeriesCollection>
+    <ChartLegendSettings Visible="false"></ChartLegendSettings>
+    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+</SfChart>
+
+@code {
+    public class ChartData
+    {
+        public string XValue;
+        public double YValue;
+    }
+    public List<ChartData> WeatherReports = new List<ChartData>
+{
+        new ChartData { XValue = "Sun", YValue = 0.8d },
+        new ChartData { XValue = "Mon", YValue = 1.2d },
+        new ChartData { XValue = "Tue", YValue = 1.1d },
+        new ChartData { XValue = "Wed", YValue = 1.0d },
+        new ChartData { XValue = "Thu", YValue = 0.9d },
+        new ChartData { XValue = "Fri", YValue = 0.9d },
+        new ChartData { XValue = "Sat", YValue = 1.0d },
+    };
+    void ChartLoad(ILoadedEventArgs Args)
+    {
+    }
+}

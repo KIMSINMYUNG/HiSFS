@@ -1,0 +1,171 @@
+﻿@using Microsoft.Extensions.Configuration
+
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+<div id=@($"dFileList_{this.GetHashCode()}") class="e-control e-filemanager e-lib e-fe-cb-select e-keyboard">
+    <div class="e-large-icons e-lib e-touch e-keyboard" role="group">
+        <ul class="e-list-parent e-ul " role="listbox">
+            @if (Files != null)
+            {
+                @foreach (var file in Files)
+                {
+                    <li class="e-list-item e-level-1 e-large-icon @(file.HoverCss) @(file.SelectedCss)" role="option" title=@(file.FileName)
+                        @onmouseover=@(() => file.HoverCss ??= "e-hover") @onmouseout=@(() => file.HoverCss = null)
+                        @onclick=@(() => OnClickFile(file))
+                        @ondblclick=@(() => OnDbClickFile(file))>
+                        <div class="e-text-content">
+                            @*<div class="e-checkbox-wrapper e-css e-small" role="checkbox" aria-checked="false">
+                                    <span class="e-frame e-icons">
+                                    </span>
+                                </div>*@
+                            <div class="e-list-icon @(file.IconClass)">
+                            </div>
+                            <span class="e-list-text">
+                                @(file.FileName)
+                            </span>
+                        </div>
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+</div>
+<SfContextMenu Target=@($"#dFileList_{this.GetHashCode()}") Items=@MenuItems>
+    @*<ContextMenuEvents OnOpen="OnContextMenuItemOpen" ItemSelected="OnContextMenuItemSelected" TValue="MenuItem" />*@
+
+
+    <MenuEvents TValue="MenuItem" ItemSelected="@OnContextMenuItemSelected" OnOpen="OnContextMenuItemOpen"></MenuEvents>
+
+</SfContextMenu>
+
+@code {
+    [Parameter]
+    public ObservableCollection<FileInfo> Files { get; set; }
+
+    [Parameter]
+    public FileInfo SelectedFile { get; set; }
+
+    [Parameter]
+    public bool Readonly { get; set; }
+
+    [Parameter]
+    public EventCallback<FileInfo> OnFileDeleted { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnClickFiles { get; set; }
+
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "BL0005:Component parameter should not be set outside of its component.", Justification = "<보류 중>")]
+    public List<MenuItem> MenuItems = new List<MenuItem> {
+        new MenuItem { Id = "delete", Text = "삭제", IconCss = "e-cm-icons e-delete" }
+    };
+
+    private async Task OnClickFile(FileInfo file)
+    {
+        if (SelectedFile != null)
+            SelectedFile.SelectedCss = "";
+
+        SelectedFile = file;
+        SelectedFile.SelectedCss = "e-active e-focus";
+
+        string config = Configuration["RemoteApi:StorageRoot"].ToString();
+        config = config.Replace("Uploads", "").Replace("\\", "/");
+        //config = config.Replace( "\\", "/");
+        if (file.Url != null)
+        {
+            string fileFullName = config + file.Url.ToString();
+            //var targetRoot = Config.GetSection("RemoteApi")["StorageRoot"];
+            System.IO.FileInfo fi = new System.IO.FileInfo(fileFullName);
+            if (fi.Exists)
+            {
+                string fileExtens = Path.GetExtension(fileFullName);
+                if (!fileExtens.ToUpper().Equals(".PDF"))
+                    fileFullName = null;
+
+                //await OnClickFiles.InvokeAsync(fileFullName);
+            }
+            else
+            {
+                fileFullName = null;
+                //await OnClickFiles.InvokeAsync(fileFullName);
+            }
+            await OnClickFiles.InvokeAsync(fileFullName);
+        }
+    }
+
+    private async Task OnDbClickFile(FileInfo file)
+    {
+        if (string.IsNullOrWhiteSpace(file.Url) == true)
+            return;
+
+        await JSRuntime.InvokeVoidAsync("downloadFromUrl", file.Url, file.FileName);
+    }
+
+    private void OnContextMenuItemOpen(BeforeOpenCloseMenuEventArgs<MenuItem> e)
+    {
+        var result = Files?.FirstOrDefault(x => string.IsNullOrWhiteSpace(x.HoverCss) == false);
+        if (result != default && Readonly == false)
+        {
+            OnClickFile(result);
+            return;
+        }
+
+        e.Cancel = true;
+    }
+
+    private async Task OnContextMenuItemSelected(MenuEventArgs<MenuItem> e)
+    {
+        if (e.Item.Id == "delete")
+        {
+            if (SelectedFile != null)
+            {
+                Files.Remove(SelectedFile);
+                await OnFileDeleted.InvokeAsync(SelectedFile);
+                SelectedFile = null;
+            }
+        }
+    }
+
+    public class FileInfo
+    {
+        private string _filename;
+
+        public int Id { get; set; }
+        public string FileName
+        {
+            get => _filename;
+            set
+            {
+                _filename = value;
+                FileTitle = System.IO.Path.GetFileNameWithoutExtension(_filename);
+                FileExtension = System.IO.Path.GetExtension(_filename);
+            }
+        }
+        public string FileTitle { get; set; }
+        public string FileExtension { get; set; }
+        public string TempFilename { get; set; }
+        public int Size { get; set; }
+        public string Url { get; set; }
+        public string IconClass => FileExtension switch
+        {
+            ".txt" => "e-fe-txt",
+            ".pdf" => "e-fe-pdf",
+            ".pptx" => "e-fe-pptx",
+            ".docx" => "e-fe-docx",
+            ".xlsx" => "e-fe-xlsx",
+            ".png" => "e-fe-image",
+            ".gif" => "e-fe-image",
+            ".tiff" => "e-fe-image",
+            ".jpg" => "e-fe-image",
+            ".jpeg" => "e-fe-image",
+            ".mp3" => "e-fe-music",
+            ".mp4" => "e-fe-video",
+            ".zip" => "e-fe-zip",
+            ".alz" => "e-fe-zip",
+            _ => "e-fe-txt"
+        };
+
+        public string HoverCss { get; set; }
+        public string SelectedCss { get; set; }
+    }
+}

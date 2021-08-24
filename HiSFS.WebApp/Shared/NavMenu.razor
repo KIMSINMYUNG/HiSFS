@@ -1,0 +1,156 @@
+﻿@inherits CustomComponent
+
+@inject NavigationManager NavigationManager;
+@*<nav class="fixed-top row align-items-center" style="background-color: #212121; height: 64px;">*@
+<div class="container-fluid">
+    <nav class="row align-items-center navbar-dark bg-dark" style="height: 64px;">
+        <a class="col-auto ml-3" href="">
+            @*<img src="images/CI_hongikIT.png" style="width: 140px; height: 30px;" />*@
+            @*<img src="images/UNI_logo.png" style="width: auto; height: 48px;">*@
+
+            <img src="images/logo.png" style="width: auto; height: 48px;">
+        </a>
+
+        <div class="col-auto mr-auto pt-1 ml-5">
+            <SfMenu @ref="menu" Items="@menuItems" CssClass="bg-dark" TValue="MenuItemModel">
+                <MenuEvents ItemSelected="SelectedMenuItem" TValue="MenuItemModel" />
+            </SfMenu>
+        </div>
+
+        @if (@Context.로그인유무 == true)
+        {
+            <div class="col-auto mr-3">
+                <SfButton CssClass="e-outline none" HtmlAttributes=@(new Dictionary<string, object> { ["title"] = "메시지함" }) OnClick=@(() => NotifyMessage(Message.SelectedMenu, null, null, "/common/메시지함", null))>
+                    <div class="notification">
+                        <span class="e-icon-group e-icons e-icon-message"></span>
+                        @if (messageCount > 0)
+                        {
+                            <span class="badge">@messageCount</span>
+                        }
+                    </div>
+                </SfButton>
+            </div>
+            <div class="col-auto mr-3">
+                <span>@Context.직원?.사용자명</span>
+            </div>
+            <div class="col-auto mr-3">
+                <SfButton OnClick="OnLogout">로그아웃</SfButton>
+            </div>
+        }
+    </nav>
+</div>
+
+@code
+{
+#pragma warning disable BL0005
+
+    private SfMenu<MenuItemModel> menu;
+    private List<MenuItemModel> menuItems;
+    private int messageCount;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        //await RefreshAsync();
+    }
+
+    private async Task RefreshAsync(IEnumerable<메뉴직원권한정보> 메뉴직원권한목록 = null)
+    {
+        await Remote.WaitForReadyRemoteService();
+
+        var menuList = await Remote.Command.공통.메뉴_조회();
+        Cache.ModifyMenus(menuList);
+
+        menuItems = new List<MenuItemModel>();
+        foreach (var menu in menuList)
+        {
+            if (menu.사용유무 == false)
+                continue;
+
+            // 읽기 권한이 없는 경우 메뉴를 표시하지 않는다.
+            if (메뉴직원권한목록 != null && 메뉴직원권한목록.FirstOrDefault(x => x.메뉴순번 == menu.순번)?.읽기권한 != true)
+                continue;
+
+            if (menu.상위메뉴 != null && menuItems.Any(x => x.Id == menu.상위메뉴.순번.ToString()) == false)
+                continue;
+
+            var menuItem = new CustomMenuItem
+            {
+                Id = menu.순번.ToString(),
+                Text = menu.메뉴명,
+                ParentId = menu.상위메뉴?.순번.ToString(),
+                Uri = menu.경로명,
+                ClassName = menu.클래스명,
+                Separator = string.IsNullOrEmpty(menu.메뉴명) == true ? true : false,
+                Disabled = (menu.상위메뉴?.순번 != null && menu.클래스명 == null) ? true : false
+            };
+
+            menuItems.Add(menuItem);
+        }
+
+        StateHasChanged();
+    }
+
+    protected override void OnDispose()
+    {
+    }
+
+    private void SelectedMenuItem(MenuEventArgs<MenuItemModel> args)
+    {
+        var menu = menuItems.FirstOrDefault(x => x.Id == args.Item.Id);
+
+        var customMemnu = menu as CustomMenuItem;
+        NotifyMessage(Services.Message.SelectedMenu, menu.Id, menu.Text, customMemnu.Uri, customMemnu.ClassName);
+    }
+
+    protected override void OnReceivedMessage(Message message, bool isGlobal, dynamic[] args)
+    {
+        base.OnReceivedMessage(message, isGlobal, args);
+
+        if (message == Message.Login)
+        {
+            // 메뉴권한 적용 {{{
+            _ = InvokeAsync(async () =>
+            {
+                if (Context.직원.사번 == "SYSTEM")
+                    await RefreshAsync();
+                else
+                    await RefreshAsync(Context.직원.메뉴직원권한목록);
+
+                messageCount = await Remote.Command.공통.메시지_읽지않은개수(Context.직원.사번);
+
+                StateHasChanged();
+            });
+        }
+
+        if (message == Message.ReceivedMessage)
+        {
+            _ = InvokeAsync(async () =>
+            {
+                messageCount = await Remote.Command.공통.메시지_읽지않은개수(Context.직원.사번);
+
+                StateHasChanged();
+            });
+        }
+    }
+
+    private async Task OnLogout()
+    {
+        Context.직원 = null;
+
+        await SessionStorage.SetAsync("isLogin", false);
+
+        NotifyMessage(Message.Logout);
+
+        NavigationManager.NavigateTo("/login");
+    }
+
+    public class CustomMenuItem : MenuItemModel
+    {
+        public string ParentId { get; set; }
+        public string ClassName { get; set; }
+        public string Uri { get; set; }
+    }
+}

@@ -1,0 +1,65 @@
+﻿@page "/popup/부서정보"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="부서정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(부서정보.회사코드) HeaderText="회사코드" />
+        <GridColumn Field=@nameof(부서정보.부서코드) HeaderText="부서코드" />
+        <GridColumn Field=@nameof(부서정보.사업장코드) HeaderText="사업장코드" />
+        <GridColumn Field=@nameof(부서정보.부문코드) HeaderText="부문코드" />
+        <GridColumn Field=@nameof(부서정보.부서명) HeaderText="부서명" />
+    </GridColumns>
+</FGrid>
+
+
+
+@code {
+
+
+
+    private FGrid<부서정보> grid;
+    private ObservableCollection<부서정보> list;
+    private 부서정보 selectedRow;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<부서정보>> OnSelectedEvent { get; set; }
+
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<부서정보, bool> ReturnSelectedItem { get; set; }
+
+
+
+    private async Task RefreshAsync()
+    {
+
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.부서정보_조회(회사코드);
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<부서정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

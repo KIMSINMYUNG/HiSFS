@@ -1,0 +1,133 @@
+﻿@inherits CustomComponent
+
+@page "/SYS/CM/공통코드"
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="공통코드" DefaultMode="true" EditMode="DGridEditMode.All"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionBegin="OnActionBegin" OnActionComplete="OnActionComplete" OnRowDataBound="OnRowDataBound" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(공통코드.코드) Width="160" ValidationRules="@(new ValidationRules { Required = true })" />
+        <GridColumn Field=@nameof(공통코드.상위코드) Width="100" />
+        <GridColumn Field=@nameof(공통코드.코드명) Width="180" />
+        <GridColumn Field=@nameof(공통코드.코드영문명) Width="180" />
+        <GridColumn Field=@nameof(공통코드.설명) Width="200" />
+        <GridColumn Field=@nameof(공통코드.인자1) Width="120" />
+        <GridColumn Field=@nameof(공통코드.인자2) Width="120" />
+        <GridColumn Field=@nameof(공통코드.인자3) Width="120" />
+        <GridColumn Field=@nameof(공통코드.코드유형코드) Width="140" Template=@CommonCodeTemplate(nameof(공통코드.코드유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(공통코드.코드유형코드), "코드유형", "S01") HeaderText="코드유형" ValidationRules="@(new ValidationRules { Required = true })" />
+        <GridColumn Field="코드유형.코드명" Visible="false" />
+        <GridColumn Field=@nameof(공통코드.뎁스) Width="100" ValidationRules="@(new ValidationRules { Required = true })" />
+        <GridColumn Field=@nameof(공통코드.정렬순번) Width="100" ValidationRules="@(new ValidationRules { Required = true })" />
+        <GridColumn Field=@nameof(공통코드.사용유무) Width="80" EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" DefaultValue="true" />
+    </GridColumns>
+</FGrid>
+
+@*@result*@
+
+@code {
+    private FGrid<공통코드> grid;
+    private ObservableCollection<공통코드> list;
+
+
+    private async Task RefreshAsync()
+    {
+        list = null;
+        StateHasChanged();
+
+        var result = await Remote.Command.공통.공통코드_조회();
+        ModifyList(result, (x, map) =>
+        {
+            if (x.코드유형코드 != null)
+                x.코드유형 = map[x.코드유형코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<공통코드> args)
+    {
+
+    }
+
+    private void OnRowDataBound(RowDataBoundEventArgs<공통코드> args)
+    {
+        if (string.IsNullOrEmpty(args.Data.상위코드) == false)
+            return;
+
+        args.Row.AddStyle(new[] { "background-color: #444444;" });
+    }
+
+    private async Task OnActionBegin(ActionEventArgs<공통코드> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            await Task.Yield();
+
+        }
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<공통코드> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+
+            var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            if (selectedRow == null)
+                return;
+
+            var newRow = args.Data;
+            newRow.코드 = $"{selectedRow.코드[0..1]}{int.Parse(selectedRow.코드[1..3]) + (selectedRow.뎁스 == 1 ? 1 : 0):00}{(selectedRow.뎁스 == 1 ? "" : (int.Parse(selectedRow.코드[3..]) + 1).ToString("00"))}";
+            newRow.상위코드 = selectedRow.상위코드;
+            newRow.코드유형코드 = selectedRow.코드유형코드;
+            newRow.뎁스 = selectedRow.뎁스;
+            newRow.정렬순번 = list.Where(x => x.상위코드 == selectedRow.상위코드).Max(x => x.정렬순번) + 1;
+            newRow.사용유무 = true;
+            newRow.삭제유무 = false;
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+
+            var rc = await grid.Grid.GetSelectedRowCellIndexes();
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //state = "delete";
+
+            await Remote.Command.공통.공통코드_삭제(args.Data, false);
+
+            NotifyGlobalMessage(Services.Message.ChangedCommonCode);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //state = "save";
+
+            await Remote.Command.공통.공통코드_저장(args.Data, args.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyGlobalMessage(Services.Message.ChangedCommonCode);
+        }
+    }
+
+    protected override void OnReceivedMessage(Services.Message message, bool isGlobal, dynamic[] args)
+    {
+        base.OnReceivedMessage(message, isGlobal, args);
+
+        if (isGlobal == true && message == Services.Message.ChangedCommonCode)
+        {
+
+        }
+    }
+
+    protected override void OnDispose()
+    {
+
+    }
+}

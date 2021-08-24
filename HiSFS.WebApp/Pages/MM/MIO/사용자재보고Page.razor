@@ -1,0 +1,369 @@
+﻿@inherits CustomComponent
+@page "/mm/mio/사용자재보고"
+@using HiSFS.Api.Shared.Models.View_DZICUBE
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Popups
+
+@*<SfGrid @ref="grid1" DataSource="@list1" AllowPaging="true" Toolbar="@(new string[] {"Add","Cancel" })">*@
+
+    <SfGrid @ref="grid1" DataSource="@list1" AllowPaging="true" >
+        <GridEvents OnActionComplete="ActionCompleteHandler" TValue="사용자재보고정보" Created="RefreshAsync" RowSelected="OnRowSelected"></GridEvents>
+        <GridEditSettings AllowAdding="true" AllowEditing="false" AllowDeleting="false" Mode="@Syncfusion.Blazor.Grids.EditMode.Dialog" Dialog="DialogParams">
+            <Template>
+                @{
+                    var 헤더 = (context as 사용자재보고정보);
+                }
+                <div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="@회사코드Check"></SfTextBox>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <DInputSearch Placeholder="지시번호" Target="#main" DialogHeader="지시번호" TValue="외주작업지시서정보" TCode="string" TextField="지시번호" ValueChanged=@(지시번호Changed) CodeField="지시번호" @bind-Code=@(헤더.지시번호)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.외주지시Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </div>
+
+                    </div>
+                    <div class="form-row">
+
+                        <div class="form-group col-md-6">
+                            <SfDatePicker ID="작업일자" TValue="DateTime" Value='@작업일자_EDIT' FloatLabelType="FloatLabelType.Always" Placeholder="작업일자">
+                            </SfDatePicker>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <SfTextBox ID="품목코드" Value="@(품번_EDIT)" FloatLabelType="FloatLabelType.Always" Placeholder="품목코드" Enabled="@false"></SfTextBox>
+                        </div>
+
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <SfTextBox ID="사용공정" Value="@(사용공정_EDIT)" FloatLabelType="FloatLabelType.Always" Placeholder="사용공정" Enabled="@false"></SfTextBox>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <SfTextBox ID="사용작업장" Value="@(사용작업장_EDIT)" FloatLabelType="FloatLabelType.Always" Placeholder="사용작업장" Enabled="@false"></SfTextBox>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <SfTextBox ID="지시구분" Value="@(지시구분_EDIT)" FloatLabelType="FloatLabelType.Always" Placeholder="지시구분" Enabled="@false"></SfTextBox>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <SfComboBox TValue="string" TItem="직원정보" @bind-Value="@(헤더.사원코드)" PopupWidth="300px" DataSource="@직원정보List" PopupHeight="400px" CssClass="e-multi-column" Placeholder="사원코드" AllowFiltering="true">
+                                <ComboBoxTemplates TItem="직원정보">
+                                    <HeaderTemplate>
+                                        <table><tr><th class="e-text-center">사번</th><th width="100px">사용자명</th><th width="100px">부서코드</th></tr></table>
+                                    </HeaderTemplate>
+                                    <ItemTemplate Context="anotherContext">
+                                        @{
+                                            var 직원정보 = (anotherContext as 직원정보);
+                                        }
+                                        <table>
+                                            <tbody>
+                                                <tr>
+                                                    <td>@직원정보.사번</td>
+                                                    <td>@직원정보.사용자명</td>
+                                                    <td>@직원정보.부서코드</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </ItemTemplate>
+                                </ComboBoxTemplates>
+                                <ComboBoxFieldSettings Text="사용자명" Value="사번"></ComboBoxFieldSettings>
+                            </SfComboBox>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <SfComboBox TValue="string" TItem="부서정보" @bind-Value="@(헤더.부서코드)" PopupWidth="400px" DataSource="@부서정보List" PopupHeight="400px" CssClass="e-multi-column" Placeholder="부서코드" AllowFiltering="true">
+                                <ComboBoxTemplates TItem="부서정보">
+                                    <HeaderTemplate>
+                                        <table>
+                                            <tr>
+                                                <th width="100px">부서코드</th>
+                                                <th width="100px">부서명</th>
+                                                <th width="100px">부문코드</th>
+                                                <th width="100px">부문명</th>
+                                            </tr>
+                                        </table>
+                                    </HeaderTemplate>
+                                    <ItemTemplate Context="anotherContext">
+                                        @{
+                                            var 부서 = (anotherContext as 부서정보);
+                                        }
+                                        <table>
+                                            <tbody>
+                                                <tr>
+                                                    <td>@부서.부서코드</td>
+                                                    <td>@부서.부서명</td>
+                                                    <td>@부서.부문코드</td>
+                                                    <td>@부서.부문명</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </ItemTemplate>
+                                </ComboBoxTemplates>
+                                <ComboBoxFieldSettings Text="부서명" Value="부서코드"></ComboBoxFieldSettings>
+                            </SfComboBox>
+                        </div>
+                        <div class="form-group col-md-4">
+                            @*<SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="사용수량" Value=@(사용수량_EDIT) Enabled="false" />*@
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <SfDropDownList ID="사용여부" TItem="사용여부필드" @bind-Value="@(헤더.사용여부)" TValue="string" DataSource="@list사용여부" FloatLabelType="FloatLabelType.Always" Placeholder="사용여부">
+                                <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <SfDropDownList ID="유무상구분" TItem="유무상구분필드" @bind-Value="@(헤더.유무상구분)" TValue="string" DataSource="@list유무상구분" FloatLabelType="FloatLabelType.Always" Placeholder="유무상구분">
+                                <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <SfDropDownList ID="유효여부" TItem="유효여부필드" @bind-Value="@(헤더.유효여부)" TValue="string" DataSource="@list유효여부" FloatLabelType="FloatLabelType.Always" Placeholder="유효여부">
+                                <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </div>
+                    </div>
+
+
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                        </div>
+                        <div class="form-group col-md-4">
+
+                        </div>
+                        <div class="form-group col-md-4">
+                            @*<SfDropDownList ID="지시전개순번" TItem="지시전개순번필드" @bind-Value="@(전개순번_EDIT)" TValue="Decimal" DataSource="@list지시전개순번" FloatLabelType="FloatLabelType.Always" Placeholder="지시전개순번">
+                                    <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                                </SfDropDownList>*@
+                        </div>
+                    </div>
+
+                </div>
+            </Template>
+        </GridEditSettings>
+        <GridColumns>
+            <GridColumn Field=@nameof(사용자재보고정보.회사코드) HeaderText="회사코드" IsPrimaryKey="true" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" Width="140"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.사업장코드) HeaderText="사업장코드" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.작업번호) HeaderText="작업번호" IsPrimaryKey="true" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.작업순번) HeaderText="작업순번" IsPrimaryKey="true" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.작업일자) HeaderText="작업일자" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.품번) HeaderText="품번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.사용공정) HeaderText="사용공정" Width="120" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.사용작업장) HeaderText="사용작업장" Width="120" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.지시번호) HeaderText="지시번호" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.지시구분) HeaderText="지시구분" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.지시전개순번) HeaderText="지시전개순번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.사원코드) HeaderText="사원코드" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.부서코드) HeaderText="부서코드" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.실적번호) HeaderText="실적번호" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.사용여부) HeaderText="사용여부" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.유무상구분) HeaderText="유무상구분" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.유효여부) HeaderText="유효여부" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+            <GridColumn Field=@nameof(사용자재보고정보.사용수량) HeaderText="사용수량" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+        </GridColumns>
+    </SfGrid>
+
+
+
+    @code {
+
+        public List<사용자재보고정보> list1 { get; set; }
+        private SfGrid<사용자재보고정보> grid1;
+
+
+        public List<직원정보> 직원정보List { get; set; }
+        public List<부서정보> 부서정보List { get; set; }
+
+
+        private 장소위치정보 이동공정_입고창고코드Selected { get; set; }
+        private 장소위치정보 이동작업장_입고장소코드Selected { get; set; }
+
+
+        private 품목정보 품목코드Selected { get; set; }
+
+        private VL_MES_WO_WF 지시번호Selected { get; set; }
+
+        public DateTime 작업일자_EDIT { get; set; } = DateTime.Now;
+
+        private Boolean 회사코드Check = false, 작업번호Check = false, 출고장소Check = true, 입고고장소Check = true;
+
+        private Boolean Check = false;
+
+        private DialogSettings DialogParams = new DialogSettings { MinHeight = "500px", Width = "600px" };
+
+        private string 회사코드 = "";
+        private string 작업번호 = "";
+
+
+        private string 지시구분_EDIT = "";
+        private string 사용공정_EDIT = "";
+        private string 사용작업장_EDIT = "";
+        private string 품번_EDIT = "";
+
+        private string 실적번호_EDIT = "";
+
+
+        public Decimal 전개순번_EDIT { get; set; }
+        public Decimal 사용수량_EDIT { get; set; }
+
+        public void 지시번호Changed(외주작업지시서정보 value)
+        {
+            전개순번_EDIT = value.전개순번;
+            사용수량_EDIT = value.수량;
+            지시구분_EDIT = value.지시구분;
+            사용공정_EDIT = value.공정;
+            사용작업장_EDIT = value.작업장;
+            품번_EDIT = value.품번;
+
+            grid1.PreventRender(false);
+            StateHasChanged();
+
+        }
+
+
+        public class 지시전개순번필드
+        {
+            public int ID { get; set; }
+            public string Text { get; set; }
+        }
+        public List<지시전개순번필드> list지시전개순번 = new List<지시전개순번필드>
+            () {
+        new 지시전개순번필드(){ ID=0, Text="미사용"},
+        new 지시전개순번필드(){ ID=1, Text="사용"},
+        };
+
+
+        public class 사용여부필드
+        {
+            public int ID { get; set; }
+            public string Text { get; set; }
+        }
+        public List<사용여부필드>
+            list사용여부 = new List<사용여부필드>
+                () {
+                new 사용여부필드(){ ID=0, Text="미사용"},
+                new 사용여부필드(){ ID=1, Text="사용"},
+                    };
+
+
+        public class 유무상구분필드
+        {
+            public int ID { get; set; }
+            public string Text { get; set; }
+        }
+        public List<유무상구분필드>
+            list유무상구분 = new List<유무상구분필드>
+                () {
+                        new 유무상구분필드(){ ID=0, Text="무상"},
+                        new 유무상구분필드(){ ID=1, Text="유상"},
+                    };
+
+
+        public class 유효여부필드
+        {
+            public int ID { get; set; }
+            public string Text { get; set; }
+        }
+        public List<유효여부필드>
+            list유효여부 = new List<유효여부필드>
+                () {
+                                new 유효여부필드(){ ID=0, Text="미마감"},
+                                new 유효여부필드(){ ID=1, Text="마감"},
+                    };
+
+        protected async override void OnInitialized()
+        {
+            회사코드 = await SessionStorage.GetAsync<string>
+                ("회사코드");
+            var result = await this.Remote.Command.기준정보.직원_조회(true, 회사코드);
+            직원정보List = result.ToList();
+
+            var result2 = await Remote.Command.기준정보.부서정보_조회(회사코드);
+            부서정보List = result2.ToList();
+        }
+
+        async Task RefreshAsync()
+        {
+            회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+            var result = await Remote.Command.기준정보.MES생산관리_사용자재보고정보_조회(회사코드);
+
+            list1 = result.ToList();
+
+            StateHasChanged();
+
+        }
+        private async Task OnRowSelected(RowSelectEventArgs<사용자재보고정보>
+            e)
+        {
+            작업번호 = e.Data.작업번호;
+            //회사코드 = e.Data.회사코드;
+
+        }
+
+        private void OnActionBegin(ActionEventArgs<일괄생산실적상세정보>
+            args)
+        {
+            //await Task.Yield();
+
+            if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+            {
+                var parentRow = grid1.SelectedRecords.FirstOrDefault();
+                if (parentRow == null)
+                {
+                    args.Cancel = true;
+                    return;
+                }
+            }
+        }
+
+        public async Task ActionCompleteHandler(ActionEventArgs<사용자재보고정보>
+            args)
+        {
+            if (args.RequestType.ToString() == "Add")
+            {
+                Check = true;
+            }
+            if (args.RequestType.ToString() == "Save")
+            {
+                var newRow = args.Data;
+                newRow.회사코드 = 회사코드;
+                newRow.사업장코드 = "1000";
+
+                newRow.지시전개순번 = 전개순번_EDIT;
+                newRow.사용수량 = 사용수량_EDIT;
+                newRow.지시구분 = 지시구분_EDIT;
+                newRow.사용공정 = 사용공정_EDIT;
+                newRow.사용작업장 = 사용작업장_EDIT;
+                newRow.품번 = 품번_EDIT;
+                newRow.작업일자 = 작업일자_EDIT;
+
+
+
+                await Remote.Command.기준정보.MES생산실적_사용자재보고정보_등록(newRow, args.Action == "Add" ? true : false);
+                NotifyMessage(Message.반영성공);
+                await RefreshAsync();
+
+            }
+            else
+            {
+                Check = false;
+            }
+        }
+
+
+        protected override void OnDispose()
+        {
+            //throw new NotImplementedException();
+        }
+    }

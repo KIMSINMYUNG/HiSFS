@@ -1,0 +1,93 @@
+﻿
+@page "/dz/재고조정현황"
+@using HiSFS.Api.Shared.Models.View_DZICUBE
+@inherits CustomComponent
+
+<SfSplitter Width="5000px" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                <FGrid @ref="grid" DataSource="@list" TValue="VL_MES_ADJUST" DefaultMode="true" EditMode="DGridEditMode.EditDelete" PageSize="15"
+                       OnCreated="RefreshAsync" OnToolbarClick="OnToolbarClick">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.CO_CD) HeaderText="회사코드" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ADJUST_NB) HeaderText="조정번호" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ADJUST_SQ) HeaderText="조정순번" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ADJUST_FG) HeaderText="조정구분" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ADJUST_FG_NM) HeaderText="조정구분명" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ADJUST_DT) HeaderText="조정일자" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.WH_CD) HeaderText="창고코드" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.WH_NM) HeaderText="창고명" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.LC_CD) HeaderText="장소코드" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.LC_NM) HeaderText="장소명" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.PLN_CD) HeaderText="담당자코드" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.PLN_NM) HeaderText="담당자명" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ITEM_CD) HeaderText="품번" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ITEM_NM) HeaderText="품명" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ITEM_DC) HeaderText="규격" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.UNIT_DC) HeaderText="단위" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.UNITMANG_DC) HeaderText="관리단위" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.UNITCHNG_NB) HeaderText="환산계수" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.QT) HeaderText="조정수량" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ADJUST_UM) HeaderText="단가" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.ADJUST_AM) HeaderText="조정금액" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.LOT_NB) HeaderText="LOT번호" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.MGMT_CD) HeaderText="관리구분" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.MGM_NM) HeaderText="관리구분명" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.PJT_CD) HeaderText="프로젝트코드" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.PJT_NM) HeaderText="프로젝트명" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.REMARK_DC_H) HeaderText="비고(건)" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.REMARK_DC_D) HeaderText="비고(내역)" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.TR_CD) HeaderText="거래처" />
+                        <GridColumn Field=@nameof(VL_MES_ADJUST.TR_NM) HeaderText="거래처명" />
+
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    private FGrid<VL_MES_ADJUST> grid;
+    private List<VL_MES_ADJUST> list;
+    private VL_MES_ADJUST selectedRow;
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+
+        StateHasChanged();
+
+        //창고VIEW
+        var result = await Remote.Command.기준정보.VL_MES_ADJUST();
+
+        list = result.ToList();
+
+        StateHasChanged();
+    }
+
+
+    private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "btnCheckSave")
+        {
+            var YesOrNo = await ShowMessageBox("재고조정현황반영", "재고조정현황을 반영하시겠습니까?", MessageBoxResultType.YesOrNo);
+            bool result = false;
+            if (YesOrNo)
+            {
+                result = await Remote.Command.기준정보.VL_MES_ADJUST_반영(list);
+
+                if (result)
+                    NotifyMessage(Message.반영성공);
+                else
+                    NotifyMessage(Message.반영실패);
+            }
+
+        }
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

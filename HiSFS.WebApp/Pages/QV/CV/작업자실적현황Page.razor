@@ -1,0 +1,126 @@
+﻿@page "/qv/iv/작업자실적현황"
+@using HiSFS.Api.Shared.Models
+@using System.ComponentModel.DataAnnotations.Schema
+
+
+@inherits CustomComponent
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="40%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                <FGrid @ref="grid1" DataSource="@list1" TValue="작업자생산실적정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="5"
+                       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(작업자생산실적정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        <GridColumn Field="작업자.사용자명" HeaderText="작업자명" Width="150" />
+                        <GridColumn Field="작업자.부서.부서명" HeaderText="부서명" Width="150" />
+                        <GridColumn Field=@nameof(작업자생산실적정보.작업자사번) HeaderText="작업자사번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                        @*<GridColumn Field=@nameof(작업자생산실적정보.생산지시코드) Visible="false" />
+        <GridColumn Field=@nameof(작업자생산실적정보.생산지시명) HeaderText="작업지시명" Width="150" />
+        <GridColumn Field=@nameof(작업자생산실적정보.작업자사번) HeaderText="작업자사번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+        <GridColumn Field=@nameof(작업자생산실적정보.공정단위코드) HeaderText="공정단위코드" Width="150" />
+        <GridColumn Field=@nameof(작업자생산실적정보.생산품코드) HeaderText="실적품번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+
+        <GridColumn Field=@nameof(작업자생산실적정보.실적수량) HeaderText="실적수량" Width="100" Format="G29" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+        <GridColumn Field=@nameof(작업자생산실적정보.불량수량) HeaderText="불량수량" Width="100" Format="G29" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+
+        <GridColumn Field=@nameof(작업자생산실적정보.실적공정코드_창고코드) HeaderText="실적공정코드/창고코드" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+        <GridColumn Field=@nameof(작업자생산실적정보.실적작업장코드_장소코드) HeaderText="실적작업장코드/장소코드" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+        <GridColumn Field=@nameof(작업자생산실적정보.실적등록일) Format="yyyy/MM/dd " HeaderText="실적등록일" Width="150">
+            <EditTemplate></EditTemplate>
+        </GridColumn>*@
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+        <SplitterPane Size="60%" Collapsible="true" >
+            <div class="row mx-2 mb-3">
+                <HiSFS.WebApp.Pages.Common.단위 제목="실적현황">
+                    <FGrid DataSource=@list2 DefaultMode="true" TValue="작업자생산실적정보" EditMode="DGridEditMode.None" PageSize="10">
+                        <GridColumns>
+                            <GridColumn Field=@nameof(작업자생산실적정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+                                <EditTemplate></EditTemplate>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(작업자생산실적정보.생산지시코드) Visible="false" />
+                            <GridColumn Field=@nameof(작업자생산실적정보.생산지시명) HeaderText="작업지시명" Width="150" />
+                            <GridColumn Field=@nameof(작업자생산실적정보.작업자사번) HeaderText="작업자사번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                            <GridColumn Field=@nameof(작업자생산실적정보.공정단위코드) HeaderText="공정단위코드" Width="150" />
+                            <GridColumn Field=@nameof(작업자생산실적정보.생산품코드) HeaderText="실적품번" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+
+                            <GridColumn Field=@nameof(작업자생산실적정보.실적수량) HeaderText="실적수량" Width="100" Format="G29" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                            <GridColumn Field=@nameof(작업자생산실적정보.불량수량) HeaderText="불량수량" Width="100" Format="G29" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+
+                            <GridColumn Field=@nameof(작업자생산실적정보.실적공정코드_창고코드) HeaderText="실적공정코드/창고코드" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                            <GridColumn Field=@nameof(작업자생산실적정보.실적작업장코드_장소코드) HeaderText="실적작업장코드/장소코드" Width="150" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                            <GridColumn Field=@nameof(작업자생산실적정보.실적등록일) Format="yyyy/MM/dd hh:mm" HeaderText="실적등록일" Width="150">
+                                <EditTemplate></EditTemplate>
+                            </GridColumn>
+                        </GridColumns>
+                    </FGrid>
+                </HiSFS.WebApp.Pages.Common.단위>
+            </div>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    // 순번  보유품번 품번 품명 규격 수량 단위 장소 위치 품질검사 검사기준값 오차값 측정값 검사단위 검사장비 검사결과
+    public SfButton btnExcel;
+
+    private FGrid<작업자생산실적정보> grid1;
+    private ObservableCollection<작업자생산실적정보> list1;
+
+    private FGrid<작업자생산실적정보> grid2;
+    private ObservableCollection<작업자생산실적정보> list2;
+
+    private string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        //var result = await Remote.Command.기준정보.MES생산관리_작업자생산실적정보_조회(회사코드);
+
+        var result = await Remote.Command.기준정보.MES생산관리_작업자생산실적정보_조회(회사코드);
+
+        ModifyList(result, (x, map) =>
+        {
+        });
+
+        list1 = result.ToObservableCollection();
+
+        StateHasChanged();
+
+
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<작업자생산실적정보> args)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task OnRowSelected(RowSelectEventArgs<작업자생산실적정보> args)
+    {
+
+        var result = await Remote.Command.기준정보.MES생산관리_작업자생산실적상세정보_조회(args.Data.생산지시코드, 회사코드, args.Data.작업자사번);
+
+
+        ModifyList(result, (x, map) =>
+        {
+        });
+        list2 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+
+
+    protected override void OnDispose()
+    {
+    }
+}

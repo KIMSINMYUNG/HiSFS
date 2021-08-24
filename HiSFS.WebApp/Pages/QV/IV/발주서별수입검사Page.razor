@@ -1,0 +1,92 @@
+﻿@page "/popup/발주서별수입검사"
+
+@inherits CustomComponent
+
+<FGrid @ref="grid" DataSource="@list" TValue="발주서별수입검사"  DefaultMode="true"  PageSize="15"
+       OnCreated="RefreshAsync"  OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(발주서별수입검사.회사코드) HeaderText="회사코드" Width="110" />
+        <GridColumn Field=@nameof(발주서별수입검사.실행상태코드)  HeaderText="실행상태"  Width="120" >
+            <Template>
+                @{ var info = context as 발주서별수입검사;
+                    if (info?.실행상태코드 == "B2004")
+                    {
+                        <span>완료</span>
+                    }
+                }
+            </Template>
+        </GridColumn>
+        <GridColumn Field=@nameof(발주서별수입검사.상세) HeaderText="" Width="120" TextAlign="TextAlign.Right" AllowAdding="false" AllowEditing="false">
+            <Template>
+                @{ var info = context as 발주서별수입검사; }
+                <SfButton @onclick=@(() => OnShowDetail(info))>상세</SfButton>
+            </Template>
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+
+        <GridColumn Field=@nameof(발주서별수입검사.발주일) HeaderText="발주일" Width="120" />
+        <GridColumn Field=@nameof(발주서별수입검사.납기일) HeaderText="납기일" Width="120" />
+        <GridColumn Field=@nameof(발주서별수입검사.출하예정일) HeaderText="출하예정일" Width="120" />
+        <GridColumn Field=@nameof(발주서별수입검사.거래처명) HeaderText="거래처명" Width="120" />
+        <GridColumn Field=@nameof(발주서별수입검사.거래구분) HeaderText="거래구분" Width="120" />
+        <GridColumn Field=@nameof(발주서별수입검사.발주번호) HeaderText="발주번호" Width="200" />
+        <GridColumn Field=@nameof(발주서별수입검사.발주순번) HeaderText="발주순번" Width="120" />
+        <GridColumn Field=@nameof(발주서별수입검사.환종) HeaderText="환종" Width="100" />
+        <GridColumn Field=@nameof(발주서별수입검사.품번) HeaderText="품번" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.품명) HeaderText="품명" Width="200" />
+        <GridColumn Field=@nameof(발주서별수입검사.규격) HeaderText="규격" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.관리단위) HeaderText="단위" Width="100" />
+        <GridColumn Field=@nameof(발주서별수입검사.발주수량) HeaderText="발주수량" Width="120" />
+        <GridColumn Field=@nameof(발주서별수입검사.발주단가) HeaderText="발주단가" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.공급가) HeaderText="공급가" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.부가세) HeaderText="부가세" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.합계액) HeaderText="합계액" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.관리구분명) HeaderText="관리구분명" Width="180" />
+        <GridColumn Field=@nameof(발주서별수입검사.프록젝트명) HeaderText="프록젝트명" Width="180" />
+        <GridColumn Field=@nameof(발주서별수입검사.비고_내역) HeaderText="비고(내역)" Width="200" />
+        <GridColumn Field=@nameof(발주서별수입검사.담당자명) HeaderText="담당자명" Width="100" />
+        <GridColumn Field=@nameof(발주서별수입검사.부가세구분) HeaderText="부가세구분" Width="100" />
+        <GridColumn Field=@nameof(발주서별수입검사.과세구분명) HeaderText="과세구분명" Width="120" />
+        <GridColumn Field=@nameof(발주서별수입검사.검사구분) HeaderText="검사구분" Width="100" />
+        <GridColumn Field=@nameof(발주서별수입검사.비고) HeaderText="비고" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.과세구분) HeaderText="과세구분" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.담당자코드) HeaderText="담당자코드" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.사업장코드) HeaderText="사업장코드" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.부서코드) HeaderText="부서코드" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.사원코드) HeaderText="사원코드" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.거래처코드) HeaderText="거래처코드" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.관리구분코드) HeaderText="관리구분코드" Width="150" />
+        <GridColumn Field=@nameof(발주서별수입검사.프로젝트) HeaderText="프로젝트" Width="150" />
+    </GridColumns>
+</FGrid>
+
+@code {
+
+    private FGrid<발주서별수입검사> grid;
+    private ObservableCollection<발주서별수입검사> list;
+
+    private async Task RefreshAsync()
+    {
+
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.발주서별수입검사_조회Dz( 회사코드);
+
+        list = result.ToObservableCollection();
+
+
+        StateHasChanged();
+    }
+
+
+    private void OnShowDetail(발주서별수입검사 info)
+    {
+        // 작업지시 상세 페이지로 이동
+        NotifyMessage(Message.SelectedMenu, null, null, "/qv/iv/발주서별수입검사상세", null, info.발주번호, info.발주순번);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+
+}

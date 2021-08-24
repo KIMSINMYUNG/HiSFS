@@ -1,0 +1,444 @@
+﻿@page "/pm/wo/공정별작업지시"
+
+@inherits CustomComponent
+
+@using Syncfusion.XlsIO;
+@using Syncfusion.XlsIORenderer;
+@using Syncfusion.Blazor.PdfViewerServer
+@using Syncfusion.Pdf;
+@using Microsoft.AspNetCore.Hosting
+@using QRCoder;
+@using System.Drawing;
+@using System.Drawing.Imaging;
+
+
+@inject IWebHostEnvironment Environment
+
+
+<FGrid @ref="grid" DataSource="list" TValue="생산지시정보" DefaultMode="true"
+       OnCreated="RefreshAsync">
+    <GridColumns>
+        <GridColumn Field=@nameof(생산지시정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(생산지시정보.생산지시코드) Visible="false" />
+        <GridColumn Field=@nameof(생산지시정보.생산지시명) HeaderText="작업지시명" />
+        <GridColumn Field=@nameof(생산지시정보.순번) HeaderText="차수" AllowAdding="false" AllowEditing="false" />
+        <GridColumn Field=@nameof(생산지시정보.실행상태코드) HeaderText="실행상태" Template=@CommonCodeTemplate(nameof(생산지시정보.실행상태코드))>
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(생산지시정보.생산계획코드) HeaderText="생산계획">
+            <Template>
+                @((context as 생산지시정보).생산계획?.생산계획명)
+            </Template>
+        </GridColumn>
+        <GridColumn Field="생산계획.생산계획명" Visible="false" />
+        <GridColumn Field=@nameof(생산지시정보.생산지시유형코드) HeaderText="생산지시유형" Template=@CommonCodeTemplate(nameof(생산지시정보.생산지시유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(생산지시정보.생산지시유형코드), "생산지시유형", "B21") />
+        <GridColumn Field=@nameof(생산지시정보.생산수량) />
+        <GridColumn Field=@nameof(생산지시정보.시작일) Format="yyyy/MM/dd" />
+        <GridColumn Field=@nameof(생산지시정보.완료목표일) Format="yyyy/MM/dd" />
+        <GridColumn Field=@nameof(생산지시정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일" AllowAdding="false" AllowEditing="false" />
+        <GridColumn Field=@nameof(생산지시정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="변경일" AllowAdding="false" AllowEditing="false" />
+        <GridColumn HeaderText="" Width="120" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right" AllowAdding="false" AllowEditing="false">
+            <Template>
+                @{ var info = context as 생산지시정보; }
+                <SfButton @onclick=@(() => OnShowWorkOrder(info))>작업지시서</SfButton>
+            </Template>
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+    </GridColumns>
+</FGrid>
+
+<SfDialog Target="#main" IsModal="true" Width="90%" Height="900px" ShowCloseIcon="true" @bind-Visible=@(isShowPdfViewer)>
+    <DialogTemplates>
+        <Header>작업지시서</Header>
+        <Content>
+            <SfPdfViewerServer DocumentPath=@(documentPath) Width="100%" Height="750px" />
+        </Content>
+    </DialogTemplates>
+    <DialogButtons>
+        <DialogButton Content="확인" OnClick=@(() => isShowPdfViewer = false) />
+    </DialogButtons>
+    <DialogAnimationSettings Effect="@DialogEffect.None"></DialogAnimationSettings>
+</SfDialog>
+
+
+
+@code {
+    /*
+        작업자에게 할당 된 작업지시 목록을 조회하는 화면
+
+        입력사항 (없음)
+
+        동작 :
+           - 생산 책임자 또는 작업자 별 작업지시 내용 조회.
+           - 작업지시서 보기 및 발급
+
+        작업지시서 내용 :
+           - 공정 정보
+           - 도면 (도면번호, 도면명) ※ 도면 이미지는 포함하지 않음
+           - 필요자재 목록 및 정보
+           - 생산 공정품 정보
+           - 단위 생산 예상 시간
+           - 비고
+           - 바코드 (공정 시작, 완료, 자재불량, 공정품불량)
+             ※ 자주검사 체크시 자주검사 시작/완료 바코드도 포함함
+             ※ 품질검사 공정의 경우 품질검사 시작/완료 바코드
+        ※ 작업지시서의 양식은 1차 미적용. 2차 고객 협의 후 양식 적용 예정
+    */
+
+    private FGrid<생산지시정보> grid;
+    private ObservableCollection<생산지시정보> list;
+
+    private string documentPath;
+    private bool isShowPdfViewer;
+    private QRCodeGenerator qrGenerator = new QRCodeGenerator();
+    private string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.작업지시_조회(회사코드, new 검색정보
+        {
+            [검색대상.상태] = "B2003",
+        });
+        ModifyList(result, (x, map) =>
+        {
+        });
+        list = result.ToObservableCollection();
+
+
+
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+    protected override void OnDispose()
+    {
+
+    }
+
+
+    private async Task OnShowWorkOrder(생산지시정보 info)
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var detail = await Remote.Command.생산관리.작업지시상세_조회(info.생산지시코드, 회사코드);
+
+        var buffer = MakeWorkOrderPdf(detail);
+        var pdfFilename = $"{Path.GetFileName(Path.GetTempFileName())}.pdf";
+        var tempFilename = Path.Combine(Environment.WebRootPath, "Temp", pdfFilename);
+        File.WriteAllBytes(tempFilename, buffer);
+
+        documentPath = $"wwwroot/Temp/{pdfFilename}";
+
+        isShowPdfViewer = true;
+    }
+
+    private string gong_barcodeStart;
+    private string gong_barcodeEnd;
+    private string pum_barcodeStart;
+    private string pum_barcodeEnd;
+
+
+    private byte[] MakeWorkOrderPdf(생산지시정보 info)
+    {
+        var finalDoc = new PdfDocument();
+        var pages = new List<Stream>();
+
+        var renderer = new XlsIORenderer();
+        var settings = new XlsIORendererSettings();
+        settings.IsConvertBlankPage = false;
+        settings.LayoutOptions = LayoutOptions.FitSheetOnOnePage;
+        settings.DisplayGridLines = GridLinesDisplayStyle.Invisible;
+
+        foreach (var 차수정보 in info.생산지시공정차수목록)
+        {
+            using var ws = MakeWorkOrderExcel(info, 차수정보);
+            settings.TemplateDocument = new PdfDocument();
+            var document = renderer.ConvertToPDF(ws, settings);
+            var sPdf = new MemoryStream();
+            document.Save(sPdf);
+            sPdf.Seek(0, SeekOrigin.Begin);
+            pages.Add(sPdf);
+        }
+        PdfDocumentBase.Merge(finalDoc, pages.ToArray());
+        using var ms = new MemoryStream();
+        finalDoc.Save(ms);
+
+
+        return ms.ToArray();
+    }
+
+    private Stream MakeWorkOrderExcel(생산지시정보 생산지시, 생산지시공정차수정보 공정차수)
+    {
+        gong_barcodeStart = $"00 S9108 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}";
+        gong_barcodeEnd = $"00 S9109 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}";
+
+        //pum_barcodeStart = $"00 S9112 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}";
+        //pum_barcodeEnd = $"00 S9113 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}";
+
+
+
+        var workOrderTemplate = Path.Combine(Environment.WebRootPath, "Forms", "WorkOrder_Template.xlsx");
+
+        using var excelEngine = new ExcelEngine();
+        var application = excelEngine.Excel;
+        application.DefaultVersion = ExcelVersion.Excel2016;
+        using var rs = new MemoryStream(File.ReadAllBytes(workOrderTemplate));
+        var workbook = application.Workbooks.Open(rs);
+        var sheet = workbook.Worksheets[0];
+
+        //////////////////////
+        // 항목 전개
+
+        /*
+        sheet[3, 1].Text = "공정유형";
+        sheet[3, 2].Text = 공정차수.생산품공정차수.공정단위.공정.공정명;
+
+        sheet[4, 1].Text = "공정";
+        sheet[4, 2].Text = 공정차수.생산품공정차수.공정단위.공정단위명;
+
+        sheet[5, 1].Text = "완제품";
+        sheet[5, 2].Text = 공정차수.생산품공정차수.공정단위.완제품?.품목명;
+
+        sheet[6, 1].Text = "공정품";
+        sheet[6, 2].Text = 공정차수.생산품공정차수.공정단위.공정품?.품목명;
+
+        sheet[7, 1].Text = "공정기준시간";
+        sheet[7, 2].Text = 공정차수.생산품공정차수.공정단위.공정예상시간.ToString();
+
+        sheet[8, 1].Text = "시작일";
+        sheet[8, 2].Text = 생산지시.시작일?.ToString("yyyy/MM/dd");
+
+        sheet[8, 1].Text = "완료목표일";
+        sheet[8, 2].Text = 생산지시.완료목표일?.ToString("yyyy/MM/dd");
+
+        sheet[10, 1].Text = "지시수량";
+        sheet[10, 2].Text = 생산지시.생산수량.ToString();
+
+        sheet[11, 1].Text = "공정담당자";
+        sheet[11, 2].Text = 공정차수.작업자?.사용자명;
+
+        sheet[12, 1].Text = "도면번호";
+        sheet[12, 2].Text = 공정차수.생산품공정차수.공정단위.도면?.도면번호;
+
+        sheet[13, 1].Text = "도면명";
+        sheet[13, 2].Text = 공정차수.생산품공정차수.공정단위.도면?.도면명;
+
+        sheet[14, 1].Text = "비고";
+        sheet[14, 2].Text = 공정차수.비고;
+
+        sheet[16, 1].Text = "공정 시작";
+        var ms = new MemoryStream();
+        MakeQrCode($"00 S9108 ").Save(ms, ImageFormat.Png);
+        sheet.Pictures.AddPicture(16, 2, ms, 16, 16);
+        ms.Dispose();
+
+        sheet[20, 1].Text = "공정 종료";
+        ms = new MemoryStream();
+        MakeQrCode($"00 S9109 ").Save(ms, ImageFormat.Png);
+        sheet.Pictures.AddPicture(20, 2, ms, 16, 16);
+        ms.Dispose();
+
+        sheet[24, 1].Text = "공정품 불량";
+        ms = new MemoryStream();
+        MakeQrCode($"00 S9110 ").Save(ms, ImageFormat.Png);
+        sheet.Pictures.AddPicture(24, 2, ms, 16, 16);
+        ms.Dispose();
+
+        if (공정차수.생산품공정차수.공정단위.공정.공정유형코드 != "B0205") // 검사가 아닌 경우
+        {
+            sheet[28, 1].Text = "자재 불량";
+
+            ms = new MemoryStream();
+            MakeQrCode($"00 S9111 ").Save(ms, ImageFormat.Png);
+            sheet.Pictures.AddPicture(28, 2, ms, 16, 16);
+            ms.Dispose();
+        }
+
+        */
+
+        //////////////////////
+        ///
+
+        sheet.IsGridLinesVisible = false;
+        sheet.Range["A2:I2"].Merge(true);
+        //Insert Rich Text
+        sheet.Range["A2"].Text = "작업지시서";
+        sheet.Range["A2"].CellStyle.Font.FontName = "Verdana";
+        sheet.Range["A2"].CellStyle.Font.Bold = true;
+        sheet.Range["A2"].CellStyle.Font.Size = 31;
+        sheet.Range["A2"].CellStyle.Font.RGBColor = Syncfusion.Drawing.Color.FromArgb(0, 0, 0, 0);
+        sheet.Range["A2"].HorizontalAlignment = ExcelHAlign.HAlignCenter;
+
+
+        sheet.Range["F10:F24"].HorizontalAlignment = ExcelHAlign.HAlignLeft;
+        sheet.Range["G14:H34"].HorizontalAlignment = ExcelHAlign.HAlignLeft;
+
+
+        sheet.Range["F10:F24"].CellStyle.Font.FontName = "Arial";
+
+        sheet.Range["B18"].Text = "  공정유형";
+        sheet.Range["B18"].CellStyle.Font.Size = 18;
+        sheet.Range["B18"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B20"].Text = "  공정";
+        sheet.Range["B20"].CellStyle.Font.Size = 18;
+        sheet.Range["B20"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B22"].Text = "  생산품";
+        sheet.Range["B22"].CellStyle.Font.Size = 18;
+        sheet.Range["B22"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B24"].Text = "  공정품";
+        sheet.Range["B24"].CellStyle.Font.Size = 18;
+        sheet.Range["B24"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B26"].Text = "  공정기준시간";
+        sheet.Range["B26"].CellStyle.Font.Size = 18;
+        sheet.Range["B26"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B28"].Text = "  시작일";
+        sheet.Range["B28"].CellStyle.Font.Size = 18;
+        sheet.Range["B28"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B30"].Text = "  완료목표일";
+        sheet.Range["B30"].CellStyle.Font.Size = 18;
+        sheet.Range["B30"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B32"].Text = "  지시수량";
+        sheet.Range["B32"].CellStyle.Font.Size = 18;
+        sheet.Range["B32"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B34"].Text = "  공정담당자";
+        sheet.Range["B34"].CellStyle.Font.Size = 18;
+        sheet.Range["B34"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B36"].Text = "  도면번호";
+        sheet.Range["B36"].CellStyle.Font.Size = 18;
+        sheet.Range["B36"].CellStyle.Font.Bold = true;
+
+        sheet.Range["B38"].Text = "  비고";
+        sheet.Range["B38"].CellStyle.Font.Size = 18;
+        sheet.Range["B38"].CellStyle.Font.Bold = true;
+
+        sheet.Range["F18"].Text = 공정차수.생산품공정차수.공정단위.공정.공정명;
+        sheet.Range["F18"].CellStyle.Font.Size = 17;
+        sheet.Range["F20"].Text = 공정차수.생산품공정차수.공정단위.공정단위명;
+        sheet.Range["F20"].CellStyle.Font.Size = 17;
+        sheet.Range["F22"].Text = 공정차수.생산품공정차수.공정단위.완제품코드 + "    " + 공정차수.생산품공정차수.공정단위.완제품?.품목명;
+        sheet.Range["F22"].CellStyle.Font.Size = 17;
+        sheet.Range["F24"].Text = 공정차수.생산품공정차수.공정단위.공정품코드 + "    " + 공정차수.생산품공정차수.공정단위.공정품?.품목명;
+        sheet.Range["F24"].CellStyle.Font.Size = 17;
+        sheet.Range["F26"].Text = 공정차수.생산품공정차수.공정단위.공정예상시간.ToString();
+        sheet.Range["F26"].CellStyle.Font.Size = 17;
+        sheet.Range["F28"].Text = 생산지시.시작일?.ToString("yyyy/MM/dd");
+        sheet.Range["F28"].CellStyle.Font.Size = 17;
+        sheet.Range["F30"].Text = 생산지시.완료목표일?.ToString("yyyy/MM/dd");
+        sheet.Range["F30"].CellStyle.Font.Size = 17;
+        sheet.Range["F32"].Text = 생산지시.생산수량.ToString();
+        sheet.Range["F32"].CellStyle.Font.Size = 17;
+        sheet.Range["F34"].Text = 공정차수.작업자?.사용자명;
+        sheet.Range["F34"].CellStyle.Font.Size = 17;
+        sheet.Range["F36"].Text = 공정차수.생산품공정차수.공정단위.도면?.도면번호;
+        sheet.Range["F36"].CellStyle.Font.Size = 17;
+        sheet.Range["F38"].Text = 공정차수.생산품공정차수.공정단위.도면?.도면명;
+        sheet.Range["F38"].CellStyle.Font.Size = 17;
+        sheet.Range["F40"].Text = 공정차수.비고;
+        sheet.Range["F40"].CellStyle.Font.Size = 17;
+
+
+        if (공정차수.생산품공정차수.공정단위.공정.공정유형코드 != "B0205") // 검사가 아닌 경우
+        {
+            if (gong_barcodeStart != null)
+            {
+                sheet.Range[8, 1].CellStyle.Font.Bold = true;
+                sheet.Range[8, 1].CellStyle.Font.Size = 15;
+                sheet[8, 1].Text = "공정 시작";
+                var ms = new MemoryStream();
+                MakeQrCode(gong_barcodeStart).Save(ms, ImageFormat.Png);
+                sheet.Pictures.AddPicture(6, 2, ms, 30, 30);
+                ms.Dispose();
+            }
+            if (gong_barcodeStart != null)
+            {
+                sheet.Range[50, 1].CellStyle.Font.Bold = true;
+                sheet.Range[50, 1].CellStyle.Font.Size = 15;
+                sheet[50, 1].Text = "공정 종료";
+                var ms = new MemoryStream();
+                MakeQrCode(gong_barcodeEnd).Save(ms, ImageFormat.Png);
+                sheet.Pictures.AddPicture(48, 2, ms, 30, 30);
+                ms.Dispose();
+            }
+            if (공정차수.생산품공정차수.공정단위.공정.설비사용유무 == true && 공정차수.생산품공정차수.공정단위.공정설비목록.Count > 0 )
+            {
+                sheet.Range[8, 5].CellStyle.Font.Bold = true;
+                sheet.Range[8, 5].CellStyle.Font.Size = 15;
+                sheet[8, 5].Text = "설비 코드";
+                var ms = new MemoryStream();
+                MakeQrCode(공정차수.생산품공정차수.공정단위.공정설비목록[0].설비코드).Save(ms, ImageFormat.Png);
+                sheet.Pictures.AddPicture(6, 7, ms, 35, 35);
+                ms.Dispose();
+            }
+        }
+        else
+        {
+            /*
+            if (pum_barcodeStart != null)
+            {
+                sheet.Range[8, 1].CellStyle.Font.Bold = true;
+                sheet.Range[8, 1].CellStyle.Font.Size = 15;
+                sheet[8, 1].Text = "품질관리 시작";
+                var ms = new MemoryStream();
+                MakeQrCode(gong_barcodeStart).Save(ms, ImageFormat.Png);
+                sheet.Pictures.AddPicture(6, 2, ms, 30, 30);
+                ms.Dispose();
+            }
+            if (pum_barcodeEnd != null)
+            {
+                sheet.Range[50, 1].CellStyle.Font.Bold = true;
+                sheet.Range[50, 1].CellStyle.Font.Size = 15;
+                sheet[50, 1].Text = "품질관리 종료";
+                var ms = new MemoryStream();
+                MakeQrCode(gong_barcodeEnd).Save(ms, ImageFormat.Png);
+                sheet.Pictures.AddPicture(48, 2, ms, 30, 30);
+                ms.Dispose();
+            }
+            */
+
+        }
+
+
+        //IListObject table1 = sheet.ListObjects.Create("Table1", sheet["A17:J40"]);
+        //table1.BuiltInTableStyle = TableBuiltInStyles.TableStyleLight1;
+
+        sheet.Range["A18:J19"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A20:J21"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A22:J23"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A24:J25"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A26:J27"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A28:J29"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A30:J31"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A32:J33"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A34:J35"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A36:J37"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+        sheet.Range["A38:J39"].BorderAround(ExcelLineStyle.Medium, Syncfusion.Drawing.Color.LightGray);
+
+
+
+        var ws = new MemoryStream();
+        workbook.SaveAs(ws);
+        ws.Seek(0, SeekOrigin.Begin);
+
+        return ws;
+    }
+
+    private Bitmap MakeQrCode(string text)
+    {
+        var qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
+        var qrCode = new QRCode(qrCodeData);
+        return qrCode.GetGraphic(20);
+    }
+}

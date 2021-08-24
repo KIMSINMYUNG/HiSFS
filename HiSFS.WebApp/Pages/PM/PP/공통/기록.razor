@@ -1,0 +1,63 @@
+﻿<SfCard>
+    <CardHeader>
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col mr-auto">
+                    <span class="card-header-text">@제목</span>
+                </div>
+                <div class="col-auto mr-3">
+                    <span>@작성자</span>
+                </div>
+                <div class="col-auto">
+                    <span>@(작성일?.ToString("yyyy/MM/dd"))</span>
+                </div>
+            </div>
+        </div>
+    </CardHeader>
+    <CardContent>
+        @if (보기모드 == true)
+        {
+            <SfRichTextEditor Readonly="isReadonly" @bind-Value=@내용>
+                <ChildContent>
+                    <RichTextEditorInlineMode Enable="true" />
+                </ChildContent>
+            </SfRichTextEditor>
+            }
+        else
+        {
+            <SfRichTextEditor Height="300px" ValueChanged="내용Changed" Value=@내용 />
+        }
+    </CardContent>
+</SfCard>
+
+@code {
+    [Parameter]
+    public string 제목 { get; set; }
+
+    [Parameter]
+    public string 내용 { get; set; }
+
+    [Parameter]
+    public EventCallback<string> 내용Changed { get; set; }
+
+    [Parameter]
+    public string 작성자 { get; set; }
+
+    [Parameter]
+    public DateTime? 작성일 { get; set; } = DateTime.Now;
+
+    [Parameter]
+    public bool 보기모드 { get; set; }
+
+
+    private bool isReadonly = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1000);
+        this.isReadonly = false;
+        await Task.Delay(1000);
+        this.isReadonly = true;
+    }
+}

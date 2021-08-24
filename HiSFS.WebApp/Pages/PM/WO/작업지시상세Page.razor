@@ -1,0 +1,1904 @@
+﻿@page "/pm/wo/작업지시상세"
+@page "/pm/wo/작업지시상세/{Code}"
+
+
+
+@using WampSharp.V2;
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Hosting
+@using Syncfusion.Blazor.PdfViewerServer
+@using Syncfusion.Blazor.Data
+
+@implements IDisposable
+@inject IJSRuntime JSRuntime;
+
+@inject IWebHostEnvironment Environment
+
+@inject ProtectedSessionStorage ProtectedSessionStore
+@inherits CustomComponent
+@*
+    생산지시 상세 입력 및 확인 메뉴
+
+    입력사항 :
+       - 생산유형, 생산수량, 시작일, 목표일   (기본값은 생산계획 입력값으로 함)
+       - 공정 별 작업자 선택 (기본값 미선택, 선택 시 해당 작업자에게 해당 공정의 작업이 배정됨)
+
+    동작 :
+       - 생산지시 항목 입력 / 공정 별 작업자 선택/미선택
+       - 작업지시 상태 변경, 작업지시상태 확정일 경우 작업자별/공정별 작업지시서 생성 및 조회 (탭 및 공정별작업지시 메뉴)
+
+    작업지시서 내용 :
+       - 공정 정보
+       - 도면 (도면번호, 도면명) ※ 도면 이미지는 포함하지 않음
+       - 필요자재 목록 및 정보
+       - 생산 공정품 정보
+       - 단위 생산 예상 시간
+       - 비고
+       - 바코드 (공정 시작, 완료, 자재불량, 공정품불량)
+         ※ 자주검사 체크시 자주검사 시작/완료 바코드도 포함함
+         ※ 품질검사 공정의 경우 품질검사 시작/완료 바코드
+    ※ 작업지시서의 양식은 1차 미적용. 2차 고객 협의 후 추가내용 적용 및 양식 적용 예정
+*@
+
+<style>
+    .e-grid .e-gridcontent .e-rowcell.below-20 {
+        color: red;
+    }
+</style>
+@if (isShowQrCode == true)
+{
+    <SfQRCodeGenerator Width="0px" Height="0px" Value="1">
+        @*<QRCodeGeneratorDisplayText Visibility="false" />*@
+    </SfQRCodeGenerator>
+}
+
+@if (생산지시 != null)
+{
+    <CascadingValue Name="생산지시" Value=@(생산지시) TValue="생산지시정보">
+        <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top" @bind-SelectedItem=@(tabIndex)>
+            <TabItems>
+                <TabItem>
+                    <ChildContent>
+                        <TabHeader Text="기본정보" />
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="px-2 py-2">
+                            <div class="row mb-2">
+                                <div class="col-auto mr-1">
+                                    <SfButton OnClick=@(() => OnSave("B2001")) IsPrimary=@(실행상태코드 == "B2001") Disabled="@(실행상태코드 == "B2004" ? true : false)">확정전</SfButton>
+                                </div>
+                                <div class="col-auto mr-1">
+                                    <SfButton OnClick=@(() => OnSave("B2002")) IsPrimary=@(실행상태코드 == "B2002") Disabled="@(실행상태코드 == "B2004" ? true : false)">확정</SfButton>
+                                </div>
+                                <div class="col-auto mr-1">
+                                    <SfButton OnClick=@(() => OnSave("B2003")) IsPrimary=@(실행상태코드 == "B2003") Disabled="@(실행상태코드 == "B2004" ? true : false)">실행</SfButton>
+                                </div>
+                                <div class="col-auto mr-1">
+                                    <SfButton OnClick=@(() => OnSave("B2004")) IsPrimary=@(실행상태코드 == "B2004") Disabled="@(실행상태코드 == "B2004" ? true : false)">완료</SfButton>
+                                </div>
+                                <div class="col-auto mr-auto"></div>
+
+                                <div class="col-auto my-auto mr-2">
+                                    <SfButton OnClick="() => OnSave()" Disabled="@(실행상태코드 == "B2004" ? true : false)">저장</SfButton>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <HiSFS.WebApp.Pages.Common.단위 제목="계획항목">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-4">
+                                                <SfTextBox Placeholder="생산계획명" FloatLabelType="FloatLabelType.Always" Value=@(생산지시.생산계획.생산계획명) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <SfTextBox Placeholder="주문번호" FloatLabelType="FloatLabelType.Always" Value=@(생산지시.생산계획.주문번호) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="지시차수" @bind-Value=@(생산지시.순번) Readonly="true" />
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-4">
+                                                <SfTextBox Placeholder="생산품" FloatLabelType="FloatLabelType.Always" Value=@(생산지시.생산계획.생산품?.품목명) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <SfTextBox Placeholder="생산품공정" FloatLabelType="FloatLabelType.Always" Value=@(생산지시.생산계획.생산품공정?.생산품공정명) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <SfTextBox Placeholder="생산책임자" FloatLabelType="FloatLabelType.Always" Value=@(생산지시.생산계획.생산책임자?.사용자명) Readonly="true" />
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-4">
+                                                <SfDatePicker FloatLabelType="FloatLabelType.Always" Placeholder="실행예정일" Value=@(생산지시.생산계획.실행일시) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <SfDatePicker FloatLabelType="FloatLabelType.Always" Placeholder="완료목표일" Value=@(생산지시.생산계획.종료일시) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="계획수량" Value=@(생산지시.생산계획.계획수량) Readonly="true" />
+                                            </div>
+                                        </div>
+                                    </HiSFS.WebApp.Pages.Common.단위>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <HiSFS.WebApp.Pages.Common.단위 제목="지시항목">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="생산지시명" @bind-Value=@(생산지시.생산지시명) Readonly=@보기모드 />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <DCommonCodeDropList Placeholder="실행상태" ParentCode="B20" @bind-Value=@(생산지시.실행상태코드) Readonly=@보기모드 CssClass="e-info" />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <DCommonCodeDropList Placeholder="지시유형" ParentCode="B21" @bind-Value=@(생산지시.생산지시유형코드) Readonly=@보기모드 CssClass="e-info" />
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-4">
+                                                <SfDatePicker FloatLabelType="FloatLabelType.Always" Placeholder="시작일" @bind-Value=@(생산지시.시작일) Readonly=@보기모드 />
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <SfDatePicker FloatLabelType="FloatLabelType.Always" Placeholder="완료목표일" @bind-Value=@(생산지시.완료목표일) Readonly=@보기모드 />
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="지시수량" @bind-Value=@(생산지시.생산수량) Readonly=@보기모드 />
+                                            </div>
+                                        </div>
+                                    </HiSFS.WebApp.Pages.Common.단위>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <HiSFS.WebApp.Pages.Common.단위 제목="비고">
+                                        <SfRichTextEditor @bind-Value=@(생산지시.비고) />
+                                    </HiSFS.WebApp.Pages.Common.단위>
+                                </div>
+                            </div>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+                @if (생산지시.생산지시공정차수목록 != null && 생산지시.생산지시공정차수목록.Count > 0)
+                {
+                    @foreach (var 공정차수 in 생산지시.생산지시공정차수목록)
+                    {
+                        <TabItem>
+                            <ChildContent>
+                                <TabHeader Text=@($"[{공정차수.공정차수}차] {공정차수.생산품공정차수.공정단위.공정단위명}") /> @* 공정 별 이름 변경 **@
+                            </ChildContent>
+                            <ContentTemplate>
+                                @* 공정정보 표현 *@
+                                <div class="px-2 py-2">
+                                    <div class="row mb-2">
+                                        <div class="col-auto mr-auto">
+                                            <SfButton OnClick="@(() => 공정단위실적클릭(공정차수))"  Content=@($"[{공정차수.공정차수}차] {공정차수.생산품공정차수.공정단위.공정단위명} 공정단위실적등록") Disabled="@공정버튼활성여부" CssClass="e-info"></SfButton>
+                                        </div>
+                                        <div class="col-auto my-auto mr-2">
+                                            @*<SfButton OnClick="() => OnPDFDown()" Disabled="@(실행상태코드 == "B2004" ? true : false)">PDF저장</SfButton>*@
+                                            <SfButton @onclick=@(() => OnShowWorkOrder(공정차수)) Disabled="@(보기모드 == false ? true : false)">PDF뷰어</SfButton>
+
+                                        </div>
+                                        <div class="col-auto my-auto mr-2">
+                                            <SfButton OnClick="() => OnSave()" Disabled="@(실행상태코드 == "B2004" ? true : false)">저장</SfButton>
+                                        </div>
+                                    </div>
+                                    <HiSFS.WebApp.Pages.Common.단위 제목="공정기본">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-3">
+                                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="공정유형" Value=@(공정차수.생산품공정차수.공정단위.공정.공정명) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="공정" Value=@(공정차수.생산품공정차수.공정단위.공정단위명) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                @*<SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="완제품" Value=@(공정차수.생산품공정차수.공정단위.완제품?.품목명) Readonly="true" />*@
+                                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="생산품" Value=@(공정차수.생산품공정차수.공정단위.완제품코드) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                @*<SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="공정품" Value=@(공정차수.생산품공정차수.공정단위.공정품?.품목명) Readonly="true" />*@
+                                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="공정품" Value=@(공정차수.생산품공정차수.공정단위.공정품코드) Readonly="true" />
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-3">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="공정기준시간" Value=@(공정차수.생산품공정차수.공정단위.공정예상시간) TValue="double?" Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <SfDatePicker FloatLabelType="FloatLabelType.Always" Placeholder="시작일" Value=@(생산지시.시작일) Readonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <SfDatePicker FloatLabelType="FloatLabelType.Always" Placeholder="완료목표일" Value=@(생산지시.완료목표일) EReadonly="true" />
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <SfNumericTextBox FloatLabelType="FloatLabelType.Always" Placeholder="지시수량" Value=@(생산지시.생산수량) Readonly="true" />
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-3">
+                                                <DInputSearch Placeholder="작업자 지정" Target="#root" DialogHeader="공정담당자 조회" TValue="직원정보" TCode="string" TextField="사용자명" @bind-Value=@(공정차수.작업자) Enabled="false">
+                                                    <DialogContent>
+                                                        <HiSFS.WebApp.Pages.Common.Popup.직원Popup />
+                                                    </DialogContent>
+                                                </DInputSearch>
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="생산이동" Value=@생산이동완료유무 Readonly="true"  CssClass="e-custom"  />
+                                            </div>
+
+                                        </div>
+                                    </HiSFS.WebApp.Pages.Common.단위>
+
+
+
+                                    @*공정검사목록*@
+                                    <div class="mb-3"></div>
+                                    @if (공정차수.생산품공정차수.공정단위.공정.공정유형코드 == "B0205")
+                                    {
+                                        <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                                            <SplitterPanes>
+                                                <SplitterPane Size="45%" Collapsible="true">
+                                                    <HiSFS.WebApp.Pages.Common.단위 제목="검사 장비">
+
+                                                        @*<SfButton @onclick="@OpenDialog">Open Dialog</SfButton>*@
+
+                                                        <TGrid @ref="grid5" DataSource=@(list5) TValue="공정단위검사장비" EditMode="DGridEditMode.None" DefaultMode="false"
+                                                               OnActionBegin="OnActionBegin" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                                                            <GridColumns>
+                                                                <GridColumn Field=@nameof(공정단위검사정보.No) HeaderText="순번" Width="80">
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                                <GridColumn Field=@nameof(공정단위검사장비.공정단위코드) Visible="false" />
+                                                                <GridColumn Field=@nameof(공정단위검사장비.품질검사코드) Visible="false" />
+                                                                <GridColumn Field=@nameof(공정단위검사장비.검사장비식별번호) Width="0" IsPrimaryKey="true">
+                                                                    <Template>
+                                                                        @((context as 공정단위검사장비).검사장비?.장비명)
+                                                                    </Template>
+                                                                    <EditTemplate>
+                                                                        @{ var info = context as 공정단위검사장비; }
+                                                                        <DInputSearch ID="검사장비식별번호" Placeholder="검사장비" Target="#root" DialogHeader="검사장비 조회" TValue="연동장비정보" TCode="int?" TextField="장비명" @bind-Value=@(info.검사장비) CodeField="식별번호" @bind-Code=@(info.검사장비식별번호)>
+                                                                            <DialogContent>
+                                                                                <HiSFS.WebApp.Pages.Common.Popup.연동장비Popup />
+                                                                            </DialogContent>
+                                                                        </DInputSearch>
+                                                                    </EditTemplate>
+                                                                </GridColumn>
+                                                                <GridColumn Field="검사장비.장비명" Width="200" HeaderText="검사장비명">
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                                <GridColumn Field="검사장비.연동장비유형.코드명" Width="160" HeaderText="연동장비유형">
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                                <GridColumn HeaderText="" Width="120" TextAlign="TextAlign.Right" AllowEditing="false" AllowAdding="false">
+                                                                    <Template>
+                                                                        @{ var info = context as 공정단위검사장비; }
+                                                                        <SfButton @onclick=@(() => OnConnection(info, true, Sid))>@RowButton[info.검사장비식별번호]</SfButton>
+                                                                    </Template>
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                                @*<GridColumn HeaderText="장비연결" Width="120">
+                                                                        <GridCommandColumns>
+                                                                            <GridCommandColumn Type="CommandButtonType.None" Title="장비연결"
+                                                                                               ButtonOption="@(new CommandButtonOptions()
+                                                                                               {
+                                                                                                   IconCss = "remove-image-icon-icon-image", Content="장비연결" ,
+                                                                                               })" />
+                                                                        </GridCommandColumns>
+                                                                    </GridColumn>*@
+
+                                                            </GridColumns>
+                                                        </TGrid>
+                                                    </HiSFS.WebApp.Pages.Common.단위>
+                                                </SplitterPane>
+                                            </SplitterPanes>
+                                        </SfSplitter>
+                                        @*<div class="text-center">
+                                                <SfButton @ref="btnCheck" @onclick="@(async () => await OnCheck())">측정</SfButton>
+                                                <SfButton @ref="btnLoop" @onclick="@(e => OnLoopSave())" Content="저장">다음측정</SfButton>
+                                                <SfButton @ref="btnNext" @onclick="@(e => OnNext())" Content="다음측정">다음측정</SfButton>
+                                            </div>*@
+
+                                        @*<div class="text-right">
+                                                <SfButton @ref="btnTest" @onclick="@(e => OnTest("T"))" Content="측정">측정</SfButton>
+                                                <SfButton @ref="btnSave" @onclick="@(e => OnSaves())" Content="측정적용">측정적용</SfButton>
+                                                <SfButton @ref="btnReset" @onclick="@(e => OnReset())" Content="측정리셋">측정리셋</SfButton>
+                                            </div>*@
+
+                                        <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+                                            <SplitterPanes>
+                                                <SplitterPane Size="30%" Collapsible="true">
+                                                    <HiSFS.WebApp.Pages.Common.단위 제목="품목">
+                                                        @*<div class="text-right">
+                                                                <SfButton @ref="btnTest" @onclick="@(e => OnNextTest())" IconPosition="IconPosition.Right" Content="다음측정" Disabled=@IsEnable>다음측정</SfButton>
+                                                            </div>*@
+                                                        <SfGrid @ref="grid3" DataSource="@품질검사생산품목록" AllowSelection="true" Height="200">
+                                                            <GridEvents RowSelected="RowSelectHandler" OnActionComplete="OnActionComplete" TValue="품질검사생산품"></GridEvents>
+                                                            <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple" PersistSelection="true"></GridSelectionSettings>
+                                                            <SfToolbar>
+                                                                <ToolbarEvents Clicked="ToolbarClickHandler"></ToolbarEvents>
+                                                                <Syncfusion.Blazor.Navigations.ToolbarItems>
+
+                                                                    <ToolbarItem Type="@Syncfusion.Blazor.Navigations.ItemType.Input" Align="Syncfusion.Blazor.Navigations.ItemAlign.Right">
+                                                                        <Template>
+                                                                            <SfTextBox Width="200" @ref="@_searchBox" @bind-Value="검사수량입력" @onkeyup="@OnKeyUp" Placeholder="검사수량을 입력하세요" Enabled="@IsEnable" />
+                                                                        </Template>
+                                                                    </ToolbarItem>
+                                                                    <ToolbarItem Type="@Syncfusion.Blazor.Navigations.ItemType.Button" Align="Syncfusion.Blazor.Navigations.ItemAlign.Right" PrefixIcon="검사수량" Text="검사수량설정" Disabled="@IsBtnEnable" />
+                                                                </Syncfusion.Blazor.Navigations.ToolbarItems>
+                                                            </SfToolbar>
+                                                            <GridColumns>
+                                                                @*<GridColumn Type="ColumnType.CheckBox" AllowFiltering="false" AllowSorting="false" Width="50"></GridColumn>*@
+                                                                <GridColumn Field=@nameof(품질검사생산품.Seq) HeaderText="SEQ" TextAlign="TextAlign.Left" Width="50" IsPrimaryKey="true"></GridColumn>
+                                                                <GridColumn Field=@nameof(품질검사생산품.생산품공정코드) HeaderText="생산품공정코드" Width="100" HeaderTextAlign="TextAlign.Left"></GridColumn>
+                                                                @*<GridColumn Field=@nameof(품질검사생산품.생산품공정명) HeaderText="생산품공정명" Width="100"></GridColumn>
+                                                                    <GridColumn Field=@nameof(품질검사생산품.공정단위코드) HeaderText="공정단위코드" Width="100"></GridColumn>*@
+                                                                <GridColumn Field=@nameof(품질검사생산품.Result) HeaderText="테스트여부" Width="100"></GridColumn>
+                                                                @*<GridColumn Field=@nameof(품질검사생산품.CheckDate) HeaderText="측정날짜" Format="d" Type="ColumnType.Date" TextAlign="TextAlign.Right" Width="100"></GridColumn>*@
+                                                            </GridColumns>
+                                                        </SfGrid>
+                                                    </HiSFS.WebApp.Pages.Common.단위>
+                                                </SplitterPane>
+                                                <SplitterPane Size="70%" Collapsible="true">
+                                                    <HiSFS.WebApp.Pages.Common.단위 제목="검사 항목">
+
+                                                        <TGrid @ref="grid4" DataSource=@(list4) TValue="공정단위검사정보" DefaultMode="false" EditMode="DGridEditMode.None" OnCheckSave="OnCheckSave " OnCheckReset="OnCheckReset"
+                                                               QueryCellInfoHandler="QueryCellInfoHandler" OnRowDataBound="OnRowDataBound" OnActionBegin="OnActionBegin" OnActionComplete="OnActionComplete" OnRowSelected="OnGrid4RowSelected" OnCheckAuth="CheckAuth">
+
+                                                            <GridColumns>
+                                                                <GridColumn Type="ColumnType.CheckBox" AllowFiltering="false" AllowSorting="false" AllowEditing="false"
+                                                                            AllowReordering="false" AllowAdding="false" Width="60">
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                                <GridColumn Field=@nameof(공정단위검사정보.No) HeaderText="순번" Width="80" IsPrimaryKey="true">
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                                <GridColumn Field=@nameof(공정단위검사정보.공정단위코드) Visible="false" />
+                                                                <GridColumn Field=@nameof(공정단위검사정보.품질검사코드) Width="0" IsPrimaryKey="true">
+                                                                    <Template>
+                                                                        @((context as 공정단위검사정보).품질검사?.품질검사명)
+                                                                    </Template>
+                                                                    <EditTemplate>
+                                                                        @{ var info = context as 공정단위검사정보; }
+                                                                        <DInputSearch ID="품질검사코드" Placeholder="품질검사" Target="#root" DialogHeader="품질검사 조회" TValue="품질검사정보" TCode="string" TextField="품질검사명" @bind-Value=@(info.품질검사) CodeField="품질검사코드" @bind-Code=@(info.품질검사코드)>
+                                                                            <DialogContent>
+                                                                                <HiSFS.WebApp.Pages.Common.Popup.검사Popup />
+                                                                            </DialogContent>
+                                                                        </DInputSearch>
+                                                                    </EditTemplate>
+                                                                </GridColumn>
+                                                                <GridColumn Field="품질검사.품질검사명" Width="160" HeaderText="품질검사">
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                                @*<GridColumn Field=@nameof(공정단위검사정보.검사단위코드) Width="130">
+                                                                        <Template>
+                                                                            @{ var info = context as 공정단위검사정보; }
+                                                                            @info.검사단위?.코드명
+                                                                        </Template>
+                                                                        <EditTemplate>
+                                                                            @{ var info = context as 공정단위검사정보; }
+                                                                            <DCommonCodeDropList ID="검사단위코드" Placeholder="검사단위" ParentCode="B24" @bind-Value=@(info.검사단위코드) />
+                                                                        </EditTemplate>
+                                                                    </GridColumn>*@
+                                                                <GridColumn Field="검사단위.코드명" Width="120" HeaderText="검사단위">
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                                <GridColumn Field=@nameof(공정단위검사정보.검사기준값) HeaderText="검사기준값" Width="120" />
+                                                                @*<GridColumn Field=@nameof(공정단위검사정보.오차범위) HeaderText="오차범위" Width="120" />*@
+                                                                <GridColumn Field=@nameof(공정단위검사정보.오차범위상한) HeaderText="오차범위상한" Width="120" />
+                                                                <GridColumn Field=@nameof(공정단위검사정보.오차범위하한) HeaderText="오차범위하한" Width="120" />
+                                                                <GridColumn Field=@nameof(공정단위검사정보.합격여부) HeaderText="합격여부" Width="120">
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                                <GridColumn Field=@nameof(공정단위검사정보.검사측정값) HeaderText="검사측정값" Width="100" Format="C2">
+                                                                    <EditTemplate></EditTemplate>
+                                                                </GridColumn>
+                                                            </GridColumns>
+                                                        </TGrid>
+                                                    </HiSFS.WebApp.Pages.Common.단위>
+                                                </SplitterPane>
+                                            </SplitterPanes>
+                                        </SfSplitter>
+
+                                    }
+                                    <div class="mb-3"></div>
+                                    @if (공정차수.생산품공정차수.공정단위.도면 != null)
+                                    {
+                                        <HiSFS.WebApp.Pages.Common.단위 제목="도면">
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="도면번호" Value=@(공정차수.생산품공정차수.공정단위.도면.도면번호) Readonly="true" />
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <SfTextBox FloatLabelType="FloatLabelType.Always" Placeholder="도면명" Value=@(공정차수.생산품공정차수.공정단위.도면.도면명) Readonly="true" />
+                                                </div>
+                                            </div>
+                                        </HiSFS.WebApp.Pages.Common.단위>
+                                    }
+                                    @if (보기모드 == true)
+                                    {
+                                        <HiSFS.WebApp.Pages.Common.단위 제목="바코드">
+                                            <div class="form-row">
+                                                @if (공정차수.생산품공정차수.공정단위.공정.공정유형코드 == "B0205")
+                                                {
+                                                    <div class="form-group col-md-3">
+                                                        <div class="row mb-2">
+                                                            <span class="col text-center">
+                                                                <SfButton @ref="btnStart" OnClick="onClickStart" Content="품질검사 시작" Disabled="@IsBtnStartEnable"></SfButton>
+                                                            </span>
+                                                        </div>
+                                                        @if (pum_barcodeStart != null)
+                                                        {
+                                                            <div class="row mb-2">
+                                                                <div class="col text-center">
+                                                                    @*$"00 S9112 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}"*@
+                                                                    <!--<SfQRCodeGenerator Width="300px" Height="150px" Value=@(pum_barcodeStart)>-->
+                                                                    @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                                                    <!--</SfQRCodeGenerator>-->
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col text-center">
+                                                                    @*<SfButton Disabled="true">출력</SfButton>*@
+                                                                    @*<SfButton OnClick="() => OnQRPrinte(pum_barcodeStart, 2) ">출력</SfButton>*@
+                                                                </div>
+                                                            </div>
+                                                        }
+
+                                                    </div>
+                                                    <div class="form-group col-md-3">
+                                                        <div class="row mb-2">
+                                                            <span class="col text-center">
+                                                                <SfButton @ref="btnEnd" OnClick="onClickEnd" Content="품질검사 종료" Disabled="@IsBtnEndEnable"></SfButton>
+                                                            </span>
+                                                        </div>
+                                                        @if (pum_barcodeEnd != null)
+                                                        {
+                                                            <div class="row mb-2">
+                                                                <div class="col text-center">
+                                                                    @*$"00 S9113 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}"*@
+                                                                    <!--<SfQRCodeGenerator Width="300px" Height="150px" Value=@(pum_barcodeEnd)>-->
+                                                                    @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                                                    <!--</SfQRCodeGenerator>-->
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col text-center">
+                                                                    @*<SfButton Disabled="true">출력</SfButton>*@
+                                                                    @*<SfButton OnClick="() => OnQRPrinte(pum_barcodeEnd, 2) ">출력</SfButton>*@
+                                                                </div>
+                                                            </div>
+                                                        }
+
+                                                    </div>
+
+
+                                                    <div class="form-group col-md-3">
+                                                        <div class="row mb-2">
+                                                            <span class="col text-center">
+                                                                <SfButton @ref="실적등록" OnClick="실적등록클릭" Content="실적등록및입고처리" Disabled=@실적등록버튼활성유무 CssClass="e-info"></SfButton>
+                                                            </span>
+                                                        </div>
+                                                        @if (실적등록바코드 != null)
+                                                        {
+                                                            <div class="row mb-2">
+                                                                <div class="col text-center">
+                                                                    <!--<SfQRCodeGenerator Width="300px" Height="150px" Value=@(실적등록바코드)>-->
+                                                                    @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                                                    <!--</SfQRCodeGenerator>-->
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col text-center">
+                                                                    @*<SfButton Disabled="true">출력</SfButton>*@
+                                                                    @*<SfButton OnClick="() => OnQRPrinte(실적등록바코드, 2) ">출력</SfButton>*@
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+
+                                                }
+                                                else
+                                                {
+                                                    <div class="form-group col-md-3">
+                                                        <div class="row mb-2">
+                                                            <span class="col text-center">
+                                                                <SfButton @ref="btnProcStart" OnClick="onClickProcStart" Content="공정시작" Disabled="true" CssClass="e-info"></SfButton>
+                                                            </span>
+                                                        </div>
+                                                        @if (gong_barcodeStart != null)
+                                                        {
+                                                            <div class="row mb-2">
+                                                                <div class="col text-center">
+                                                                    @*$"00 S9108 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}"*@
+                                                                    <SfQRCodeGenerator Width="300px" Height="150px" Value=@(gong_barcodeStart)>
+                                                                        @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                                                    </SfQRCodeGenerator>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col text-center">
+                                                                    @*<SfButton Disabled="true">출력</SfButton>*@
+                                                                    <SfButton OnClick="() => OnQRPrinte(gong_barcodeStart, 2) ">출력</SfButton>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    <div class="form-group col-md-3">
+                                                        <div class="row mb-2">
+                                                            <span class="col text-center">
+                                                                <SfButton @ref="btnProcEnd" OnClick="onClickProcEnd" Content="공정종료" Disabled="true" CssClass="e-info"></SfButton>
+                                                            </span>
+                                                        </div>
+                                                        @if (gong_barcodeEnd != null)
+                                                        {
+                                                            <div class="row mb-2">
+                                                                <div class="col text-center">
+                                                                    <SfQRCodeGenerator Width="300px" Height="150px" Value=@(gong_barcodeEnd)>
+                                                                        @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                                                    </SfQRCodeGenerator>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col text-center">
+                                                                    @*<SfButton Disabled="true">출력</SfButton>*@
+                                                                    <SfButton OnClick="() => OnQRPrinte(gong_barcodeEnd, 2) ">출력</SfButton>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+
+
+
+                                                    @if (공정차수.생산품공정차수.공정단위.공정.설비사용유무 == true && 공정차수.생산품공정차수.공정단위.공정설비목록.Count > 0)
+                                                    {
+                                                        <!--<div class="form-group col-md-3">
+                                                            <div class="row mb-2">
+                                                                <span class="col text-center">
+                                                                    <SfButton @ref="btnSystem" OnClick="onClickProcEnd" Content="설비" Disabled="true" CssClass="e-info"></SfButton>
+                                                                </span>
+                                                            </div>
+
+                                                            <div class="row mb-2">
+                                                                <div class="col text-center">
+                                                                    <SfQRCodeGenerator Width="300px" Height="150px" Value=@(공정차수.생산품공정차수.공정단위.공정설비목록[0].설비코드)>-->
+                                                                        @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                                                    <!--</SfQRCodeGenerator>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col text-center">-->
+                                                                    @*<SfButton Disabled="true">출력</SfButton>*@
+                                                                    <!--<SfButton OnClick="() => OnQRPrinte(공정차수.생산품공정차수.공정단위.공정설비목록[0].설비코드, 2) ">출력</SfButton>
+                                                                </div>
+                                                            </div>
+                                                        </div>-->
+                                                    }
+                                                    <div class="form-group col-md-3">
+                                                        <div class="row mb-2">
+                                                            <span class="col text-center">제품불량</span>
+                                                        </div>
+                                                        <div class="row mb-2">
+                                                            <div class="col text-center">
+                                                                <SfQRCodeGenerator Width="300px" Height="150px" Value=@($"00 S9110 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}")>
+                                                                    <QRCodeGeneratorDisplayText Visibility="true" />
+                                                                </SfQRCodeGenerator>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col text-center">
+                                                                <SfButton Disabled="true">출력</SfButton>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!--<div class="form-group col-md-3">
+                                                    <div class="row mb-2">
+                                                        <span class="col text-center">자재불량</span>
+                                                    </div>
+                                                    <div class="row mb-2">
+                                                        <div class="col text-center">
+                                                            <SfQRCodeGenerator Width="300px" Height="150px" Value=@($"00 S9111 {생산지시.생산지시코드} {공정차수.생산품공정차수.공정단위.공정단위코드}")>-->
+                                                    @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                                    <!--</SfQRCodeGenerator>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col text-center">
+                                                                <SfButton Disabled="true">출력</SfButton>
+                                                            </div>
+                                                        </div>
+                                                    </div>-->
+                                                }
+                                            </div>
+                                        </HiSFS.WebApp.Pages.Common.단위>
+                                    }
+                                    @if (공정차수.생산품공정차수.공정단위.공정품유형코드 == "B0402")
+                                    {
+                                        @*<HiSFS.WebApp.Pages.Common.단위 제목="완제품 보유품목코드 발행">
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-1">
+                                                        <SfButton IsPrimary="true" OnClick="On발행">발행</SfButton>
+                                                    </div>
+                                                    <div class="from-group col-md-3">
+                                                        @if (보유품목코드 != null)
+                                                        {
+                                                            <SfQRCodeGenerator Width="250px" Height="150px" Value=@(보유품목코드)>
+                                                                <QRCodeGeneratorDisplayText Visibility="true" />
+                                                            </SfQRCodeGenerator>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </HiSFS.WebApp.Pages.Common.단위>*@
+                                    }
+                                    <div class="mb-3"></div>
+                                    <HiSFS.WebApp.Pages.Common.단위 제목="비고">
+                                        <SfRichTextEditor @bind-Value=@(공정차수.비고) />
+                                    </HiSFS.WebApp.Pages.Common.단위>
+                                </div>
+                            </ContentTemplate>
+                        </TabItem>
+                    }
+                }
+            </TabItems>
+
+            <TabAnimationSettings>
+                <TabAnimationPrevious Effect="AnimationEffect.None" />
+                <TabAnimationNext Effect="AnimationEffect.None" />
+            </TabAnimationSettings>
+
+            <TabEvents Selected="OnSelected" />
+        </SfTab>
+    </CascadingValue>
+
+    <SfDialog Target="#main" IsModal="true" Width="90%" Height="900px" ShowCloseIcon="true" @bind-Visible=@(isShowPdfViewer)>
+        <DialogTemplates>
+            <Header></Header>
+            <Content>
+                <SfPdfViewerServer DocumentPath=@(documentPath) Width="1700px" Height="750px" />
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="확인" OnClick=@(() => isShowPdfViewer = false) />
+        </DialogButtons>
+        <DialogAnimationSettings Effect="@DialogEffect.None"></DialogAnimationSettings>
+    </SfDialog>
+
+    //품직검사실적등록
+    <SfDialog Target="#main" Width="800px" Height="840px" IsModal="true" @bind-Visible="isDialogVisible" CloseOnEscape="true">
+        <DialogTemplates>
+            <Header>
+                <b>생산실적등록  주문번호[ @(생산지시.생산계획.주문번호) ]</b> 
+            </Header>
+            <Content>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="false"></SfTextBox>
+
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="생산지시코드" @bind-Value="@(생산지시.생산지시코드)" FloatLabelType="FloatLabelType.Always" Placeholder="생산지시코드" Enabled="false"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="공정단위코드" @bind-Value="@(공정단위코드)" FloatLabelType="FloatLabelType.Always" Placeholder="공정단위코드" Enabled="false"></SfTextBox>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfDropDownList ID="재작업여부" TItem="재작업필드" @bind-Value="@(Edit재작업필드)" TValue="string" DataSource="@list재작업여부" FloatLabelType="FloatLabelType.Always" CssClass="@Validate" Placeholder="재작업여부" Enabled="false">
+                            <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="생산품코드" @bind-Value="@(생산품코드)" FloatLabelType="FloatLabelType.Always" Placeholder="생산품코드" Enabled="false"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="생산품공정코드" @bind-Value="@(생산지시.생산계획.생산품공정.생산품공정코드)" FloatLabelType="FloatLabelType.Always" Placeholder="생산품공정코드" Enabled="false"></SfTextBox>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="직원정보" @bind-Value="@(Edit사원코드)" PopupWidth="300px" DataSource="@직원정보List" PopupHeight="600px" CssClass="@Validate" Placeholder="사원코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="직원정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">사번</th><th width="100px">사용자명</th><th width="100px">부서코드</th></tr></table>
+                                </HeaderTemplate>
+
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 직원정보 = (anotherContext as 직원정보);
+                                    }
+
+                                    @*<ValidationMessage For="() => 직원정보.사번" />*@
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@직원정보.사번</td>
+                                                <td>@직원정보.사용자명</td>
+                                                <td>@직원정보.부서코드</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="사용자명" Value="사번"></ComboBoxFieldSettings>
+                        </SfComboBox>
+
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="부서정보" @bind-Value="@(Edit부서코드)" PopupWidth="400px" DataSource="@부서정보List" PopupHeight="400px" CssClass="@Validate" Placeholder="부서코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="부서정보">
+                                <HeaderTemplate>
+                                    <table>
+                                        <tr>
+                                            <th width="100px">부서코드</th>
+                                            <th width="100px">부서명</th>
+                                            <th width="100px">부문코드</th>
+                                            <th width="100px">부문명</th>
+                                        </tr>
+                                    </table>
+
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 부서 = (anotherContext as 부서정보);
+                                    }
+
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@부서.부서코드</td>
+                                                <td>@부서.부서명</td>
+                                                <td>@부서.부문코드</td>
+                                                <td>@부서.부문명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="부서명" Value="부서코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfDatePicker FloatLabelType="FloatLabelType.Always" TValue="DateTime?" Placeholder="실적등록일" Value="@실적등록일selected" Enabled="true">
+                            <DatePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler"></DatePickerEvents>
+                        </SfDatePicker>
+                    </div>
+                </div>
+
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="장소정보" Query="@Query" @bind-Value="@(Edit실적공정코드_창고코드)" PopupWidth="300px" DataSource="@실적공정코드_창고코드List" PopupHeight="400px" CssClass="@Validate" Placeholder="실적공정코드/창고코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always" Readonly="true">
+                            <ComboBoxTemplates TItem="장소정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">장소코드</th><th width="100px">장소명</th></tr></table>
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 장소정보 = (anotherContext as 장소정보);
+                                    }
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@장소정보.장소코드</td>
+                                                <td>@장소정보.장소명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="장소명" Value="장소코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="장소위치정보"  @bind-Value="@(Edit실적작업장코드_장소코드)" PopupWidth="300px" DataSource="@실적작업장코드_장소코드List" PopupHeight="400px" CssClass="@Validate" Placeholder="실적작업장코드/장소코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always" >
+                            <ComboBoxTemplates TItem="장소위치정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">위치코드</th><th width="100px">위치명</th></tr></table>
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 장소위치정보 = (anotherContext as 장소위치정보);
+                                    }
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@장소위치정보.위치코드</td>
+                                                <td>@장소위치정보.위치명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="위치명" Value="위치코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="실적구분" Value="창고" FloatLabelType="FloatLabelType.Always" Placeholder="실적구분" Readonly="true"></SfTextBox>
+                    </div>
+                </div>
+
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="목표수량" @bind-Value=@(Edit목표수량) Enabled="true" />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="장소정보" Query="@Query3" @bind-Value="@(Edit실적공정코드)" PopupWidth="300px" DataSource="@실적공정코드List" PopupHeight="400px" CssClass="@Validate" Placeholder="실적공정코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="장소정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">장소코드</th><th width="100px">장소명</th></tr></table>
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 장소정보 = (anotherContext as 장소정보);
+                                    }
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@장소정보.장소코드</td>
+                                                <td>@장소정보.장소명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="장소명" Value="장소코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="장소위치정보" @bind-Value="@(Edit실적작업장코드)" PopupWidth="300px" DataSource="@실적작업장코드List" PopupHeight="400px" CssClass="@Validate" Placeholder="실적작업장코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="장소위치정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">위치코드</th><th width="100px">위치명</th></tr></table>
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 장소위치정보 = (anotherContext as 장소위치정보);
+                                    }
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@장소위치정보.위치코드</td>
+                                                <td>@장소위치정보.위치명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="위치명" Value="위치코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+                    </div>
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="검사수량" @bind-Value=@(Edit검사수량) Readonly="true" />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="실적수량" @bind-Value=@(Edit실적수량) Enabled="true">
+                            <NumericTextBoxEvents ValueChange="@품질검사수량Changed" TValue="Decimal"></NumericTextBoxEvents>
+                        </SfNumericTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="실적불량수량" @bind-Value=@(Edit불량수량) Enabled="true">
+                            <NumericTextBoxEvents ValueChange="@품질검사수량Changed" TValue="Decimal"></NumericTextBoxEvents>
+                        </SfNumericTextBox>
+                    </div>
+                </div>
+
+                <div class="form-row">
+
+                    <div class="form-group col-md-12">
+                        @*<SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="사용수량" @bind-Value=@(Edit사용수량) Enabled="true" />*@
+
+                        <SfGrid @ref="GridBom" DataSource=@listBomOB TValue="공정단위자재현황">
+                            <GridEditSettings AllowAdding="false" AllowDeleting="false" AllowEditing="false"></GridEditSettings>
+                            <GridColumns>
+                                @*<GridColumn Field=@nameof(공정단위자재현황.공정단위코드) HeaderText="공정단위코드" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" AllowAdding="false" AllowEditing="false"></GridColumn>*@
+                                <GridColumn Field=@nameof(공정단위자재현황.자재코드) HeaderText="자재코드" IsPrimaryKey="true" Width="200" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" AllowAdding="false" AllowEditing="false"></GridColumn>
+                                <GridColumn Field=@nameof(공정단위자재현황.필요수량) Width="100" HeaderText="필요수량" Format="c3"></GridColumn>
+                                <GridColumn Field=@nameof(공정단위자재현황.사용수량) Width="100" HeaderText="사용수량" Format="c3"></GridColumn>
+                                <GridColumn Field=@nameof(공정단위자재현황.불량수량) Width="100" HeaderText="불량수량" Format="c3"></GridColumn>
+                            </GridColumns>
+                        </SfGrid>
+                    </div>
+
+                </div>
+
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <SfTextBox ID="비고" @bind-Value="@(Edit비고)" FloatLabelType="FloatLabelType.Always" Placeholder="비고" Enabled="true" Multiline="true"></SfTextBox>
+                    </div>
+                </div>
+
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="실적등록" OnClick=@(실적등록저장) IsPrimary="true" />
+            <DialogButton Content="취소" OnClick=@(() => {  isDialogVisible = false; }) />
+        </DialogButtons>
+    </SfDialog>
+
+
+
+
+
+
+    //공정실적등록
+    <SfDialog Target="#main" Width="700px" Height="500px" IsModal="true" @bind-Visible="공정실적팝업" CloseOnEscape="true">
+        <DialogTemplates>
+            <Header>
+                <b>공정실적등록</b>
+            </Header>
+            <Content>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="false"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="생산지시코드" @bind-Value="@(생산지시.생산지시코드)" FloatLabelType="FloatLabelType.Always" Placeholder="생산지시코드" Enabled="false"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="공정단위코드" @bind-Value="@(공정단위코드)" FloatLabelType="FloatLabelType.Always" Placeholder="공정단위코드" Enabled="false"></SfTextBox>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="생산품코드" @bind-Value="@(생산지시.생산계획.생산품공정.생산품코드)" FloatLabelType="FloatLabelType.Always" Placeholder="생산품코드" Enabled="false"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="생산품공정코드" @bind-Value="@(생산지시.생산계획.생산품공정.생산품공정코드)" FloatLabelType="FloatLabelType.Always" Placeholder="생산품공정코드" Enabled="false"></SfTextBox>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="직원정보" @bind-Value="@(Edit사원코드)" PopupWidth="300px" DataSource="@직원정보List" PopupHeight="600px" CssClass="@Validate" Placeholder="사원코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="직원정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">사번</th><th width="100px">사용자명</th><th width="100px">부서코드</th></tr></table>
+                                </HeaderTemplate>
+
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 직원정보 = (anotherContext as 직원정보);
+                                    }
+
+                                    @*<ValidationMessage For="() => 직원정보.사번" />*@
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@직원정보.사번</td>
+                                                <td>@직원정보.사용자명</td>
+                                                <td>@직원정보.부서코드</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="사용자명" Value="사번"></ComboBoxFieldSettings>
+                        </SfComboBox>
+
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="부서정보" @bind-Value="@(Edit부서코드)" PopupWidth="400px" DataSource="@부서정보List" PopupHeight="400px" CssClass="@Validate" Placeholder="부서코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="부서정보">
+                                <HeaderTemplate>
+                                    <table>
+                                        <tr>
+                                            <th width="100px">부서코드</th>
+                                            <th width="100px">부서명</th>
+                                            <th width="100px">부문코드</th>
+                                            <th width="100px">부문명</th>
+                                        </tr>
+                                    </table>
+
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 부서 = (anotherContext as 부서정보);
+                                    }
+
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@부서.부서코드</td>
+                                                <td>@부서.부서명</td>
+                                                <td>@부서.부문코드</td>
+                                                <td>@부서.부문명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="부서명" Value="부서코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+
+                    </div>
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group col-md-4">
+                        <SfDatePicker FloatLabelType="FloatLabelType.Always" TValue="DateTime?" Placeholder="실적등록일" Value="@실적등록일selected" Enabled="true">
+                            <DatePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler"></DatePickerEvents>
+                        </SfDatePicker>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="실적수량" @bind-Value=@(Edit실적수량) Enabled="true" />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="실적불량수량" @bind-Value=@(Edit불량수량) Enabled="true" />
+                    </div>
+
+                </div>
+
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="공정실적등록" OnClick=@(공정실적등록저장) IsPrimary="true" />
+            <DialogButton Content="취소" OnClick=@(() => {  공정실적팝업 = false; }) />
+        </DialogButtons>
+    </SfDialog>
+
+
+
+
+
+
+
+
+
+    //공정단위실적등록
+    <SfDialog Target="#main" Width="800px" Height="750px" IsModal="true" @bind-Visible="공정단위실적다이어로그" CloseOnEscape="true">
+        <DialogTemplates>
+            <Header>
+                <b>공정단위실적등록  주문번호[ @(생산지시.생산계획.주문번호) ]</b>
+            </Header>
+            <Content>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="false"></SfTextBox>
+
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="생산지시코드" @bind-Value="@(생산지시.생산지시코드)" FloatLabelType="FloatLabelType.Always" Placeholder="생산지시코드" Enabled="false"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="공정단위코드" @bind-Value="@(공정단위코드)" FloatLabelType="FloatLabelType.Always" Placeholder="공정단위코드" Enabled="false"></SfTextBox>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfDropDownList ID="재작업여부" TItem="재작업필드" @bind-Value="@(Edit재작업필드)" TValue="string" DataSource="@list재작업여부" FloatLabelType="FloatLabelType.Always" CssClass="@Validate" Placeholder="재작업여부" Enabled="false">
+                            <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="생산품코드" @bind-Value="@(생산품코드)" FloatLabelType="FloatLabelType.Always" Placeholder="생산품코드" Readonly="true"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="공정품코드" @bind-Value="@(Edit공정단위생산품공정코드)" FloatLabelType="FloatLabelType.Always" Placeholder="공정품코드" Readonly="true"></SfTextBox>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="주문번호" @bind-Value="@(생산지시.생산계획.주문번호)" FloatLabelType="FloatLabelType.Always" Placeholder="주문번호" Readonly="true"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="직원정보" @bind-Value="@(Edit사원코드)" PopupWidth="300px" DataSource="@직원정보List" PopupHeight="600px" CssClass="@Validate" Placeholder="사원코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="직원정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">사번</th><th width="100px">사용자명</th><th width="100px">부서코드</th></tr></table>
+                                </HeaderTemplate>
+
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 직원정보 = (anotherContext as 직원정보);
+                                    }
+
+                                    @*<ValidationMessage For="() => 직원정보.사번" />*@
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@직원정보.사번</td>
+                                                <td>@직원정보.사용자명</td>
+                                                <td>@직원정보.부서코드</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="사용자명" Value="사번"></ComboBoxFieldSettings>
+                        </SfComboBox>
+
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="부서정보" @bind-Value="@(Edit부서코드)" PopupWidth="400px" DataSource="@부서정보List" PopupHeight="400px" CssClass="@Validate" Placeholder="부서코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="부서정보">
+                                <HeaderTemplate>
+                                    <table>
+                                        <tr>
+                                            <th width="100px">부서코드</th>
+                                            <th width="100px">부서명</th>
+                                            <th width="100px">부문코드</th>
+                                            <th width="100px">부문명</th>
+                                        </tr>
+                                    </table>
+
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 부서 = (anotherContext as 부서정보);
+                                    }
+
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@부서.부서코드</td>
+                                                <td>@부서.부서명</td>
+                                                <td>@부서.부문코드</td>
+                                                <td>@부서.부문명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="부서명" Value="부서코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="장소정보" Query="@Query" @bind-Value="@(Edit실적공정코드_창고코드)" PopupWidth="300px" DataSource="@실적공정코드_창고코드List" PopupHeight="400px" CssClass="@Validate" Placeholder="실적공정코드/창고코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always" Readonly="true">
+                            <ComboBoxTemplates TItem="장소정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">장소코드</th><th width="100px">장소명</th></tr></table>
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 장소정보 = (anotherContext as 장소정보);
+                                    }
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@장소정보.장소코드</td>
+                                                <td>@장소정보.장소명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="장소명" Value="장소코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="장소위치정보"  @bind-Value="@(Edit실적작업장코드_장소코드)" PopupWidth="300px" DataSource="@실적작업장코드_장소코드List" PopupHeight="400px" CssClass="@Validate" Placeholder="실적작업장코드/장소코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always" >
+                            <ComboBoxTemplates TItem="장소위치정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">위치코드</th><th width="100px">위치명</th></tr></table>
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 장소위치정보 = (anotherContext as 장소위치정보);
+                                    }
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@장소위치정보.위치코드</td>
+                                                <td>@장소위치정보.위치명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="위치명" Value="위치코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="목표수량" @bind-Value=@(Edit목표수량) Enabled="true" />
+                    </div>
+                </div>
+
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <SfTextBox ID="실적구분" Value="창고" FloatLabelType="FloatLabelType.Always" Placeholder="실적구분" Readonly="true"></SfTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="장소정보" Query="@Query3" @bind-Value="@(Edit실적공정코드)" PopupWidth="300px" DataSource="@실적공정코드List" PopupHeight="400px" CssClass="@Validate" Placeholder="실적공정코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="장소정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">장소코드</th><th width="100px">장소명</th></tr></table>
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 장소정보 = (anotherContext as 장소정보);
+                                    }
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@장소정보.장소코드</td>
+                                                <td>@장소정보.장소명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="장소명" Value="장소코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfComboBox TValue="string" TItem="장소위치정보" @bind-Value="@(Edit실적작업장코드)" PopupWidth="300px" DataSource="@실적작업장코드List" PopupHeight="400px" CssClass="@Validate" Placeholder="실적작업장코드" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <ComboBoxTemplates TItem="장소위치정보">
+                                <HeaderTemplate>
+                                    <table><tr><th class="e-text-center">위치코드</th><th width="100px">위치명</th></tr></table>
+                                </HeaderTemplate>
+                                <ItemTemplate Context="anotherContext">
+                                    @{
+                                        var 장소위치정보 = (anotherContext as 장소위치정보);
+                                    }
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <td>@장소위치정보.위치코드</td>
+                                                <td>@장소위치정보.위치명</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </ItemTemplate>
+                            </ComboBoxTemplates>
+                            <ComboBoxFieldSettings Text="위치명" Value="위치코드"></ComboBoxFieldSettings>
+                        </SfComboBox>
+                    </div>
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group col-md-4">
+                        <SfDatePicker FloatLabelType="FloatLabelType.Always" TValue="DateTime?" Placeholder="실적등록일" Value="@실적등록일selected" Enabled="true">
+                            <DatePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler"></DatePickerEvents>
+                        </SfDatePicker>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="실적수량" @bind-Value=@(Edit실적수량) Enabled="true">
+                            <NumericTextBoxEvents ValueChange="@공정실적불량Changed" TValue="Decimal"></NumericTextBoxEvents>
+                        </SfNumericTextBox>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="실적불량수량" @bind-Value=@(Edit불량수량) Enabled="true">
+                            <NumericTextBoxEvents ValueChange="@공정실적불량Changed" TValue="Decimal"></NumericTextBoxEvents>
+                        </SfNumericTextBox>
+
+                    </div>
+
+                </div>
+
+                <div class="form-row">
+
+                    <div class="form-group col-md-12">
+                        @*<SfNumericTextBox FloatLabelType="FloatLabelType.Always" TValue="Decimal" Placeholder="사용수량" @bind-Value=@(Edit사용수량) Enabled="true" />*@
+
+                        <SfGrid @ref="GridBom" DataSource=@listBomOB TValue="공정단위자재현황">
+                            <GridEditSettings AllowAdding="false" AllowDeleting="false" AllowEditing="false"></GridEditSettings>
+                            <GridColumns>
+                                @*<GridColumn Field=@nameof(공정단위자재현황.공정단위코드) HeaderText="공정단위코드" Width="100" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" AllowAdding="false" AllowEditing="false"></GridColumn>*@
+                                <GridColumn Field=@nameof(공정단위자재현황.자재코드) HeaderText="자재코드" IsPrimaryKey="true" Width="200" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" AllowAdding="false" AllowEditing="false"></GridColumn>
+                                <GridColumn Field=@nameof(공정단위자재현황.필요수량) Width="100" HeaderText="필요수량" Format="c3"></GridColumn>
+                                <GridColumn Field=@nameof(공정단위자재현황.사용수량) Width="100" HeaderText="사용수량" Format="c3"></GridColumn>
+                                <GridColumn Field=@nameof(공정단위자재현황.불량수량) Width="100" HeaderText="불량수량" Format="c3"></GridColumn>
+                            </GridColumns>
+                        </SfGrid>
+                    </div>
+
+                </div>
+
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <SfTextBox ID="비고" @bind-Value="@(Edit비고)" FloatLabelType="FloatLabelType.Always" Placeholder="비고" Enabled="true" Multiline="true"></SfTextBox>
+                    </div>
+                </div>
+
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="공정단위실적등록" OnClick=@(공정단위실적저장) IsPrimary="true" />
+            <DialogButton Content="취소" OnClick=@(() => {  공정단위실적다이어로그 = false; }) />
+        </DialogButtons>
+    </SfDialog>
+
+}
+
+<style>
+    .e-checkbox-disabled .e-checkbox-wrapper .e-frame {
+        border-color: #bdbdbd;
+        color: red;
+    }
+
+    .e-checkbox-disabled .e-checkbox-wrapper {
+        cursor: default;
+        pointer-events: none;
+    }
+
+    .e-custom .e-control.e-textbox {
+        font-weight: bold;
+        font-size: 15px;
+    } 
+
+</style>
+
+@code
+{
+
+    private SfGrid<공정단위자재현황> GridBom;
+    private List<공정단위자재현황> listBom { get; set; }
+    private ObservableCollection<공정단위자재현황> listBomOB = new ObservableCollection<공정단위자재현황>();
+    #region 맴버변수
+    [Parameter]
+    public string Code { get; set; }
+
+    private 생산지시정보 생산지시;
+    private ObservableCollection<생산지시공정차수정보> 생산지시공정차수목록 { get; set; }
+    private int tabIndex = 0;
+    private bool 보기모드 = false;
+    private string 실행상태코드;
+    private bool isShowQrCode = false;
+    private string 보유품목코드;
+    private int selected차수;
+
+    private string 공정코드;
+    private string 공정유형코드;
+    private string 생산품코드;
+    private static int 품목라스트포인트;
+
+    private DGrid<공정단위정보> grid;
+    private ObservableCollection<공정단위정보> list;
+    private 공정단위정보 selected;
+
+    private TGrid<공정단위검사정보> grid4;
+    private ObservableCollection<공정단위검사정보> list4 = new ObservableCollection<공정단위검사정보>();
+    private 공정단위검사정보 selected공정단위검사정보;
+
+    private TGrid<공정단위검사장비> grid5;
+    private ObservableCollection<공정단위검사장비> list5 = new ObservableCollection<공정단위검사장비>();
+
+    protected SfButton btnStart, btnEnd, btnProcStart, btnProcEnd, btnSystem;
+
+    protected bool btnStartFlag = false;
+    public bool IsBtnStartEnable { get; set; } = false;
+    public bool IsBtnEndEnable { get; set; } = false;
+
+    protected bool btnProcStartFlag = false;
+    public bool IsBtnProcEndEnable { get; set; } = true;
+    public bool IsBtnProcStartEnable { get; set; } = true;
+
+    private SfTextBox _searchBox;
+
+    public bool IsEnable { get; set; } = true;
+    public bool IsBtnEnable { get; set; } = false;
+
+    public string 검사수량입력 { get; set; }
+    public int 검사수량입력_숫자 { get; set; }
+    public int 총품질검사수량 = 0;
+
+    private string pum_barcodeStart;
+    private string pum_barcodeEnd;
+    private string gong_barcodeStart;
+    private string gong_barcodeEnd;
+    private string 공정단위코드 = "";
+    private string 회사코드 = "";
+    private string 생산이동완료유무;
+
+    #endregion
+
+    public async Task ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        Console.WriteLine(검사수량입력);
+        if (args.Item.Text == "검사수량설정")
+        {
+            if (Convert.ToInt32(검사수량입력) > 생산지시.생산수량)
+                return;
+
+            검사수량입력_숫자 = Convert.ToInt32(검사수량입력);
+
+            var cancle = await ShowMessageBox("검사수량", "검사수량을 설정하시겠습니까?", MessageBoxResultType.YesOrNo);
+            if (!cancle)
+                return;
+
+            IsEnable = false;
+            IsBtnEnable = true;
+
+            Console.WriteLine(args.Item.Text);
+            list3 = Enumerable.Range(1, Convert.ToInt32(검사수량입력_숫자)).Select(cnt => new 품질검사생산품()
+            {
+                Seq = cnt,
+                생산지시코드 = 생산지시.생산지시코드,
+                생산품공정코드 = 생산지시.생산계획.생산품공정.생산품공정코드,
+                생산품공정명 = 생산지시.생산계획.생산품공정.생산품공정명,
+                공정단위코드 = 생산지시.생산지시공정차수목록[selected차수 - 1].생산품공정차수.공정단위코드,
+                Result = "",
+                보유품목코드 = 생산지시.생산계획.생산품코드,
+                CheckDate = DateTime.Now.AddDays(-cnt),
+            }).ToList();
+            품질검사생산품목록 = new ObservableCollection<품질검사생산품>(list3);
+
+
+        }
+    }
+
+    public async Task OnKeyUp()
+    {
+        //await _grid.Search(_searchBox.Value);
+    }
+
+
+    #region  공정
+    //공정시작
+    private async Task onClickProcStart()
+    {
+        if (btnProcStartFlag == false)
+        {
+            btnProcStartFlag = true;
+            IsBtnProcStartEnable = true;
+            IsBtnProcEndEnable = false;
+
+            await Remote.Command.생산관리.공정이력정보_저장(생산지시, 생산지시.생산지시공정차수목록[selected차수 - 1], 0, "공정시작", true);
+
+            NotifyMessage(Message.CheckProcStart);
+        }
+        else
+        {
+            ShowMessageBox("공정시작", "공정작업중 입니다 확인바랍니다", MessageBoxResultType.Okay);
+        }
+    }
+
+    //공정종료
+    private async Task onClickProcEnd()
+    {
+        if (btnProcStartFlag == true)
+        {
+
+            var 생산수량 = await ShowPromptBox("공정종료", "생산수량을 입력해주세요", "1", MessageBoxResultType.YesOrNo);
+
+            int prn_su = 0;
+            if (생산수량)
+            {
+                var qrCount = this.Context.promptBoxInfo.Count;
+                try
+                {
+
+                    btnProcStartFlag = false;
+                    IsBtnProcStartEnable = false;
+                    IsBtnProcEndEnable = true;
+
+                    prn_su = Convert.ToInt32(qrCount);
+                }
+                catch (Exception ex)
+                {
+                    await ShowMessageBox(qrCount, "숫자를 입력 하세요", MessageBoxResultType.Okay);
+                    Console.WriteLine("텍스트 문자 입력 : " + ex.Message);
+                    return;
+                }
+
+                await Remote.Command.생산관리.공정이력정보_저장(생산지시, 생산지시.생산지시공정차수목록[selected차수 - 1], prn_su, "공정종료", false);
+
+                NotifyMessage(Message.CheckProcEnd);
+            }
+
+
+        }
+    }
+
+    #endregion
+
+    #region 공정실적등록
+
+    private bool 공정실적팝업;
+    private async Task 공정실적등록저장()
+    {
+        if (Edit사원코드 == "" || Edit부서코드 == "")
+        {
+            this.Validate = "e-error e-multi-column";
+            StateHasChanged();
+            return;
+        }
+
+
+
+        var 공정이력정보 = new 공정이력정보
+        {
+            회사코드 = 회사코드,
+            생산지시코드 = 생산지시.생산지시코드,
+            공정단위코드 = null,
+            생산품코드 = 생산지시.생산계획.생산품공정.생산품코드,
+            생산품공정코드 = 생산지시.생산계획.생산품공정.생산품공정코드,
+            설비코드 = null,
+            생산지시명 = 생산지시.생산지시명,
+            작업자사번 = Edit사원코드,
+            목표수량 = 생산지시.생산수량,
+            생산수량 = Edit실적수량,
+            불량수량 = Edit불량수량,
+            공정상태 = "공정완료",
+        };
+
+        bool result = await Remote.Command.생산관리.공정이력완료정보_저장(공정이력정보);
+
+
+        if (!result)
+        {
+            NotifyMessage(Message.반영실패);
+            isDialogVisible = false;
+            return;
+        }
+
+        if (실행상태코드 != "B2004")
+        {
+            var c = await CheckAndModify(() => Remote.Command.생산관리.작업지시상세_저장(생산지시));
+            if (c == false)
+                return;
+
+            var ti = tabIndex;
+
+            await RefreshAsync();
+
+            tabIndex = ti;
+
+        }
+        NotifyMessage(Message.반영성공);
+
+        Edit사원코드 = "";
+        Edit부서코드 = "";
+        Edit실적수량 = 0;
+        Edit사용수량 = 0;
+        Edit불량수량 = 0;
+        실적등록일selected = DateTime.Now;
+
+        공정실적팝업 = false;
+
+        this.Validate = "e-multi-column";
+    }
+    #endregion
+
+
+    //검사측정값 리셋
+    private async Task OnClickReset(공정단위검사정보 info)
+    {
+        var found = list4.FirstOrDefault(c => c.품질검사코드 == info.품질검사코드);
+        found.검사측정값 = null;
+        await Remote.Command.생산관리.공정단위검사_저장(info, false);
+
+        NotifyMessage(Message.ModifiedUpdateData);
+    }
+    //검사측정값 저장
+    private async Task OnClickSave(공정단위검사정보 info, bool isType)
+    {
+        await Remote.Command.생산관리.공정단위검사_저장(info, false);
+        NotifyMessage(Message.ModifiedUpdateData);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Remote.WaitForReadyRemoteService();
+        await RefreshAsync();
+
+    }
+
+    /// <summary>
+    /// QR코드 버그픽스
+    /// </summary>
+    /// <param name="firstRender"></param>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender == true)
+        {
+            await Task.Delay(1000);
+            isShowQrCode = true;
+            StateHasChanged();
+
+        }
+    }
+
+
+
+    #region OnSave
+
+
+    private async Task OnSave(string 실행상태코드 = null)
+    {
+        if (string.IsNullOrWhiteSpace(실행상태코드) == false)
+        {
+            if (생산지시.실행상태코드 == "B2004")
+            {
+                IsBtnStartEnable = false;
+                IsBtnEndEnable = true;
+
+                return;
+            }
+            생산지시.실행상태코드 = 실행상태코드;
+        }
+        if (생산지시.실행상태코드 == "B2002")
+        {
+            //List<string> 담당자들 = new List<string>();
+            //foreach(var 담당자 in 생산지시.생산지시공정차수목록)
+            //{
+            //    담당자들.Add(담당자?.작업자사번);
+
+            //    if(담당자.작업자사번 == null )
+            //    {
+            //        NotifyMessage(Message.작업지시작업자지정메세지);
+            //        return;
+            //    }
+            //}
+
+            //await Remote.Command.공통.PDA_작업지시서메시지(생산지시.생산계획?.생산책임자사번, 담당자들);
+        }
+
+        if (실행상태코드 == "B2004")
+        {
+
+            await Task.Delay(500);
+            //공정실적팝업 = true;
+
+            var result = await this.Remote.Command.기준정보.직원_조회(true, 회사코드);
+            직원정보List = result.ToList();
+
+            var result2 = await Remote.Command.기준정보.부서정보_조회(회사코드);
+            부서정보List = result2.ToList();
+
+        }
+
+
+        var c = await CheckAndModify(() => Remote.Command.생산관리.작업지시상세_저장(생산지시));
+        if (c == false)
+            return;
+
+        var ti = tabIndex;
+
+        await RefreshAsync();
+
+        tabIndex = ti;
+
+        NotifyMessage(Message.ModifiedUpdateData);
+
+
+    }
+
+    #endregion
+
+    private async Task OnConfirm()
+    {
+        //생산계획.사용유무 = !생산계획.사용유무;
+
+        //await Remote.Command.생산관리.생산계획상세_저장(생산계획);
+
+        var ti = tabIndex;
+
+        await RefreshAsync();
+
+        tabIndex = ti;
+
+        NotifyMessage(Message.ModifiedUpdateData);
+    }
+
+    private async Task On발행()
+    {
+        var 공정차수 = 생산지시.생산지시공정차수목록[selected차수 - 1];
+
+        //보유품목코드 = await Remote.Command.생산관리.작업지시_완제품_발행(생산지시.생산지시코드, selected차수, new 품목정보
+        //{
+        //    품목코드 = 공정차수.생산품공정차수.생산품공정.생산품코드
+        //});
+    }
+
+
+    private void OnGrid4RowSelected(RowSelectEventArgs<공정단위검사정보> args)
+    {
+        //selected공정단위검사정보 = args.Data;
+
+        //ModifyList(selected공정단위검사정보.공정검사장비목록, (x, map) =>
+        //{
+        //    if (x.검사장비?.연동장비유형코드 != null)
+        //        x.검사장비.연동장비유형 = map[x.검사장비?.연동장비유형코드];
+        //});
+        //list5.Clear();
+        //if (selected공정단위검사정보.공정검사장비목록 != null)
+        //{
+        //    foreach (var item in selected공정단위검사정보.공정검사장비목록)
+        //        list5.Add(item);
+        //}
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<공정단위검사정보> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.공정단위검사_삭제(args.Data, true);
+
+            await RefreshAsync();
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newData = args.Data;
+
+            await Remote.Command.생산관리.공정단위검사_저장(newData, args.Action == "Add" ? true : false);
+            if (args.Action == "Add")
+                await RefreshAsync();
+
+            ModifyList(list4, (info, map) =>
+            {
+                if (info.검사단위코드 != null)
+                    info.검사단위 = map[info.검사단위코드];
+            }, false);
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+
+    private void OnActionBegin(ActionEventArgs<공정단위검사정보> args)
+    {
+        //await Task.Yield();
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+        }
+    }
+
+    private void OnActionBegin(ActionEventArgs<공정단위검사장비> args)
+    {
+        //await Task.Yield();
+
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            //if (parentRow == null || selected공정단위검사정보 == null)
+            //{
+            //    args.Cancel = true;
+            //    return;
+            //}
+        }
+    }
+    private async Task OnActionComplete(ActionEventArgs<공정단위검사장비> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            //state = "Add";
+            // var parentRow = grid3.GetCurrentViewRecords.
+
+            var newRow = args.Data;
+            newRow.공정단위코드 = 생산지시.생산지시공정차수목록[selected차수 - 1].생산품공정차수.공정단위코드;  //parentRow.공정단위코드;
+
+            var result = await Remote.Command.생산관리.공정단위검사_조회(newRow.공정단위코드);
+
+            var rsesult2 = from 품질검사 in result
+                           where 품질검사.공정단위코드 == newRow.공정단위코드
+                           select 품질검사;
+
+
+            foreach (var item in rsesult2)
+            {
+                newRow.품질검사코드 = item.품질검사코드;
+            }
+
+            //newRow.품질검사코드 = 품질검사코드;
+            //생산지시.생산지시공정차수목록[selected차수 - 1].생산품공정차수.공정단위.공정검사목록[0].품질검사코드;
+            //"Q000001";   //selected공정단위검사정보.품질검사코드;
+
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            //state = "BeginEdit";
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.공정단위검사장비_삭제(args.Data, true);
+
+            await RefreshAsync();
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 관련 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newData = args.Data;
+            newData.회사코드 = 회사코드;
+
+            await Remote.Command.생산관리.공정단위검사장비_저장(newData, args.Action == "Add" ? true : false);
+            if (args.Action == "Add")
+                await RefreshAsync();
+
+            ModifyList(list5, (info, map) =>
+            {
+                if (info.검사장비.연동장비유형코드 != null)
+                    info.검사장비.연동장비유형 = map[info.검사장비.연동장비유형코드];
+            }, false);
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+    private async Task OnActionComplete(ActionEventArgs<품질검사생산품> args)
+    {
+
+        if (list3.Count > 0)
+            await grid3.SelectRow(nowItem, true);
+    }
+
+    //2021.02.01 캘리퍼스를 위한 Event
+    public class MyMitutoyoTupleEventConverter : WampEventValueTupleConverter<(string, decimal)>
+    {
+    }
+
+    private bool IsVisible { get; set; } = true;
+
+    private void OpenDialog()
+    {
+        this.IsVisible = true;
+    }
+
+    // 2021.03.17 추가
+    private async Task OnQRPrinte(string _type, int size)
+    {
+        var barcodeValue = _type;
+        await QRPrinte_Act(barcodeValue, size);
+    }
+
+    protected override void OnDispose()
+    {
+        myValue?.Clear();
+        nowItem = 0;
+    }
+
+
+}
+
+
+<!--<div class="form-group col-md-3">
+    <div class="row mb-2">
+        <span class="col text-center">
+            <SfButton @ref="실적등록" OnClick="공정실적등록클릭" Content="실적등록" Disabled="false" CssClass="e-info"></SfButton>
+        </span>
+    </div>
+    if (공정실적등록바코드 != null)
+    {
+        <div class="row mb-2">
+            <div class="col text-center">
+                <SfQRCodeGenerator Width="300px" Height="150px" Value=@(공정실적등록바코드)>-->
+@*<QRCodeGeneratorDisplayText Visibility="true" />*@
+<!--</SfQRCodeGenerator>
+    </div>
+</div>
+<div class="row">
+    <div class="col text-center">-->
+@*<SfButton Disabled="true">출력</SfButton>*@
+<!--<SfButton OnClick="() => OnQRPrinte(공정실적등록바코드, 2) ">출력</SfButton>
+            </div>
+        </div>
+    }
+</div>-->

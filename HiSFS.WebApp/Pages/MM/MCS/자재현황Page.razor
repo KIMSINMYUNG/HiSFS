@@ -1,0 +1,216 @@
+﻿@inherits CustomComponent
+@page "/mm/mcs/자재현황"
+
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6" ID="root">
+    <SplitterPanes>
+        <SplitterPane Size="50%" Collapsible="true">
+            <ContentTemplate>
+                <FGrid @ref="grid" DataSource="@list" TValue="보유품목정보" DefaultMode="true" EditMode="DGridEditMode.None"
+                       OnRowSelected="OnRowSelected" OnDataBound="OnDataBound" OnCreated="RefreshAsync">
+
+                    <GridColumns>
+                        <GridColumn Field=@nameof(보유품목정보.No) HeaderText="순번" Width="80" />
+                        <GridColumn Field=@nameof(보유품목정보.보유품목코드) Visible="false" />
+                        <GridColumn Field="품목.원품목코드" Width="160" HeaderText="품번" />
+                        <GridColumn Field="품목.품목명" Width="260" HeaderText="품명" />
+                        @*<GridColumn Field="품목.규격" Width="160" HeaderText="규격" />
+                        <GridColumn Field="품목.단위.코드명" Width="80" HeaderText="단위" />*@
+                        <GridColumn Field=@nameof(품목정보.품목구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.품목구분코드)) HeaderText="품목구분" />
+                        <GridColumn Field="품목구분.코드명" Width="100" AllowEditing="false" AllowAdding="false" HeaderText="품목구분">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>
+                        @*<GridColumn HeaderText="전주재고" Width="100" />
+                        <GridColumn HeaderText="전일재고" Width="100" />
+                        *@
+                        @*<GridColumn HeaderText="금일입고" Width="100" />
+                        <GridColumn HeaderText="금일출고" Width="100" />*@
+                        <GridColumn Field="수량" Format="G29" Width="100" HeaderText="현재수량" />
+                        <GridColumn Field="장소.장소명" Width="140" HeaderText="장소" />
+                        <GridColumn Field="장소위치.위치명" Width="140" HeaderText="위치" />
+                        <GridColumn Field="보유일" Width="120" Format="yyyy/MM/dd" HeaderText="입고일" />
+                       
+
+                    </GridColumns>
+                </FGrid>
+            </ContentTemplate>
+        </SplitterPane>
+        <SplitterPane Size="50%" Collapsible="true">
+            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+                <SplitterPanes>
+                    <SplitterPane Size="50%" Collapsible="true">
+
+                        <div class="row section-header">
+                            <span class="my-auto">위치기준</span>
+                        </div>
+
+                        <FGrid @ref="grid3" DataSource="@list3" DefaultMode="true" PageSize="10" TValue="보유품목위치정보">
+                            <GridColumns>
+                                @*<GridColumn Field=@nameof(보유품목위치정보.No) HeaderText="순번" Width="80" />*@
+                                <GridColumn Field=@nameof(보유품목위치정보.보유품목코드) IsPrimaryKey="true" HeaderText="품목코드" Width="80" />
+                                <GridColumn Field="장소위치.위치명" HeaderText="위치명" Width="100" />
+                                <GridColumn HeaderText="위치상세명" Width="160">
+                                    <Template>
+                                        @{ var info = context as 보유품목위치정보; }
+                                        @if (info.위치상세코드 != "" && info.위치상세코드 != null)
+                                        {
+                                            var result = 위치명조회(info.위치상세코드);
+                                            <span>@result</span>
+                                        }
+                                        else
+                                        {
+                                            <span>창고</span>
+                                        }
+                                    </Template>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(보유품목위치정보.수량) Format="G29" HeaderText="수량" Width="100" />
+                                <GridColumn Field=@nameof(보유품목위치정보.CreateTime) HeaderText="등록일" Width="100" />
+                            </GridColumns>
+                        </FGrid>
+
+                    </SplitterPane>
+                    <SplitterPane Collapsible="true">
+
+                        <div class="row section-header">
+                            <span class="my-auto">품목기준</span>
+                        </div>
+
+
+                        <FGrid @ref="grid2" DataSource="@list2" DefaultMode="true" PageSize="10" TValue="보유품목위치정보">
+                            <GridColumns>
+                                @*<GridColumn Field=@nameof(보유품목위치정보.No) HeaderText="순번" Width="80" />*@
+                                <GridColumn Field="장소위치.위치명" HeaderText="위치명" Width="100" />
+                                <GridColumn HeaderText="위치상세명" Width="160">
+                                    <Template>
+                                        @{ var info = context as 보유품목위치정보; }
+                                        @if (info.위치상세코드 != "" && info.위치상세코드 != null)
+                                        {
+                                            var result = 위치명조회(info.위치상세코드);
+                                            <span>@result</span>
+                                        }
+                                        else
+                                        {
+                                            <span>창고</span>
+                                        }
+
+                                    </Template>
+                                </GridColumn>
+                                <GridColumn Field=@nameof(보유품목위치정보.수량) Format="G29" HeaderText="수량" Width="100" />
+                                <GridColumn Field=@nameof(보유품목위치정보.CreateTime) HeaderText="등록일" Width="100" />
+                            </GridColumns>
+                        </FGrid>
+                    </SplitterPane>
+                </SplitterPanes>
+            </SfSplitter>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<보유품목정보> grid;
+    private ObservableCollection<보유품목정보> list;
+    private 보유품목정보 selectedRow;
+
+    private FGrid<보유품목위치정보> grid2;
+    private ObservableCollection<보유품목위치정보> list2 = new ObservableCollection<보유품목위치정보>();
+
+    private FGrid<보유품목위치정보> grid3;
+    private ObservableCollection<보유품목위치정보> list3 = new ObservableCollection<보유품목위치정보>();
+
+
+    private IEnumerable<장소정보> 장소목록;
+
+    public List<위치상세정보> 위치상세코드List { get; set; }
+
+    private SfTextBox _searchBox;
+
+    private string 회사코드 = "";
+    protected override async Task OnInitializedAsync()
+    {
+        장소목록 = (await Remote.Command.기준정보.장소_조회()).Where(x => x.사용유무 == true && x.삭제유무 != true).ToList();
+        await RefreshAsync();
+    }
+
+
+
+    public string 위치명조회(string 위치상세코드)
+    {
+        var 위치상세 = 위치상세코드List.Where(x => x.위치상세코드 == 위치상세코드).FirstOrDefault();
+
+        return 위치상세?.위치명;
+    }
+
+    private async Task RefreshAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.자재관리.자재현황_조회(회사코드);
+
+        ModifyList(result, (x, map) =>
+        {
+            @*if (x.품목.단위코드 != null)
+                x.품목.단위 = map[x.품목.단위코드];*@
+            if (x.품목구분코드 != null)
+                x.품목구분 = map[x.품목구분코드];
+        });
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+   @* public void Select(SelectingEventArgs args)
+    {
+        if (args.IsSwiped)
+        {
+            args.Cancel = true;
+        }
+    }*@
+
+    // 페이지가 소멸할 때 호출된다.
+    protected override void OnDispose()
+    {
+    }
+
+    private void OnDataBound(BeforeDataBoundArgs<보유품목정보> args)
+    {
+        list2?.Clear();
+    }
+
+
+    private async void OnRowSelected(RowSelectEventArgs<보유품목정보> args)
+    {
+        selectedRow = args.Data;
+
+        list2?.Clear();
+        string 보유품목코드 = selectedRow.보유품목코드;
+
+        var result2 = await Remote.Command.자재관리.자재위치현황_조회( 회사코드 , 보유품목코드);
+
+        
+        @*if (selectedRow.보유품목이력 == null)
+            return;*@
+
+        if (result2 == null)
+            return;
+
+        list2 = result2.ToObservableCollection();
+
+
+        var result3 = await Remote.Command.자재관리.자재장소위치별품목현황_조회(회사코드, selectedRow.장소위치코드);
+
+        if (result3 == null)
+            return;
+
+        list3 = result3.ToObservableCollection();
+
+
+var result1 = await Remote.Command.기준정보.위치상세전체정보_조회(회사코드);
+위치상세코드List = result1.ToList();
+
+        @*foreach (var item in result2)
+            list2.Add(item);*@
+
+    StateHasChanged();
+}
+}

@@ -1,0 +1,108 @@
+﻿@page "/qv/iv/수입검사"
+
+@inherits CustomComponent
+
+
+<FGrid DataSource="list" TValue="보유품목불량정보" DefaultMode="true" OnCheckAuth="CheckAuth"
+       OnCreated="RefreshAsync" OnActionComplete="OnActionComplete" EditMode="DGridEditMode.All" >
+    <GridColumns>
+        <GridColumn Field=@nameof(보유품목불량정보.No) HeaderText="순번" Width="80" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field="@nameof(보유품목불량정보.보유품목코드)" Width="120" AllowAdding="false" AllowEditing="false" HeaderText="보유품목코드" IsPrimaryKey="true" />
+
+        <GridColumn Field="보유품목.보유품목코드" HeaderText="품목코드" Width="0"  >
+            <Template>
+                @((context as 보유품목불량정보).보유품목?.보유명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="품목코드" Target="#root" DialogHeader="품목 조회" TValue="품목정보" TCode="string" TextField="품목코드" @bind-Value=@((context as 보유품목불량정보).보유품목.품목)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.원자재부품Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+
+        @*<GridColumn Field="보유품목.품목.품목코드" Width="140" HeaderText="품번" />*@
+        <GridColumn Field="보유품목.품목.품목명" Width="200" AllowEditing="false" AllowAdding="false" HeaderText="품명" />
+        <GridColumn Field="보유품목.품목.규격" Width="120" AllowEditing="false" AllowAdding="false" HeaderText="규격" />
+        @*<GridColumn Field="보유품목.수량" Width="80" HeaderText="수량" />*@
+        <GridColumn Field="보유품목.품목.단위.코드명" Width="80" HeaderText="단위" AllowEditing="false" AllowAdding="false" />
+        @*<GridColumn Field="보유품목.장소.장소명" Width="100" HeaderText="장소" />
+        <GridColumn Field="보유품목.장소위치.위치명" Width="100" HeaderText="위치" />*@
+
+
+        <GridColumn Field=@nameof(보유품목불량정보.불량유형코드) Width="0" Template=@CommonCodeTemplate(nameof(보유품목불량정보.불량유형코드)) EditTemplate=@CommonCodeEditTemplate(nameof(보유품목불량정보.불량유형코드), "불량유형", "S9209") HeaderText="불량유형" />
+        <GridColumn Field="불량유형.코드명" Width="120" HeaderText="불량유형">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(보유품목불량정보.수량) Width="80" HeaderText="불량수량" />
+        <GridColumn Field=@nameof(보유품목불량정보.불량등록일시) Width="160" Format="yy/MM/dd HH:mm:ss" HeaderText="불량등록일" />
+        <GridColumn Field=@nameof(보유품목불량정보.불량변경일시) Width="160" Format="yy/MM/dd HH:mm:ss" HeaderText="불량변경일" />
+    </GridColumns>
+</FGrid>
+
+
+
+@code {
+    private ObservableCollection<보유품목불량정보> list;
+
+
+    private async Task RefreshAsync()
+    {
+        //- 보유품목 푼번 품명 규격 수량 단위 - 장소 위치 불량유형 불량수량 불량일시등록 불량일시변경
+
+        // 사유 : 수입 
+        //_자재관리.보유품목_입고(보유품목코드, 수량, 장소코드, 사유);
+
+
+        var result = await Remote.Command.품질관리.수입검사_조회();
+        ModifyList(result, (info, map) =>
+        {
+            if (info.보유품목.품목.단위코드 != null)
+                info.보유품목.품목.단위 = map[info.보유품목.품목.단위코드];
+            if (info.불량유형코드 != null)
+                info.불량유형 = map[info.불량유형코드];
+
+            if (info.보유품목.품목.품목구분코드 != null)
+                info.보유품목.품목.품목구분 = map[info.보유품목.품목.품목구분코드];
+        });
+
+        list = result.ToObservableCollection();
+        StateHasChanged();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<보유품목불량정보> e)
+    {
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+
+        }
+        if (e.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            var row = e.Data;
+            await Remote.Command.품질관리.수입검사_삭제(row, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        else if (e.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = e.Data;
+            newRow.보유품목코드 = e.Data.보유품목.품목.품목코드;
+            //await Remote.Command.품질관리.품질검사_저장(newRow, e.Action == "Add" ? true : false);
+
+            await Remote.Command.품질관리.수입검사_저장(newRow, e.Action == "Add" ? true : false);
+
+
+            await RefreshAsync();
+
+            NotifyMessage(e.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

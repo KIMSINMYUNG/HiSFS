@@ -1,0 +1,41 @@
+﻿@inject CacheService Cache
+
+
+<SfDropDownList ID=@(ID) CssClass=@(CssClass) Placeholder=@(Placeholder) FloatLabelType="FloatLabelType.Always" TItem="공통코드" TValue="string" DataSource=@(CodeList) Value=@Value ValueChanged=@(OnValueChanged) Readonly=@(Readonly) Enabled=@(Enabled)>
+    <DropDownListFieldSettings Text="코드명" Value="코드" />
+</SfDropDownList>
+
+
+@code {
+    [Parameter]
+    public string ID { get; set; }
+
+    [Parameter]
+    public string CssClass { get; set; }
+
+    [Parameter]
+    public string Placeholder { get; set; }
+
+    [Parameter]
+    public string ParentCode { get; set; }
+
+    [Parameter]
+    public bool Readonly { get; set; }
+
+    [Parameter]
+    public bool Enabled { get; set; } = true;
+
+    [Parameter]
+    public string Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    private IList<공통코드> CodeList => Value == null ? Cache.코드목록[ParentCode] : Cache.코드형제목록[Value];
+
+    private async Task OnValueChanged(string value)
+    {
+        this.Value = value;
+        await ValueChanged.InvokeAsync(value);
+    }
+}

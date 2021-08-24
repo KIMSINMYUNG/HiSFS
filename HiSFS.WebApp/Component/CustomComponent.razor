@@ -1,0 +1,143 @@
+﻿@code {
+    protected RenderFragment<object> CommonCodeTemplate(string field) =>
+        (context) =>
+        {
+            var item = GetPropertyValue(context, field)?.ToString();
+            var itemName = item == null ? "" : 코드[item].코드명;
+            return @<span>@itemName</span>;
+        };
+    protected RenderFragment<object> CommonCodeEditTemplate(string field, string fieldText, string parentCode, bool isEnabled = true, string filter = null) =>
+        (context) =>
+        {
+            var property = context.GetType().GetProperty(field);
+            var bindableProperty = new BindableProperty<string>(context, property);
+
+//            BindableProperty<bool> enabledProperty;
+//            if (enableField != null)
+//                enabledProperty = new BindableProperty<bool>(context, enableField);
+//            else
+//                enabledProperty = new BindableProperty<bool>(true);
+
+            var item = property.GetValue(context)?.ToString();
+            var codeList = item == null ? 코드목록[parentCode] : 코드형제목록[item];
+            if (string.IsNullOrWhiteSpace(filter) == false)
+            {
+                var temp = filter.Split('=');
+                var p = temp[0].Trim();
+                var a = temp[1].Trim();
+                codeList = codeList.Where(x => x.GetType().GetProperty(p).GetValue(x)?.ToString() == a).ToList();
+            }
+            
+            return @<SfDropDownList ID=@(field) Placeholder=@(fieldText) FloatLabelType="FloatLabelType.Always" TItem="공통코드" TValue="string" DataSource=@(codeList) @bind-Value=@(bindableProperty.Value) Enabled=@(isEnabled)>
+                        <DropDownListFieldSettings Text="코드명" Value="코드" />
+                    </SfDropDownList>;
+        };
+
+    protected RenderFragment<object> ComboBoxTemplate(string fieldName) =>
+        (context) =>
+        {
+            return @<span>@GetPropertyValue(context, fieldName)</span>;
+        };
+
+    protected RenderFragment<object> ComboBoxEditTemplate<T>(string fieldCode, string itemCode, string itemName, Func<string, IEnumerable<T>> dataSourceFunc, string dataSourceFilterField = "")
+        where T : class =>
+        (context) =>
+        {
+            //var obj = GetPropertyValue(context, field);
+            var code = GetPropertyValue(context, fieldCode)?.ToString();
+            //var name = GetPropertyValue(obj, fieldName)?.ToString();
+            var dataSourceFilter = "";
+            if (string.IsNullOrWhiteSpace(dataSourceFilterField) == false)
+                dataSourceFilter = GetPropertyValue(context, dataSourceFilterField)?.ToString();
+
+            //SfComboBox<string, T> comboBox = null;
+
+            return @<SfComboBox ID=@(fieldCode) Placeholder="항목 입력" TItem=T TValue="string" Value=@(code) DataSource=@(dataSourceFunc(dataSourceFilter))>
+                        <ComboBoxFieldSettings Text=@(itemName) Value=@(itemCode) />
+                    </SfComboBox>;
+
+            //void OnValueChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string> args)
+            //{
+            //    var code = args.Value;
+            //    var item = dataSource.FirstOrDefault(x => code.Equals(x.GetType().GetProperty(fieldCode).GetValue(x)) == true);
+            //    var nameValue = item.GetType().GetProperty(fieldName).GetValue(item);
+
+            //    obj.GetType().GetProperty(fieldCode).SetValue(obj, code);
+            //    obj.GetType().GetProperty(fieldName).SetValue(obj, nameValue);
+
+            //}
+
+            //async Task OnFiltering(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+            //{
+            //    args.PreventDefaultAction = true;
+
+            //    var query = new Syncfusion.Blazor.Data.Query()
+            //        .Where(itemName, "contains", args.Text, true);
+            //    //await autoComplete.Filter(await dataSourceFunc(null), query);
+            //    var dataSource = dataSourceFunc(dataSourceFilter);
+            //    await comboBox.Filter(dataSource, query);
+            //}
+        };
+
+@*    protected RenderFragment<object> AutoCompleteTemplate(string fieldName) =>
+        (context) =>
+        {
+        return @<span>@GetPropertyValue(context, fieldName)</span>;
+
+        };
+
+    protected RenderFragment<object> AutoCompleteEditTemplate<T>(string fieldCode, string itemCode, string itemName, Func<string, IEnumerable<T>> dataSourceFunc, string dataSourceFilterField = "")
+        where T : class =>
+        (context) =>
+        {
+            //var obj = GetPropertyValue(context, field);
+            var code = GetPropertyValue(context, fieldCode)?.ToString();
+            //var name = GetPropertyValue(obj, fieldName)?.ToString();
+            var dataSourceFilter = "";
+            if (string.IsNullOrWhiteSpace(dataSourceFilterField) == false)
+                dataSourceFilter = GetPropertyValue(context, dataSourceFilterField)?.ToString();
+
+            SfAutoComplete<string, T> autoComplete = null;
+
+            return @<SfAutoComplete ID=@(fieldCode) @ref="autoComplete" Placeholder="항목 입력" TItem=T TValue="string" Value=@(code) DataSource=@(dataSourceFunc(dataSourceFilter)) ShowPopupButton="true">
+                        <AutoCompleteFieldSettings Text=@(itemName) Value=@(itemCode) />
+                        <AutoCompleteEvents Filtering="OnFiltering" TValue="string" />
+                    </SfAutoComplete>;
+
+            //void OnValueChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string> args)
+            //{
+            //    var code = args.Value;
+            //    var item = dataSource.FirstOrDefault(x => code.Equals(x.GetType().GetProperty(fieldCode).GetValue(x)) == true);
+            //    var nameValue = item.GetType().GetProperty(fieldName).GetValue(item);
+
+            //    obj.GetType().GetProperty(fieldCode).SetValue(obj, code);
+            //    obj.GetType().GetProperty(fieldName).SetValue(obj, nameValue);
+
+            //}
+
+            async Task OnFiltering(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+            {
+                args.PreventDefaultAction = true;
+
+                var query = new Syncfusion.Blazor.Data.Query()
+                    .Where(itemName, "contains", args.Text, true);
+                //await autoComplete.Filter(await dataSourceFunc(null), query);
+                var dataSource = dataSourceFunc(dataSourceFilter);
+                await autoComplete.Filter(dataSource, query);
+            }
+        };*@
+
+    static object GetPropertyValue(object obj, string field)
+    {
+        var index = field.IndexOf('.');
+        var fieldName = index == -1 ? field : field[0..index];
+
+        var propertyValue = obj.GetType().GetProperty(fieldName).GetValue(obj);
+
+        if (index == -1)
+            return propertyValue;
+
+        return GetPropertyValue(propertyValue, field[(index + 1)..]);
+    }
+
+}

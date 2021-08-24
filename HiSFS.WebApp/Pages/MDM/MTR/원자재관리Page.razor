@@ -1,0 +1,131 @@
+﻿@page "/mdm/mtr/원자재관리"
+@inherits CustomComponent
+
+
+<DGrid @ref="grid" DataSource="@list" TValue="품목정보" DefaultMode="true" EditMode="DGridEditMode.All"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(품목정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(품목정보.품목코드) Visible="false" />
+        <GridColumn Field=@nameof(품목정보.원품목코드) Width="160" HeaderText="품번" AllowEditing="false" />
+        <GridColumn Field=@nameof(품목정보.관리차수) Width="80" HeaderText="차수" AllowAdding="false" AllowEditing="false" />
+        <GridColumn Field=@nameof(품목정보.품목명) Width="160" HeaderText="품명" />
+        <GridColumn Field=@nameof(품목정보.품목구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.품목구분코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.품목구분코드), "품목구분", "B12", true, "인자1=1") HeaderText="품목구분" />
+        <GridColumn Field="품목구분.코드명" Width="120" HeaderText="품목구분">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(품목정보.조달구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.조달구분코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.조달구분코드), "조달구분", "B16") HeaderText="조달구분" />
+        <GridColumn Field="조달구분.코드명" Width="120" HeaderText="조달구분">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        @*<GridColumn Field=@nameof(품목정보.소재코드) Width="120" Template=@CommonCodeTemplate(nameof(품목정보.소재코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.소재코드), "소재", "B13") HeaderText="소재" />
+            <GridColumn Field="소재.코드명" Visible="false" />*@
+        <GridColumn Field=@nameof(품목정보.규격) Width="160" />
+        <GridColumn Field=@nameof(품목정보.단위코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.단위코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.단위코드), "단위", "B11") HeaderText="단위" />
+        <GridColumn Field="단위.코드명" Width="120" HeaderText="단위">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(품목정보.LOT여부) Width="120" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" DefaultValue="true" />
+        <GridColumn Field=@nameof(품목정보.LOT기본수량) Width="100" />
+        <GridColumn Field=@nameof(품목정보.거래처) Width="0">
+            <Template>
+                @((context as 품목정보).거래처?.거래처명)
+            </Template>
+            <EditTemplate>
+                <DInputSearch Placeholder="거래처" Target="#main" DialogHeader="거래처 조회" TValue="거래처정보" TCode="string" TextField="거래처명" @bind-Value=@((context as 품목정보).거래처)>
+                    <DialogContent>
+                        <HiSFS.WebApp.Pages.Common.Popup.거래처Popup />
+                    </DialogContent>
+                </DInputSearch>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field="거래처.거래처명" Width="160" HeaderText="거래처">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(품목정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(품목정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일">
+            <EditTemplate></EditTemplate>
+        </GridColumn>
+    </GridColumns>
+</DGrid>
+
+
+@code {
+    [Parameter]
+    public PageMode Mode { get; set; }
+
+
+    private DGrid<품목정보> grid;
+    private ObservableCollection<품목정보> list;
+
+
+    private async Task RefreshAsync()
+    {
+        var result = await Remote.Command.기준정보.원자재_조회();
+        ModifyList(result, (x, map) =>
+        {
+            if (x.품목구분코드 != null)
+                x.품목구분 = map[x.품목구분코드];
+            if (x.조달구분코드 != null)
+                x.조달구분 = map[x.조달구분코드];
+            if (x.소재코드 != null)
+                x.소재 = map[x.소재코드];
+            if (x.단위코드 != null)
+                x.단위 = map[x.단위코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<품목정보> args)
+    {
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<품목정보> args)
+    {
+        // 추가 시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.관리차수 = 1;
+            newRow.품목구분코드 = "B1201";
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.기준정보.원자재_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+            newRow.품목구분 = null;
+            newRow.품목유형 = null;
+            newRow.소재 = null;
+            newRow.규격종류 = null;
+            newRow.조달구분 = null;
+            newRow.단위 = null;
+            newRow.거래처 = null;
+
+            await Remote.Command.기준정보.원자재_저장(newRow, args.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

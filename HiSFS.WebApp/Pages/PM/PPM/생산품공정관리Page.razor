@@ -1,0 +1,290 @@
+﻿@page "/pm/ppm/생산품공정관리"
+
+@inherits CustomComponent
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="40%" Collapsible="true">
+            <FGrid @ref="grid" DataSource="@list" TValue="생산품공정정보" DefaultMode="true" EditMode="DGridEditMode.All"
+                   OnCreated="RefreshAsync" OnRowSelected="OnGrid1RowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                <GridColumns>
+                    <GridColumn Field=@nameof(생산품공정정보.No) Width="80" AllowAdding="false" AllowEditing="false">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산품공정정보.회사코드) Width="100">
+                        <Template>
+                            @((context as 생산품공정정보).회사코드)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산품공정정보; }
+                            <SfTextBox ID="회사코드" @bind-Value="@(회사코드)" FloatLabelType="FloatLabelType.Always" Placeholder="회사코드" Enabled="false"></SfTextBox>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산품공정정보.생산품공정코드) Visible="false" />
+                    <GridColumn Field=@nameof(생산품공정정보.생산품공정명) />
+                    <GridColumn Field=@nameof(생산품공정정보.관리차수)>
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산품공정정보.공정차수) HeaderText="공정차수">
+                        <Template>
+                            @{ var info = context as 생산품공정정보; }
+                            @(info.생산품공정차수목록?.Count() ?? 0)
+                        </Template>
+                        <EditTemplate>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산품공정정보.생산품코드) HeaderText="생산품" Width="0">
+                        <Template>
+                            @((context as 생산품공정정보).생산품?.품목명)
+                        </Template>
+                        <EditTemplate>
+                            @{ var info = context as 생산품공정정보; }
+                            <DInputSearch ID="생산품코드" Placeholder="생산품" Target="#root" DialogHeader="생산품 조회" TValue="품목정보" TCode="string" TextField="품목명" @bind-Value=@(info.생산품) CodeField="품목코드" @bind-Code=@(info.생산품코드)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.생산품Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="생산품.품목명" HeaderText="생산품">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산품공정정보.사용유무) HeaderText="확정유무" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" />
+                    <GridColumn Field=@nameof(생산품공정정보.CreateTime) Format="yyyy/MM/dd" HeaderText="등록일">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(생산품공정정보.UpdateTime) Format="yyyy/MM/dd" HeaderText="수정일">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+        <SplitterPane Size="60%" Collapsible="true">
+            <div class="row section-header">
+                <span class="my-auto">공정차수</span>
+            </div>
+            <FGrid @ref="grid2" DataSource="@list2" TValue="생산품공정차수정보" DefaultMode="true" EditMode="DGridEditMode.All" PageSize="9"
+                   OnActionComplete="OnActionComplete" OnActionBegin="OnActionBegin" OnCheckAuth="CheckAuth">
+                <GridColumns>
+                    <GridColumn Field=@nameof(생산품공정차수정보.생산품공정코드) Visible="false" />
+                    <GridColumn Field=@nameof(생산품공정차수정보.순번) Visible="false" IsPrimaryKey="true" />
+                    <GridColumn Field=@nameof(생산품공정차수정보.공정차수) Width="100"  AllowEditing="false" AllowAdding="false" />
+                            <GridColumn Field=@nameof(생산품공정차수정보.공정단위코드) Width="0" IsPrimaryKey="true">
+                                <Template>
+                                    @((context as 생산품공정차수정보).공정단위?.공정단위명)
+                                </Template>
+                                <EditTemplate>
+                                    @{ var info = context as 생산품공정차수정보; }
+                                    <DInputSearch ID="공정단위코드" Placeholder="공정단위" Target="#root" DialogHeader="공정단위 조회" TValue="공정단위정보" TCode="string" TextField="공정단위명" @bind-Value=@(info.공정단위) CodeField="공정단위코드" @bind-Code=@(info.공정단위코드)>
+                                        <DialogContent>
+                                            <HiSFS.WebApp.Pages.Common.Popup.공정단위Popup />
+                                        </DialogContent>
+                                    </DInputSearch>
+                                </EditTemplate>
+                            </GridColumn>
+                            <GridColumn Field="공정단위.공정단위명" Width="200" HeaderText="공정단위">
+                                <EditTemplate></EditTemplate>
+                            </GridColumn>
+                            <GridColumn Field="공정단위.공정.공정유형.코드명" Width="100" HeaderText="공정유형" AllowAdding="false" AllowEditing="false" />
+                            <GridColumn Field="공정단위.공정.공정명" Width="100" HeaderText="공정" AllowAdding="false" AllowEditing="false" />
+                            <GridColumn Field="공정단위.공정예상시간" Width="100" HeaderText="공정예상시간" AllowAdding="false" AllowEditing="false" />
+                            <GridColumn Field="공정단위.공정품유형.코드명" Width="120" HeaderText="공정품유형" AllowAdding="false" AllowEditing="false" />
+                            @*<GridColumn Field="공정단위.도면.도면명" Width="120" HeaderText="도면" AllowAdding="false" AllowEditing="false" />*@
+
+                <GridColumn HeaderText="도면" Width="120" AllowAdding="false" AllowEditing="false">
+                    <Template>
+                        @((context as 생산품공정차수정보).공정단위?.도면?.도면명)
+                    </Template>
+                    <EditTemplate></EditTemplate>
+                </GridColumn>
+
+</GridColumns>
+            </FGrid>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+@code {
+    private FGrid<생산품공정정보> grid;
+    private ObservableCollection<생산품공정정보> list;
+
+    private FGrid<생산품공정차수정보> grid2;
+    private ObservableCollection<생산품공정차수정보> list2 = new ObservableCollection<생산품공정차수정보>();
+
+    private 생산품공정정보 selectedRow;
+
+    private string 회사코드 = "";
+
+    private async Task RefreshAsync()
+    {
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.생산품공정_조회(회사코드);
+        ModifyList(result, (x, map) =>
+        {
+            //if (x.공정단위.공정유형코드 != null)
+            //x.공정단위.공정유형 = map[x.공정단위.공정유형코드];
+        });
+        list = result.ToObservableCollection();
+
+        //selectedRow = null;
+        //list2.Clear();
+
+        StateHasChanged();
+    }
+
+    //string state;
+
+    private void OnGrid1RowSelected(RowSelectEventArgs<생산품공정정보> args)
+    {
+        var info = args.Data;
+        var result = info.생산품공정차수목록;
+        ModifyList(result, (x, map) =>
+        {
+            if (x.공정단위.공정.공정유형코드 != null)
+                x.공정단위.공정.공정유형 = map[x.공정단위.공정.공정유형코드];
+            if (x.공정단위.공정품유형코드 != null)
+                x.공정단위.공정품유형 = map[x.공정단위.공정품유형코드];
+
+        });
+
+        selectedRow = info;
+        list2.Clear();
+        if (selectedRow.생산품공정차수목록 != null)
+        {
+            foreach (var item in selectedRow.생산품공정차수목록)
+                list2.Add(item);
+        }
+    }
+
+    private void OnRowDataBound(RowDataBoundEventArgs<생산품공정정보> args)
+    {
+        if (args.Data.사용유무 == true)
+            return;
+
+        args.Row.AddStyle(new[] { "background-color: #444422;" });
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<생산품공정정보> args)
+    {
+        // 추가시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.관리차수 = 1;
+            newRow.사용유무 = false;    // 최초 확정 상태가 아님
+            newRow.회사코드 = 회사코드;
+        }
+        // 편집 시작시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.생산품공정_삭제(args.Data, false);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+            newRow.회사코드 = 회사코드;
+
+            await Remote.Command.생산관리.생산품공정_저장(args.Data, args.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private Task OnActionBegin(ActionEventArgs<생산품공정차수정보> args)
+    {
+        // 추가시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            if (selectedRow == default)
+            {
+                args.Cancel = true;
+
+                return Task.CompletedTask;
+            }
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            if (parentRow == null)
+            {
+                args.Cancel = true;
+                return Task.CompletedTask;
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<생산품공정차수정보> args)
+    {
+        // 추가시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var parentRow = grid.Grid.SelectedRecords.FirstOrDefault();
+            var newRow = args.Data;
+            newRow.생산품공정코드 = parentRow.생산품공정코드;
+            newRow.공정차수 = (parentRow.생산품공정차수목록?.Count ?? 0) + 1;
+            newRow.회사코드 = parentRow.회사코드;
+        }
+        // 편집 시작시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            await Remote.Command.생산관리.생산품공정차수_삭제(args.Data, false);
+            selectedRow.생산품공정차수목록.Remove(args.Data);
+
+            NotifyMessage(Message.ModifiedDeleteData);
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            if(args.Data.공정단위.공정코드 == null )
+            {
+                NotifyMessage(Message.공정추가오류);
+                return;
+            }
+
+            await Remote.Command.생산관리.생산품공정차수_저장(args.Data, args.Action == "Add" ? true : false);
+            await RefreshAsync();
+            //selectedRow.생산품공정차수목록 = (await Remote.Command.생산관리.생산품공정차수_조회(selectedRow.생산품공정코드)).ToList();
+            //ModifyList(selectedRow.생산품공정차수목록, (x, map) =>
+            //{
+            //    if (x.공정단위.공정.공정유형코드 != null)
+            //        x.공정단위.공정.공정유형 = map[x.공정단위.공정.공정유형코드];
+            //    if (x.공정단위.공정품유형코드 != null)
+            //        x.공정단위.공정품유형 = map[x.공정단위.공정품유형코드];
+            //});
+            //list2.Clear();
+            //foreach (var item in selectedRow.생산품공정차수목록)
+            //    list2.Add(item);
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    protected override void OnReceivedMessage(Services.Message message, bool isGlobal, dynamic[] args)
+    {
+        base.OnReceivedMessage(message, isGlobal, args);
+
+        if (isGlobal == true && message == Services.Message.ChangedCommonCode)
+        {
+
+        }
+    }
+
+    protected override void OnDispose()
+    {
+
+    }
+}

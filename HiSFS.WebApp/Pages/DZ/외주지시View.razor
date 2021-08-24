@@ -1,0 +1,105 @@
+﻿
+@page "/dz/외주지시view"
+@using HiSFS.Api.Shared.Models.View_DZICUBE
+@inherits CustomComponent
+
+<SfSplitter Width="8000px" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                <FGrid @ref="grid" DataSource="@list" TValue="VL_MES_WO_WF" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="15"
+                       OnCreated="RefreshAsync" OnToolbarClick="OnToolbarClick">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.CO_CD) HeaderText="회사코드" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WO_CD) HeaderText="지시번호" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.ORD_DT) HeaderText="지시일" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.COMP_DT) HeaderText="완료일" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.ITEM_CD) HeaderText="품번" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.ITEM_NM) HeaderText="품명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.ITEM_DC) HeaderText="규격" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.UNIT_DC) HeaderText="관리단위" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.ITEM_QT) HeaderText="수량" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WOOP_SQ) HeaderText="전개순번" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.BASELOC_CD) HeaderText="공정" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.BASELOC_NM) HeaderText="공정명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.LOC_CD) HeaderText="작업장" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.LOC_NM) HeaderText="작업장명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.LBR_UM) HeaderText="외주단가" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.LBR_AM) HeaderText="외주금액" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.EQUIP_CD) HeaderText="설비코드" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.EQUIP_NM) HeaderText="설비명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.DOC_DC) HeaderText="비고" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.DOC_ST) HeaderText="지시상태" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.DOC_ST_NM) HeaderText="지시상태명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WOC_FG) HeaderText="지시구분" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WOC_FG_NM) HeaderText="지시구분명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.DOC_FG) HeaderText="생산외주구분" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.DOC_FG_NM) HeaderText="생산외주구분명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WF_FG) HeaderText="처리구분" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WF_FG_NM) HeaderText="처리구분명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.QC_FG) HeaderText="검사구분" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.QC_FG_NM) HeaderText="검사구분명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.LOT_NB) HeaderText="LOT번호" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.TR_CD) HeaderText="거래처코드" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.TR_NM) HeaderText="거래처명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.ATTR_NM) HeaderText="거래처약칭" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.SO_NB) HeaderText="주문번호" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.LN_SQ) HeaderText="주문순번" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.DIV_CD) HeaderText="사업장코드" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WTEAM_CD) HeaderText="작업팀" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WTEAM_NM) HeaderText="작업팀명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WSHFT_CD) HeaderText="작업조" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.WSHFT_NM) HeaderText="작업조명" />
+                        <GridColumn Field=@nameof(VL_MES_WO_WF.REMARK_DC) HeaderText="비고" />
+
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    private FGrid<VL_MES_WO_WF> grid;
+    private List<VL_MES_WO_WF> list;
+    private VL_MES_WO_WF selectedRow;
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+
+        StateHasChanged();
+
+        //창고VIEW
+        var result = await Remote.Command.기준정보.VL_MES_WO_WF();
+
+        list = result.ToList();
+
+        StateHasChanged();
+    }
+
+
+    private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "btnCheckSave")
+        {
+            var YesOrNo = await ShowMessageBox("외주작업지시정보반영", "외주작업지시정보를 반영하시겠습니까?", MessageBoxResultType.YesOrNo);
+            bool result = false;
+            if (YesOrNo)
+            {
+                result = await Remote.Command.기준정보.VL_MES_WO_WF_반영(list);
+
+                if (result)
+                    NotifyMessage(Message.반영성공);
+                else
+                    NotifyMessage(Message.반영실패);
+            }
+
+        }
+
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

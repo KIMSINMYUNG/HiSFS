@@ -1,0 +1,343 @@
+﻿@page "/mdm/prd/설비관리"
+
+@inherits CustomComponent
+
+
+<SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="50%" Collapsible="true">
+            <div class="row section-header">
+                <span class="my-auto">기종</span>
+            </div>
+            <FGrid @ref="grid" DataSource="@list" TValue="품목정보" DefaultMode="true" EditMode="DGridEditMode.All"
+                   OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnActionComplete="OnActionComplete" OnCheckAuth="CheckAuth">
+                <GridColumns>
+                    <GridColumn Field=@nameof(품목정보.No) Width="80" HeaderText="순번" AllowAdding="false" AllowEditing="false">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(품목정보.품목코드) Visible="false" HeaderText="설비코드" IsPrimaryKey="true" />
+                    <GridColumn Field=@nameof(품목정보.원품목코드) Width="120" HeaderText="품번" AllowEditing="false" />
+                    @*<GridColumn Field=@nameof(품목정보.관리차수) Width="80" HeaderText="차수" AllowAdding="false" AllowEditing="false" />*@
+                    <GridColumn Field=@nameof(품목정보.품목명) Width="160" HeaderText="품명" />
+                    <GridColumn Field=@nameof(품목정보.품목구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.품목구분코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.품목구분코드), "품목구분", "B12", true, "인자1=3") HeaderText="품목구분" />
+                    <GridColumn Field="품목구분.코드명" Width="120" HeaderText="품목구분">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    @*<GridColumn Field=@nameof(품목정보.조달구분코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.조달구분코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.조달구분코드), "조달구분", "B16") HeaderText="조달구분" />
+                        <GridColumn Field="조달구분.코드명" Width="120" HeaderText="조달구분">
+                            <EditTemplate></EditTemplate>
+                        </GridColumn>*@
+                    @*<GridColumn Field=@nameof(품목정보.소재코드) Width="120" Template=@CommonCodeTemplate(nameof(품목정보.소재코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.소재코드), "소재", "B13") HeaderText="소재" />
+                        <GridColumn Field="소재.코드명" Visible="false" />*@
+                    <GridColumn Field=@nameof(품목정보.규격) Width="160" />
+                    <GridColumn Field=@nameof(품목정보.단위코드) Width="0" Template=@CommonCodeTemplate(nameof(품목정보.단위코드)) EditTemplate=@CommonCodeEditTemplate(nameof(품목정보.단위코드), "단위", "B11") HeaderText="단위" />
+                    <GridColumn Field="단위.코드명" Width="120" HeaderText="단위">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    @*<GridColumn Field=@nameof(품목정보.LOT여부) Width="120" DisplayAsCheckBox="true" TextAlign="TextAlign.Center" DefaultValue="true" />*@
+                    <GridColumn Field=@nameof(품목정보.거래처) Width="0">
+                        <Template>
+                            @((context as 품목정보).거래처?.거래처명)
+                        </Template>
+                        <EditTemplate>
+                            <DInputSearch Placeholder="거래처" Target="#main" DialogHeader="거래처 조회" TValue="거래처정보" TCode="string" TextField="거래처명" @bind-Value=@((context as 품목정보).거래처)>
+                                <DialogContent>
+                                    <HiSFS.WebApp.Pages.Common.Popup.거래처Popup />
+                                </DialogContent>
+                            </DInputSearch>
+                        </EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field="거래처.거래처명" Width="160" HeaderText="거래처">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(직원정보.CreateTime) Format="yyyy/MM/dd" Width="120" HeaderText="등록일">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(직원정보.UpdateTime) Format="yyyy/MM/dd" Width="120" HeaderText="변경일">
+                        <EditTemplate></EditTemplate>
+                    </GridColumn>
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+        <SplitterPane Size="50%" Collapsible="true">
+            <SfSplitter Height="100%" Width="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Vertical" SeparatorSize="6">
+                <SplitterPanes>
+                    <SplitterPane Size="60%" Collapsible="true">
+                        <div class="row section-header">
+                            <span class="my-auto">보유설비</span>
+                        </div>
+                        <FGrid @ref="grid2" DataSource="@list2" TValue="보유품목정보" DefaultMode="true" EditMode="DGridEditMode.All" PageSize="10"
+                               OnCreated="RefreshAsync2" OnActionComplete="OnActionComplete" OnRowSelected="OnRowSelected보유설비" OnCheckAuth="CheckAuth">
+                            <GridColumns>
+                                <GridColumn Field=@nameof(보유품목정보.보유품목코드) Visible="false" HeaderText="설비코드" Width="160" AllowEditing="false" AllowAdding="false" IsPrimaryKey="true" />
+                                <GridColumn Field="보유명" Width="160" HeaderText="설비명" />
+                                <GridColumn Field="품목.품목명" Width="160" HeaderText="기종" AllowEditing="false" />
+                                <GridColumn Field="보유일" Width="160" Format="yyyy/MM/dd" HeaderText="보유일" AllowEditing="false" />
+                                @*<GridColumn Field=@nameof(보유품목정보.장소) Width="0">
+                                        <Template>
+                                            @((context as 보유품목정보).장소?.장소명)
+                                        </Template>
+                                        <EditTemplate>
+                                            <DInputSearch Placeholder="장소" Target="#main" DialogHeader="장소 조회" TValue="장소정보" TCode="string" TextField="장소명" @bind-Value=@((context as 보유품목정보).장소)>
+                                                <DialogContent>
+                                                    <HiSFS.WebApp.Pages.Common.Popup.장소Popup />
+                                                </DialogContent>
+                                            </DInputSearch>
+                                        </EditTemplate>
+                                    </GridColumn>*@
+                                <GridColumn Field=장소.장소명 Width="100" AllowAdding="false" AllowEditing="false" />
+                                <GridColumn Field=@nameof(보유품목정보.장소위치) Width="100">
+                                    <Template>
+                                        @((context as 보유품목정보).장소위치?.위치명)
+
+                                    </Template>
+                                    <EditTemplate>
+                                        <DInputSearch Placeholder="장소위치" Target="#main" DialogHeader="장소위치 조회" TValue="장소위치정보" TCode="string" TextField="위치명" @bind-Value=@((context as 보유품목정보).장소위치)>
+                                            <DialogContent>
+
+                                                <HiSFS.WebApp.Pages.Common.Popup.장소위치Popup />
+                                            </DialogContent>
+                                        </DInputSearch>
+                                    </EditTemplate>
+                                </GridColumn>
+                            </GridColumns>
+                        </FGrid>
+                    </SplitterPane>
+                    <SplitterPane Size="40%" Collapsible="true">
+                        <div class="row section-header">
+                            <span class="my-auto">바코드</span>
+                        </div>
+                        @if (barcodeValue != null)
+                        {
+                            <div class="row mb-2">
+                                <div class="col text-center">
+                                    <SfQRCodeGenerator Width="200px" Height="150px" Value=@(barcodeValue)>
+                                        @*<QRCodeGeneratorDisplayText Visibility="true" />*@
+                                    </SfQRCodeGenerator>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col text-center">
+                                    @*<SfButton Disabled="true">출력</SfButton>*@
+                                    <SfButton OnClick="() => OnQRPrinte() ">출력</SfButton>
+                                </div>
+                            </div>
+                        }
+                    </SplitterPane>
+                </SplitterPanes>
+            </SfSplitter>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    [Parameter]
+    public PageMode Mode { get; set; }
+
+
+    private FGrid<품목정보> grid;
+    private ObservableCollection<품목정보> list;
+    private string selected품목코드 { set; get; }
+    private string selected품목구분코드 { set; get; }
+    private string selected보유품목코드 { set; get; }
+
+
+
+    private FGrid<보유품목정보> grid2;
+    private ObservableCollection<보유품목정보> list2;
+    private 보유품목정보 selected;
+
+    string barcodeValue;
+
+    private async Task RefreshAsync()
+    {
+
+        var result = await Remote.Command.기준정보.설비_조회();
+        ModifyList(result, (x, map) =>
+        {
+            if (x.품목구분코드 != null)
+                x.품목구분 = map[x.품목구분코드];
+            if (x.조달구분코드 != null)
+                x.조달구분 = map[x.조달구분코드];
+            if (x.소재코드 != null)
+                x.소재 = map[x.소재코드];
+            if (x.단위코드 != null)
+                x.단위 = map[x.단위코드];
+        });
+        list = result.ToObservableCollection();
+
+        //RefreshAsync2();
+
+        StateHasChanged();
+    }
+    private string 회사코드 = "";
+    private async Task RefreshAsync2()
+    {
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.생산관리.설비현황_조회(회사코드);
+        ModifyList(result, (x, map) =>
+        {
+            if (x.품목.단위코드 != null)
+                x.품목.단위 = map[x.품목.단위코드];
+        });
+        list2 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+    async Task Refresh(string 품목코드)
+    {
+        var result = await Remote.Command.생산관리.보유설비현황_조회(회사코드, true, 품목코드);
+        ModifyList(result, (x, map) =>
+        {
+            if (x.품목.단위코드 != null)
+                x.품목.단위 = map[x.품목.단위코드];
+        });
+        list2 = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    async Task OnRowSelected(RowSelectEventArgs<품목정보> args)
+    {
+        selected품목코드 = args.Data.품목코드;
+        selected품목구분코드 = args.Data.품목구분코드;
+        //selected = args.Data;
+
+        //var result = await Remote.Command.생산관리.보유설비현황_조회(true,selected품목코드);
+        //ModifyList(result, (x, map) =>
+        //{
+        //    if (x.품목.단위코드 != null)
+        //        x.품목.단위 = map[x.품목.단위코드];
+        //});
+        //list2 = result.ToObservableCollection();
+
+        //StateHasChanged();
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<품목정보> args)
+    {
+        // 추가 시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            var newRow = args.Data;
+            newRow.관리차수 = 1;
+            newRow.품목구분코드 = "B1205";
+            newRow.조달구분코드 = "B1601";
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+
+            try
+            {
+                await Remote.Command.기준정보.설비_삭제(args.Data, false);
+
+                NotifyMessage(Message.ModifiedDeleteData);
+
+                RefreshAsync();
+            }
+            catch (Exception ex)
+            {
+                NotifyMessage(Message.DeleteErrMesage);
+
+            }
+
+
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            var newRow = args.Data;
+            newRow.품목구분 = null;
+            newRow.품목유형 = null;
+            newRow.소재 = null;
+            newRow.규격종류 = null;
+            newRow.조달구분 = null;
+            newRow.단위 = null;
+            newRow.거래처 = null;
+
+            await Remote.Command.기준정보.설비_저장(newRow, args.Action == "Add" ? true : false);
+
+            await RefreshAsync();
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private async Task OnActionComplete(ActionEventArgs<보유품목정보> args)
+    {
+        // 추가 시
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+        }
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+        }
+        // 삭제 처리
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            try
+            {
+                await Remote.Command.기준정보.보유설비_삭제(args.Data, false);
+                NotifyMessage(Message.ModifiedDeleteData);
+            }
+            catch (Exception ex)
+            {
+                NotifyMessage(Message.DeleteErrMesage);
+
+            }
+
+
+        }
+        // 저장 시
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+
+
+            args.Data.보유품목코드 = selected품목코드;
+            args.Data.장소코드 = args.Data.장소위치.장소코드;
+            args.Data.장소위치코드 = args.Data.장소위치.장소위치코드;
+            args.Data.품목코드 = selected품목코드;
+            args.Data.품목구분코드 = selected품목구분코드;
+            args.Data.회사코드 = 회사코드;
+
+            if (selected품목코드 == null)
+            {
+                NotifyMessage(Message.ItemSelectMessage);
+                await RefreshAsync2();
+                return;
+            }
+
+            await Remote.Command.기준정보.보유설비_저장(args.Data, args.Action == "Add" ? true : false);
+            await Task.Delay(500);
+            await RefreshAsync2();
+
+
+            NotifyMessage(args.Action == "Add" ? Message.ModifiedAddData : Message.ModifiedUpdateData);
+        }
+    }
+
+    private void OnRowSelected보유설비(RowSelectEventArgs<보유품목정보> e)
+    {
+        selected = e.Data;
+        selected보유품목코드 = e.Data.보유품목코드;
+        barcodeValue = selected보유품목코드;
+    }
+
+    private async Task OnQRPrinte()
+    {
+        barcodeValue = selected보유품목코드;
+
+        await QRPrinte_Act(barcodeValue, 2);
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

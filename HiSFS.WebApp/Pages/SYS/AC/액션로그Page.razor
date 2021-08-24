@@ -1,0 +1,55 @@
+﻿@inherits CustomComponent
+
+@page "/SYS/AC/액션로그"
+
+<span style="font-size: 30px; color: white;">@count</span>
+<FGrid @ref="grid" DataSource="list" DefaultMode="true" PageSize="-1" TValue="액션로그"
+       OnCreated="OnCreatedGrid">
+    <GridColumns>
+        <GridColumn Field=@nameof(액션로그.No) Width="80" HeaderText="순번" />
+        <GridColumn Field=@nameof(액션로그.액션코드) Width="120" HeaderText="액션코드" />
+        <GridColumn Field="액션.액션명" Width="120" HeaderText="액션명" />
+        <GridColumn Field=@nameof(액션로그.액션인자) Width="250" HeaderText="액션인자" />
+        <GridColumn Field="액션.액션인자설명" Width="250" HeaderText="액션인자 설명" />
+        <GridColumn Field=@nameof(액션로그.액션시각) Format="yyyy/MM/dd HH:mm:ss" Width="160" HeaderText="액션시각" />
+        <GridColumn Field="직원.사용자명" Format="yyyy/MM/dd HH:mm:ss" Width="160" HeaderText="행위자" />
+    </GridColumns>
+</FGrid>
+
+
+@code {
+    private FGrid<액션로그> grid;
+    private ObservableCollection<액션로그> list;
+    private int count = 0;
+
+
+    private async Task OnCreatedGrid(object e)
+    {
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        list = (await Remote.Command.시스템.액션로그_조회()).ToObservableCollection();
+
+        ModifyList(list, (info, map) =>
+        {
+            info.액션.액션명 = info.액션.액션명.Replace(@"\n", "");
+        });
+
+        StateHasChanged();
+    }
+
+    protected override async void OnReceivedMessage(Message message, bool isGlobal, dynamic[] args)
+    {
+        if (message != Message.ReceivedActionTag)
+            return;
+
+        count++;
+        await RefreshAsync();
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

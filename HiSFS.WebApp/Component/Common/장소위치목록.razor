@@ -1,0 +1,97 @@
+﻿@inherits CustomComponent
+
+@using Syncfusion.Blazor.Data
+
+<SfComboBox Query="@Query1" TValue="string" TItem="장소위치정보" @bind-Value="@ListItem" PopupWidth="300px" DataSource="@장소위치List" PopupHeight="400px" CssClass="@Validate" Placeholder="장소위치목록" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+    <ComboBoxEvents TValue="string" TItem="장소위치정보" ValueChange="onChange"></ComboBoxEvents>
+
+    <ComboBoxTemplates TItem="장소위치정보">
+        <HeaderTemplate>
+            <table><tr><th class="e-text-center">위치코드</th><th width="100px">위치명</th></tr></table>
+        </HeaderTemplate>
+        <ItemTemplate Context="anotherContext">
+            @{
+                var 장소위치정보 = (anotherContext as 장소위치정보);
+            }
+            <table>
+                <tbody>
+                    <tr>
+                        <td>@장소위치정보.위치코드</td>
+                        <td>@장소위치정보.위치명</td>
+                    </tr>
+                </tbody>
+            </table>
+        </ItemTemplate>
+    </ComboBoxTemplates>
+    <ComboBoxFieldSettings Text="위치명" Value="위치코드"></ComboBoxFieldSettings>
+</SfComboBox>
+
+@code {
+    [Parameter]
+    public EventCallback<string> ListItemChanged { get; set; }
+
+    [Parameter]
+    public string Validate { get; set; }
+
+    private string listItem { get; set; }
+
+    private string Edit장소위치코드 { get; set; }
+
+    private string 장소코드 { get; set; }
+
+    public Query Query1;
+
+    [Parameter]
+    public string ListItem
+    {
+        get { return Edit장소위치코드; }
+        set
+        {
+            if (Edit장소위치코드 != value)
+            {
+                Edit장소위치코드 = value;
+
+                if (ListItemChanged.HasDelegate)
+                {
+                    ListItemChanged.InvokeAsync(value);
+                }
+            }
+
+        }
+    }
+
+    public List<장소위치정보> 장소위치List { get; set; }
+
+    public string 회사코드 = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result1 = await Remote.Command.기준정보.장소위치_조회(회사코드);
+        장소위치List = result1.ToList();
+        //Query = new Query().Where(new WhereFilter() { Field = "위치코드", Operator = "contains", value = "1", IgnoreCase = true });
+    }
+
+
+
+    public async Task Reload(string str장소코드)
+    {
+        장소코드 = str장소코드;
+        Query1 = new Query().Select(new List<string> { "장소코드" }).Where("장소코드", "equal", str장소코드);
+
+
+    }
+
+
+    private void onChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, 장소위치정보> args)
+    {
+        Query1 = new Query().Select(new List<string> { "장소코드" }).Where("장소코드", "equal", 장소코드);
+        StateHasChanged();
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+
+}

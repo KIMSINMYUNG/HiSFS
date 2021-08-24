@@ -1,0 +1,66 @@
+﻿@page "/popup/직원"
+
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="직원정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup"
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected">
+    <GridColumns>
+        <GridColumn Field=@nameof(직원정보.사번) Width="80" />
+        <GridColumn Field=@nameof(직원정보.사용자명) Width="80" />
+        <GridColumn Field="부서.부서명" Width="80" HeaderText="부서" />
+    </GridColumns>
+
+    <GridEvents Created="RefreshAsync" RowSelected="OnRowSelected" TValue="직원정보" />
+</FGrid>
+
+@code {
+    private FGrid<직원정보> grid;
+    private ObservableCollection<직원정보> list;
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<직원정보>> OnSelectedEvent { get; set; }
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<직원정보, bool> ReturnSelectedItem { get; set; }
+
+    public string 회사코드 = "";
+    private async Task RefreshAsync()
+    {
+
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        // 직원 사용유무 임시 false
+        var result = await Remote.Command.기준정보.직원_조회(false, 회사코드);
+        ModifyList(result, (x, map) =>
+        {
+            //if (x.품목구분코드 != null)
+            //    x.품목구분 = map[x.품목구분코드];
+            //if (x.조달구분코드 != null)
+            //    x.조달구분 = map[x.조달구분코드];
+            //if (x.단위코드 != null)
+            //    x.단위 = map[x.단위코드];
+        });
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<직원정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

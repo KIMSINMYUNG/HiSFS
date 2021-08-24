@@ -1,0 +1,49 @@
+﻿@page "/mdm/org/부서관리"
+@inherits CustomComponent
+
+<SfSplitter Width="100%" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%">
+            <FGrid @ref="grid" DataSource="@list" TValue="부서정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="15"
+                   OnCreated="RefreshAsync" OnCheckAuth="CheckAuth">
+                <GridColumns>
+                    <GridColumn Field=@nameof(부서정보.회사코드) HeaderText="회사코드" />
+                    <GridColumn Field=@nameof(부서정보.부서코드) HeaderText="부서코드" />
+                    <GridColumn Field=@nameof(부서정보.사업장코드) HeaderText="사업장코드" />
+                    <GridColumn Field=@nameof(부서정보.부문코드) HeaderText="부문코드" />
+                    <GridColumn Field=@nameof(부서정보.부서명) HeaderText="부서명" />
+                </GridColumns>
+            </FGrid>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+
+
+
+
+
+@code {
+
+
+    private FGrid<부서정보> grid;
+    private ObservableCollection<부서정보> list;
+
+    private async Task RefreshAsync()
+    {
+
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+
+        //부서VIEW
+        var result = await Remote.Command.기준정보.부서정보_조회(회사코드);
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}

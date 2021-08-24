@@ -1,0 +1,70 @@
+﻿@using Syncfusion.Blazor.Charts
+@inherits CustomComponent
+
+<SfChart Title="공정별 품질검사현황" Palettes="@palettes" SelectionMode="Syncfusion.Blazor.Charts.SelectionMode.Series">
+    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category">
+    </ChartPrimaryXAxis>
+
+    <ChartSeriesCollection>
+        <ChartSeries DataSource="@작업지시공정현황목록"  Width="1"  Name="목표수량" XName="생산지시명" YName="목표수량" Type="ChartSeriesType.Column">
+        </ChartSeries>
+        <ChartSeries DataSource="@작업지시공정현황목록"  Width="1"  Name="검사수량" XName="생산지시명" YName="검사수량" Type="ChartSeriesType.Column">
+        </ChartSeries>
+        <ChartSeries DataSource="@작업지시공정현황목록"  Width="1"  Name="불량수량" XName="생산지시명" YName="불량수량" Type="ChartSeriesType.Column">
+        </ChartSeries>
+    </ChartSeriesCollection>
+
+    <ChartLegendSettings Visible="true" ToggleVisibility="true" />
+    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+</SfChart>
+
+
+
+@code{
+    public class ChartData
+    {
+        public string Country { get; set; }
+        public double Gold { get; set; }
+        public double Silver { get; set; }
+        public double Bronze { get; set; }
+    }
+    public List<ChartData> MedalDetails = new List<ChartData>
+{
+         new ChartData{ Country= "USA", Gold=50, Silver=70, Bronze=45 },
+         new ChartData{ Country="China", Gold=40, Silver= 60, Bronze=55 },
+         new ChartData{ Country= "Japan", Gold=70, Silver= 60, Bronze=50 },
+         new ChartData{ Country= "Australia", Gold=60, Silver= 56, Bronze=40 },
+         new ChartData{ Country= "France", Gold=50, Silver= 45, Bronze=35 },
+         new ChartData{ Country= "Germany", Gold=40, Silver=30, Bronze=22 },
+         new ChartData{ Country= "Italy", Gold=40, Silver=35, Bronze=37 },
+         new ChartData{ Country= "Sweden", Gold=30, Silver=25, Bronze=27 }
+    };
+    public String[] palettes = new String[] {  "#F6B53F", "#6FAAB0" , "#E94649" };
+
+
+    private string 회사코드 = "";
+
+    private List<작업지시공정현황> 작업지시공정현황목록;
+
+    protected override async Task OnInitializedAsync()
+    {
+        회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        //var result = await Remote.Command.생산관리.작업지시기준_조회(회사코드);
+
+        작업지시공정현황목록 = await Remote.Command.생산관리.작업지시별실적현황_조회(회사코드);
+
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+
+
+
+    protected override void OnDispose()
+    {
+
+    }
+
+
+}

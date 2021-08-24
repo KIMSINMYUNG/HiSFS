@@ -1,0 +1,124 @@
+﻿@page "/mdm/mtr/더존BOM관리"
+@inherits CustomComponent
+
+<SfSplitter Width="2500px" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%">
+            <FGrid2nd @ref="grid" DataSource="@list" TValue="BOM_정보" DefaultMode="true" EditMode="DGridEditMode.None" PageSize="15"
+                   OnCreated="RefreshAsync"  OnUpdated="RefreshAsync_2" OnCheckAuth="CheckAuth">
+                <GridColumns>
+                    <GridColumn Field=@nameof(BOM_정보.모품번) HeaderText="모품번" Width="150" IsPrimaryKey="true" />
+                    <GridColumn Field=@nameof(BOM_정보.모품명) HeaderText="모품명" Width="200" />
+                    <GridColumn Field=@nameof(BOM_정보.모규격) HeaderText="모규격" Width="100" />
+                    <GridColumn Field=@nameof(BOM_정보.모품목재고단위) HeaderText="모품목재고단위" Width="100" />
+                    <GridColumn Field=@nameof(BOM_정보.순번) HeaderText="순번" Width="100" />
+                    <GridColumn Field=@nameof(BOM_정보.자품번) HeaderText="자품번" Width="150" />
+                    <GridColumn Field=@nameof(BOM_정보.자품명) HeaderText="자품명" Width="200" />
+                    <GridColumn Field=@nameof(BOM_정보.자규격) HeaderText="자규격" Width="100" />
+                    <GridColumn Field=@nameof(BOM_정보.자품목재고단위) HeaderText="자품목재고단위" Width="100" />
+                    <GridColumn Field=@nameof(BOM_정보.정미수량) HeaderText="정미수량" Width="100" Format="G29" />
+                    <GridColumn Field=@nameof(BOM_정보.LOSS율) HeaderText="LOSS율" Width="100" />
+                    <GridColumn Field=@nameof(BOM_정보.필요수량) HeaderText="필요수량율" Width="100" Format="G29" />
+
+                    <GridColumn Field=@nameof(BOM_정보.임가공구분) HeaderText="임가공구분" Width="100">
+                        <Template>
+                            @{
+                                var info = (context as BOM_정보);
+                                <div>
+                                    <div class="empimg">
+                                        @if (info.임가공구분 == "0")
+                                        {
+                                            <span>자재</span>
+                                        }
+                                        @if (info.임가공구분 == "1")
+                                        {
+                                            <span>사급</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+
+                    <GridColumn Field=@nameof(BOM_정보.외주구분) HeaderText="외주구분" Width="100">
+                        <Template>
+                            @{
+                                var info = (context as BOM_정보);
+                                <div>
+                                    <div class="empimg">
+                                        @if (info.외주구분 == "0")
+                                        {
+                                            <span>무상</span>
+                                        }
+                                        @if (info.외주구분 == "1")
+                                        {
+                                            <span>유상</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(BOM_정보.시작일자) HeaderText="시작일자" Width="100" Format="yyyy/MM/dd" />
+                    <GridColumn Field=@nameof(BOM_정보.종료일자) HeaderText="종료일자" Width="100" Format="yyyy/MM/dd" />
+                    <GridColumn Field=@nameof(BOM_정보.사용여부) HeaderText="사용여부" Width="100">
+                        <Template>
+                            @{
+                                var info = (context as BOM_정보);
+                                <div>
+                                    <div class="empimg">
+                                        @if (info.사용여부 == "0")
+                                        {
+                                            <span>미사용</span>
+                                        }
+                                        @if (info.사용여부 == "1")
+                                        {
+                                            <span>사용</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </FGrid2nd>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+
+    private FGrid2nd<BOM_정보> grid;
+    private ObservableCollection<BOM_정보> list;
+
+    private async Task RefreshAsync()
+    {
+
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        //var result = await Remote.Command.기준정보.BOM_정보_조회(회사코드);
+        var result = await Remote.Command.기준정보.VL_MES_BOM_Auto(회사코드);
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+    private async Task RefreshAsync_2()
+    {
+
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        //var result = await Remote.Command.기준정보.BOM_정보_조회(회사코드);
+        var result = await Remote.Command.기준정보.VL_MES_BOM_Upload(회사코드);
+
+        list = result.ToObservableCollection();
+
+        StateHasChanged();
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+
+}
+

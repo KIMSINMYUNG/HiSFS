@@ -1,0 +1,81 @@
+﻿
+@page "/dz/거래처view"
+@using HiSFS.Api.Shared.Models.View_DZICUBE
+@inherits CustomComponent
+
+
+<SfSplitter Width="100%" Height="100%" Orientation="Syncfusion.Blazor.Layouts.Orientation.Horizontal" SeparatorSize="6">
+    <SplitterPanes>
+        <SplitterPane Size="100%" Collapsible="true">
+            <SfTab CssClass="h-100" LoadOn="ContentLoad.Demand" OverflowMode="OverflowMode.Scrollable" HeaderPlacement="HeaderPosition.Top">
+                <FGrid @ref="grid" DataSource="@list" TValue="VL_MES_CUST" DefaultMode="true" EditMode="DGridEditMode.EditDelete" PageSize="15"
+                       OnCreated="RefreshAsync" OnToolbarClick="OnToolbarClick">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(VL_MES_CUST.CO_CD) HeaderText="회사코드" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.TR_CD) HeaderText="거래처코드" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.TR_NM) HeaderText="거래처명" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.ATTR_NM) HeaderText="거래처약칭" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.TR_FG) HeaderText="거래처구분" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.TR_FG_NM) HeaderText="거래처구분명" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.USE_YN) HeaderText="사용여부" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.REG_NB) HeaderText="사업자등록번호" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.CEO_NM) HeaderText="대표자" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.BUSINESS) HeaderText="업태" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.JONGMOK) HeaderText="종목" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.ADDR1) HeaderText="주소1" />
+                        <GridColumn Field=@nameof(VL_MES_CUST.ADDR2) HeaderText="주소2" />
+
+                    </GridColumns>
+                </FGrid>
+            </SfTab>
+        </SplitterPane>
+    </SplitterPanes>
+</SfSplitter>
+
+@code {
+    private FGrid<VL_MES_CUST> grid;
+    private List<VL_MES_CUST> list;
+    private VL_MES_CUST selectedRow;
+
+    private async Task RefreshAsync()
+    {
+        list?.Clear();
+
+        StateHasChanged();
+
+        //부서VIEW
+
+        var result = await Remote.Command.기준정보.VL_MES_CUST();
+
+        list = result.ToList();
+
+        StateHasChanged();
+    }
+
+
+    private async Task OnToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "btnCheckSave")
+        {
+            var YesOrNo = await ShowMessageBox("거래처반영", "거래저정보를 반영하시겠습니까?", MessageBoxResultType.YesOrNo);
+            bool result = false;
+            if (YesOrNo)
+            {
+                result = await Remote.Command.기준정보.VL_MES_CUST_반영(list);
+
+                if(result)
+                    NotifyMessage(Message.반영성공);
+                else
+                    NotifyMessage(Message.반영실패);
+            }
+
+
+
+        }
+
+    }
+
+    protected override void OnDispose()
+    {
+    }
+}

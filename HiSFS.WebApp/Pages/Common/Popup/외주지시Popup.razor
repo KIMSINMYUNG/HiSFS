@@ -1,0 +1,97 @@
+﻿@page "/popup/외주지시"
+@inherits CustomComponent
+
+
+<FGrid @ref="grid" DataSource="@list" TValue="외주작업지시서정보" @ondblclick="OnDbClick" DefaultMode="true" PageMode="PageMode.Popup" 
+       OnCreated="RefreshAsync" OnRowSelected="OnRowSelected" OnCheckAuth="CheckAuth">
+    <GridColumns>
+        <GridColumn Field=@nameof(외주작업지시서정보.회사코드) HeaderText="회사코드" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.지시번호) HeaderText="지시번호" Width="150" />
+        <GridColumn Field=@nameof(외주작업지시서정보.지시일) HeaderText="지시일" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.완료일) HeaderText="완료일"Width="120"  />
+        <GridColumn Field=@nameof(외주작업지시서정보.품번) HeaderText="품번" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.품명) HeaderText="품명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.규격) HeaderText="규격" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.관리단위) HeaderText="관리단위" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.수량) HeaderText="수량" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.전개순번) HeaderText="전개순번" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.공정) HeaderText="공정" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.공정명) HeaderText="공정명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.작업장) HeaderText="작업장" Width="120"  />
+        <GridColumn Field=@nameof(외주작업지시서정보.작업장명) HeaderText="작업장명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.외주단가) HeaderText="외주단가" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.외주금액) HeaderText="외주금액" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.설비코드) HeaderText="설비코드" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.설비명) HeaderText="설비명" Width="120"  />
+        <GridColumn Field=@nameof(외주작업지시서정보.비고_DOC_DC) HeaderText="비고_DOC_DC" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.지시상태) HeaderText="지시상태" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.지시상태명) HeaderText="지시상태명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.지시구분) HeaderText="지시구분" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.지시구분명) HeaderText="지시구분명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.생산외주구분) HeaderText="생산외주구분" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.생산외주구분명) HeaderText="생산외주구분명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.처리구분) HeaderText="처리구분" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.처리구분명) HeaderText="처리구분명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.검사구분) HeaderText="검사구분" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.검사구분명) HeaderText="검사구분명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.LOT번호) HeaderText="LOT번호" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.거래처코드) HeaderText="거래처코드" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.거래처명) HeaderText="거래처명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.거래처약칭) HeaderText="거래처약칭" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.주문번호) HeaderText="주문번호" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.주문순번) HeaderText="주문순번" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.사업장코드) HeaderText="사업장코드" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.작업팀) HeaderText="작업팀" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.작업팀명) HeaderText="작업팀명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.작업조) HeaderText="작업조" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.작업조명) HeaderText="작업조명" Width="120" />
+        <GridColumn Field=@nameof(외주작업지시서정보.비고) HeaderText="비고" Width="120" />
+    </GridColumns>
+</FGrid>
+
+
+
+@code {
+    private FGrid<외주작업지시서정보> grid;
+    private List<외주작업지시서정보> list;
+    private 외주작업지시서정보 selectedRow;
+
+
+    [Parameter]
+    public EventCallback<SelectedEventArgs<외주작업지시서정보>> OnSelectedEvent { get; set; }
+
+
+    [CascadingParameter(Name = "ReturnSelectedItem")]
+    public Action<외주작업지시서정보, bool> ReturnSelectedItem { get; set; }
+
+
+
+    private async Task RefreshAsync()
+    {
+        var 회사코드 = await SessionStorage.GetAsync<string>("회사코드");
+        var result = await Remote.Command.기준정보.외주작업지시서정보_조회Dz(회사코드);
+
+        list = result.ToList();
+
+        StateHasChanged();
+    }
+
+    void OnRowSelected(RowSelectEventArgs<외주작업지시서정보> args)
+    {
+        ReturnSelectedItem(args.Data, false);
+    }
+
+    private void OnDbClick(MouseEventArgs args)
+    {
+        var selectedRow = grid.Grid.SelectedRecords.FirstOrDefault();
+        if (selectedRow == null)
+            return;
+
+        ReturnSelectedItem(selectedRow, true);
+    }
+
+
+    protected override void OnDispose()
+    {
+    }
+}
